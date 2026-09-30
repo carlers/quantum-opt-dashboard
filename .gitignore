@@ -1,0 +1,7 @@
+__pycache__/  *.py[cod]  *.egg-info/  .venv/  venv/
+.pytest_cache/  .mypy_cache/  .ruff_cache/  dist/  build/
+node_modules/  .vite/
+data/  cache/  results/  *.local
+.env  .env.*.local  *.key  *.pem
+repomix-output.xml  pending-changes.txt  .mosaic-handoff.md
+.DS_Store  Thumbs.db

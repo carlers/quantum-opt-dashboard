@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "qopt Problem Manifest",
+  "type": "object",
+  "required": ["name","version","display_name","config_schema","stages"],
+  "properties": {
+    "name": {"type": "string"},
+    "version": {"type": "string"},
+    "display_name": {"type": "string"},
+    "config_schema": {"type": "object"},
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name","config_deps","inputs"],
+        "properties": {
+          "name": {"type": "string"},
+          "display_name": {"type": "string"},
+          "config_deps": {"type": "array", "items": {"type": "string"}},
+          "inputs": {"type": "array", "items": {"type": "string"}},
+          "resource_hint": {"type": "object"},
+          "parallelizable": {"type": "boolean"},
+          "unit_label": {"type": ["string","null"]},
+          "supports_pause": {"enum": ["soft","hard","none"]}
+        }
+      }
+    }
+  }
+}

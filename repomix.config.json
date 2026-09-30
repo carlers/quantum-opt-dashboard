@@ -1,0 +1,4 @@
+{
+  "output": {"filePath":"repomix-output.xml","style":"xml","removeComments":true,"removeEmptyLines":true,"showLineNumbers":false,"topFilesLength":0},
+  "ignore": {"useGitignore":true,"useDefaultPatterns":true,"customPatterns":["node_modules","dist","build",".venv","venv","*.lock","*.log",".env*","data/**","cache/**","results/**","repomix-output.xml"]}
+}

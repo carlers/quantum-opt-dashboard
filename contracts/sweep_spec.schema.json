@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sweep Spec",
+  "type": "object",
+  "required": ["field","values"],
+  "properties": {
+    "field": {"type": "string", "description": "Config field path, e.g. 'master.L_c'"},
+    "values": {"type": "array"},
+    "second_field": {"type": ["string","null"]},
+    "second_values": {"type": ["array","null"]},
+    "max_concurrency": {"type": "integer", "minimum": 1}
+  }
+}

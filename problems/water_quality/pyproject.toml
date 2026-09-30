@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qopt-water-quality"
+version = "0.1.0"
+description = "Water-quality buoy placement plugin for qopt"
+requires-python = ">=3.12"
+dependencies = [
+  "qopt",
+  "numpy>=2.0",
+  "scipy>=1.9",
+  "pandas>=2.0,<3.0",
+  "matplotlib>=3.5",
+  "seaborn>=0.13",
+  "shapely>=2.0",
+  "tqdm>=4.60",
+  "jijmodeling>=1.0,<2.0",
+  "openjij>=0.12",
+  "ommx-pyscipopt-adapter>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0","ruff>=0.6","mypy>=1.10"]
+
+[project.entry-points."qopt.problems"]
+water_quality = "water_quality:PROBLEM"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["slow: long-running tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

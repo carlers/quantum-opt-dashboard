@@ -1,0 +1,12 @@
+name: water-quality
+on: { push: { paths: ['problems/water_quality/**','framework/python/**','.github/workflows/water-quality.yml'] } }
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12', cache: 'pip' }
+      - run: pip install -e ./framework/python
+      - run: pip install -e ./problems/water_quality[dev]
+      - run: pytest problems/water_quality -q -m "not slow"

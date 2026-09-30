@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qopt"
+version = "0.1.0"
+description = "Domain-agnostic optimization control-center framework"
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic>=2.9",
+  "pydantic-settings>=2.5",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "psycopg[binary,pool]>=3.2",
+  "boto3>=1.35",                    # R2 via S3 API
+  "python-jose[cryptography]>=3.3",
+  "sse-starlette>=2.1",
+  "httpx>=0.27",
+  "numpy>=2.0",
+  "zstandard>=0.23",
+  "wandb>=0.15",
+  "optuna>=3.0",
+  "uvloop>=0.20; sys_platform != 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0","pytest-asyncio>=0.24","ruff>=0.6","mypy>=1.10"]
+
+[project.entry-points."qopt.builtin_stages"]
+compare = "qopt.core.stages.compare:CompareStage"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["qopt*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

@@ -1,7 +1,40 @@
-__pycache__/  *.py[cod]  *.egg-info/  .venv/  venv/
-.pytest_cache/  .mypy_cache/  .ruff_cache/  dist/  build/
-node_modules/  .vite/
-data/  cache/  results/  *.local
-.env  .env.*.local  *.key  *.pem
-repomix-output.xml  pending-changes.txt  .mosaic-handoff.md
-.DS_Store  Thumbs.db
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.so
+
+# Node
+node_modules/
+.vite/
+
+# Data
+data/
+cache/
+results/
+*.local
+
+# Secrets
+.env
+.env.*.local
+*.key
+*.pem
+
+# AI workflow
+repomix-output.xml
+pending-changes.txt
+.mosaic-handoff.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# pyenv
+.python-version

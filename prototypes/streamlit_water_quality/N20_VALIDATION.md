@@ -45,6 +45,35 @@ The **published** SCIP N=20 energy (−3.301319) differs from the cold notebook-
 
 These values are now frozen as **notebook-derived fixture canaries** in the test, distinct from the paper's reported figure. They are not assertions that changing the weights is scientifically justified.
 
+## New discrepancy: Table III AHP matrix does not generate Table IV priorities
+
+**Source:** the previous manuscript, page 4, Tables III–IV; this source is user-provided and *not committed to Git*. `tests/test_paper_ahp_consistency.py` manually transcribes the tables so its computations are independently rerunnable. No assertion is made about the unavailable raw expert questionnaires.
+
+The Table III main-criteria pairwise matrix is
+
+```text
+         A       B       C       D
+A        1       4       6       8
+B       1/4      1       3       5
+C       1/6     1/3      1       3
+D       1/8     1/5     1/3      1
+```
+
+The standard principal-eigenvector method on *this printed matrix* yields:
+
+| Main criterion | Principal-eigenvector priority | Table IV global subcriteria subtotal |
+|---|---:|---:|
+| A pollution capture | 0.61697535 | 0.552191814 |
+| B aquatic stress | 0.22831938 | 0.268830225 |
+| C hydrodynamic vulnerability | 0.10461009 | 0.130782272 |
+| D operational accessibility | 0.05009517 | 0.048195690 |
+
+The principal eigenvalue is **4.147126421479674**, giving CI = (λmax − 4)/3 and **CR = 0.0544912672146942** when the standard RI(4) = 0.90 is used. The manuscript instead reports **λmax = 4.2207** and **CR = 0.0817**, and both pass its CR ≤ 0.10 rule.
+
+**Reconstructed arithmetic:** Taking the *published Table IV main weights* and calculating the mean of `(A @ w) / w` gives **4.220685443420795** and **CR = 0.08173534941510918**. These round to the paper's reported λmax and CR. Thus the reported consistency statistics can be recreated *from the reported weight vector* even though that vector **is not** the principal eigenvector of the printed matrix. The 2×2 local judgments do reproduce the paper's within-pillar 1:1 and 2:1 splits. The original derivation/aggregation of its four main priorities remains unverified.
+
+This should **not** be silently "corrected" in the notebook or Streamlit model. Options for the research team to resolve: obtain the actual elicitation matrix or original weight computation, document the intended weighting algorithm, and issue a carefully labeled manuscript correction or alternative sensitivity scenario if warranted. Existing numerical baselines remain preserved.
+
 ## Reproducible method and pass/fail meaning
 
 Run from repository root on the branch, with Python 3.12:

@@ -1,7 +1,7 @@
 # Active checkpoint: headless N20 evidence export (2026-10-18)
 
 ## Current task
-Branch `science-headless-evidence-export`, stacked on `science-n20-scip-parity` (draft PR #15). Add automated, archived, reproducible N=20 SCIP JSON/CSV evidence to remove dependency on manual Streamlit interaction. No changes to live `plugin-water-streamlit-pilot`; user approval required before any merge that can update the deployed app.
+Draft PR [#17](https://github.com/carlers/quantum-opt-dashboard/pull/17), branch `science-headless-evidence-export`, stacked on `science-n20-scip-parity` (draft PR #15). Add automated, archived, reproducible N=20 SCIP JSON/CSV evidence to remove dependency on manual Streamlit interaction. No changes to live `plugin-water-streamlit-pilot`; user approval required before any merge that can update the deployed app.
 
 ### Scoped changes
 - `prototypes/streamlit_water_quality/evidence.py`: headless 3-scenario N20 (K=5) SCIP runner, exact enumeration, explicit objective decomposition and independent feasibility checks; export config, numerical instance, results and candidate sites to JSON/CSV with SHA-256 provenance manifest.
@@ -17,8 +17,8 @@ Branch `science-headless-evidence-export`, stacked on `science-n20-scip-parity` 
 - The published paper's SCIP result −3.301319 is not proven to arise from the committed input files. Historical AHP and solver uncertainties tracked at issue #16.
 
 ### Review gates
-- [ ] Confirm *current branch* CI passed, including artifact upload, examine JSON/CSV exports.
-- [ ] Update issue #12 and PR description with exact final branch SHA and run ID.
+- [x] Current branch CI passed: https://github.com/carlers/quantum-opt-dashboard/actions/runs/39072903613 — **17 tests passed**, CLI ran all three scenarios, archive upload succeeded (artifact ID 12115499202). Archive: https://github.com/carlers/quantum-opt-dashboard/actions/runs/39072903613/artifacts/12115499202. Evidence coefficients and settings validated by CI; hosted Streamlit app itself was not tested.
+- [ ] Record final head SHA and CI verification in PR #17 and issue #12 after final documentation commit.
 - [ ] Do not deploy or merge to `plugin-water-streamlit-pilot` without explicit user approval.
 - [ ] Original Streamlit app's real N20 output and historical paper-era solver inputs remain unverified; neither blocks the automated cold-build evidence generation.
 

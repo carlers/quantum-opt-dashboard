@@ -26,3 +26,18 @@ jobs:
         run: python -m compileall -q prototypes/streamlit_water_quality
       - name: Run model invariants
         run: python -m pytest prototypes/streamlit_water_quality/tests -q -s
+
+      - name: Generate automated N20 scientific evidence bundles
+        env:
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python prototypes/streamlit_water_quality/evidence.py \
+            --output-dir "${{ runner.temp }}/n20-scip-evidence" \
+            --scenario all --time-limit 120
+      - name: Upload N20 provenance and solver results
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-scip-evidence
+          path: ${{ runner.temp }}/n20-scip-evidence
+          if-no-files-found: error
+          retention-days: 14

@@ -20,8 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install lightweight model test dependencies
-        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pytest>=8"
+      - name: Install model and SCIP validation dependencies
+        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8"
       - name: Check Python syntax
         run: python -m compileall -q prototypes/streamlit_water_quality
       - name: Run model invariants

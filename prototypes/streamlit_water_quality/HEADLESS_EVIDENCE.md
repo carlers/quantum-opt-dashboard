@@ -74,6 +74,36 @@ projected location, utility, linear coefficient, and graph degrees.
 `manifest.json` records the SHA-256 of every exported JSON/CSV file;
 a changed file will no longer match its hash.
 
+## Floating-point portability
+
+Comparing the independently downloaded artifacts from GitHub Actions runs
+`39072903613` and `39073016592` showed the same source GeoJSON,
+dependency versions, 15 fixed stations, N=20 selections, and SCIP energies,
+but several `instance.json` linear terms differed by up to
+**2.22×10⁻¹⁶**. The eigenvector-derived scenario's weights also differed at
+approximately **10⁻¹⁷**. These are finite-precision differences, not
+observed changes in the discrete optimum.
+
+The evidence export therefore records **two different kinds of digest**:
+
+- `instance_sha256` / `config_sha256` and `manifest.file_sha256`
+  represent exact bytes or exact JSON serialization. Use them to detect
+  even a one-byte difference, including floating-point roundoff.
+- `instance_numerical_fingerprint_sha256` and
+  `config_numerical_fingerprint_sha256` are SHA-256 digests of a
+  **12-decimal-place rounded** numeric representation. The instance's
+  embedded config digest is replaced by the *normalized* config digest
+  before computing this second fingerprint. These permit tolerance-aware
+  comparisons but deliberately hide changes below approximately 10⁻¹²
+  in an individual numeric field.
+
+A matching numerical fingerprint is **not** proof of identical raw
+instances, model equivalence, or scientific robustness; inspect exact
+coefficients, model versions and solver certificates when interpreting
+meaningful differences. Roundoff variation was observed across CI runs
+despite identical reported `numpy`, `scipy`, `shapely` and `pyscipopt`
+versions.
+
 ## Scenarios
 
 | Scenario ID | AHP weight source | Cold-build SCIP energy (2026-10-18 baseline) |

@@ -217,6 +217,32 @@ def test_n20_reference_matches_pilot_and_scip(label, weights):
     assert result["energy"] == pytest.approx(expected_energy, abs=1e-7, rel=0)
     assert tuple(np.flatnonzero(values)) in expected_sites
 
+    # Frozen cold-build baselines for THIS COMMITTED dataset, not the paper.
+    # These canaries ensure that a source edit cannot silently redefine parity.
+    assert hashlib.sha256(GEOJSON.read_bytes()).hexdigest() == (
+        "e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7"
+    )
+    assert hashlib.sha256(NOTEBOOK.read_bytes()).hexdigest() == (
+        "08cbc1572048f4c34aab508ae195c82575acd685c7d29695d0eccecdf67cc048"
+    )
+    assert len(data.ids) == 5417
+    assert reference["marked_count"] == len(instance.fixed_indices) == 15
+    np.testing.assert_array_equal(
+        instance.fixed_indices,
+        [417, 454, 725, 1055, 1076, 1709, 2771, 3402, 3520, 3529, 3732, 3886, 4613, 4868, 5038],
+    )
+    np.testing.assert_array_equal(
+        instance.free_indices,
+        [5253, 2394, 1894, 1557, 3225, 4623, 47, 5409, 3922, 2408,
+         2694, 4136, 2567, 1164, 4973, 4537, 2726, 968, 16, 1762],
+    )
+    np.testing.assert_array_equal(np.flatnonzero(values), [0, 1, 3, 6, 7])
+    assert len(instance.quadratic) == 12
+    if label == "notebook":
+        assert expected_energy == pytest.approx(-3.3012934918564647, abs=1e-8)
+    else:
+        assert expected_energy == pytest.approx(-3.473640036773477, abs=1e-8)
+
     # Printed in CI; not golden figures, which would incorrectly conflate studies.
     details = {
         "weight_scenario": label,

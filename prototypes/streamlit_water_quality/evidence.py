@@ -58,6 +58,27 @@ def canonical_bytes(payload: object) -> bytes:
             + "\n").encode("utf-8")
 
 
+def rounded_numeric_payload(value: object, decimals: int = 12) -> object:
+    """Tolerance-aware representation for comparing floating-point instances.
+
+    Raw JSON files and hashes remain untouched: this is a *separate*
+    approximate fingerprint. Do not use it as a cryptographic replacement
+    for file integrity, nor as proof of equality below the stated precision.
+    """
+    if isinstance(value, float):
+        adjusted = round(value, decimals)
+        return 0.0 if adjusted == 0.0 else adjusted
+    if isinstance(value, dict):
+        return {key: rounded_numeric_payload(item, decimals) for key, item in value.items()}
+    if isinstance(value, list):
+        return [rounded_numeric_payload(item, decimals) for item in value]
+    return value
+
+
+def numerical_fingerprint(value: object, decimals: int = 12) -> str:
+    return sha256_bytes(canonical_bytes(rounded_numeric_payload(value, decimals)))
+
+
 def eigenvector_weights() -> np.ndarray:
     vals, vecs = np.linalg.eig(TABLE_III)
     index = int(np.argmax(vals.real))
@@ -182,6 +203,13 @@ def run_scenario(scenario: str, *, time_limit: float = 120.0) -> tuple[dict, dic
         "has_fixed_neighbor": instance.fixed_neighbors.astype(int).tolist(),
     }
     instance_hash = sha256_bytes(canonical_bytes(instance_json))
+    # Exact floating-point JSON bytes can differ at the 1e-16 level
+    # across otherwise equivalent CI runners. Keep exact SHA-256 AND
+    # independent 12-decimal numerical fingerprints, explicitly labeled.
+    numeric_config_hash = numerical_fingerprint(config)
+    numeric_instance_payload = dict(instance_json)
+    numeric_instance_payload["config_sha256"] = numeric_config_hash
+    numeric_instance_hash = numerical_fingerprint(numeric_instance_payload)
     linear_energy = float(sum(instance.linear[i] for i in chosen))
     pair_energy = float(sum(q for i, j, q in instance.quadratic if i in chosen and j in chosen))
     checked = evaluate(instance, selected)
@@ -197,6 +225,9 @@ def run_scenario(scenario: str, *, time_limit: float = 120.0) -> tuple[dict, dic
         "scenario": scenario,
         "config_sha256": config_hash,
         "instance_sha256": instance_hash,
+        "numerical_fingerprint_precision_decimals": 12,
+        "config_numerical_fingerprint_sha256": numeric_config_hash,
+        "instance_numerical_fingerprint_sha256": numeric_instance_hash,
         "status": solver["status"],
         "proven_optimal": bool(solver["optimal"]),
         "solver_gap": float(solver["gap"]),
@@ -280,6 +311,12 @@ def write_bundle(output_dir: Path, scenarios: tuple[str, ...], time_limit: float
             "selected_local_positions": value["selected_local_candidate_positions"],
             "config_sha256": value["config_sha256"],
             "instance_sha256": value["instance_sha256"],
+            "config_numerical_fingerprint_sha256": value[
+                "config_numerical_fingerprint_sha256"
+            ],
+            "instance_numerical_fingerprint_sha256": value[
+                "instance_numerical_fingerprint_sha256"
+            ],
         })
         print("N20_EVIDENCE " + json.dumps(summary[-1], sort_keys=True))
     manifest = {

@@ -253,8 +253,10 @@ def test_n20_reference_matches_pilot_and_scip(label, weights):
         assert expected_energy == pytest.approx(-3.3012934918564647, abs=1e-8)
     elif label == "paper-weight sensitivity":
         assert expected_energy == pytest.approx(-3.473640036773477, abs=1e-8)
-    # Third (counterfactual) scenario's observed energy is printed and
-    # reviewed before freezing a source-specific numerical baseline.
+    else:
+        # Hypothetical recomputation from the printed Table III eigenvector:
+        # this is NOT a historical paper outcome.
+        assert expected_energy == pytest.approx(-3.629863700075275, abs=1e-8)
 
     # Printed in CI; not golden figures, which would incorrectly conflate studies.
     details = {

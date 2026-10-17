@@ -1,6 +1,6 @@
 # N=20 SCIP source-parity validation (issue #12 / #6)
 
-**State:** Automated verification **passed** on draft PR #15 ([GitHub Actions run 39070257316](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39070257316)); 10 tests passed. Source-formula and exact optimality parity have been established for the cold build. This is *not* a claim of exact published numerical replication.
+**State:** Automated verification **passed** on draft PR #15 (including [GitHub Actions run 39071712498](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39071712498)); 14 tests passed, with final golden-fixture CI checks repeated after updates. Source-formula and exact optimality parity have been established for the cold build. This is *not* a claim of exact published numerical replication.
 
 ## Immutable evidence and experiment boundary
 
@@ -41,6 +41,8 @@ The candidate position order in the deterministic N=20 cohort is `[5253,2394,189
 
 Source data: 5,417 GeoJSON points, **15 actually flagged existing stations** (not simulated). SHA-256 of GeoJSON: `e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7`. SHA-256 of notebook: `08cbc1572048f4c34aab508ae195c82575acd685c7d29695d0eccecdf67cc048`.
 
+An additional third **counterfactual** test using AHP priorities re-derived from the printed Table III (not the published Table IV weights) gives SCIP / enumerated optimum **−3.629863700075275** and the same selected local indices **[0,1,3,6,7]**. It is not a fourth source of historical experimental truth.
+
 The **published** SCIP N=20 energy (−3.301319) differs from the cold notebook-formula/SCIP optimum by `+0.0000255081435356` (calculated minus published). Intriguingly, the **published SA** N=20 energy is −3.301293 (Table VI), numerically close to our SCIP result; this resemblance **does not demonstrate** a typo, nor prove which source configuration was used for the paper. Applying published weights instead changes energy by approximately −0.172321 relative to the published SCIP figure. Published source instance coefficients, versioned cache, and original OMMX solver output are required to assign a cause.
 
 These values are now frozen as **notebook-derived fixture canaries** in the test, distinct from the paper's reported figure. They are not assertions that changing the weights is scientifically justified.
@@ -72,6 +74,8 @@ The principal eigenvalue is **4.147126421479674**, giving CI = (λmax − 4)/3 a
 
 **Reconstructed arithmetic:** Taking the *published Table IV main weights* and calculating the mean of `(A @ w) / w` gives **4.220685443420795** and **CR = 0.08173534941510918**. These round to the paper's reported λmax and CR. Thus the reported consistency statistics can be recreated *from the reported weight vector* even though that vector **is not** the principal eigenvector of the printed matrix. The 2×2 local judgments do reproduce the paper's within-pillar 1:1 and 2:1 splits. The original derivation/aggregation of its four main priorities remains unverified.
 
+**Counterfactual N=20 optimization:** Applying the eigenvector-derived eight-factor weights from the *printed Table III* to the same committed dataset yields **SCIP optimum −3.629863700075275**. Independent exhaustive enumeration agrees, and local selected candidates remain **[0,1,3,6,7]**, with 15 fixed stations. This is a *new sensitivity scenario*, **not** a reproduction or retraction of the reported Table IV method. In the three tested weight scenarios, candidate choices happened to remain stable; this does not establish geographic or methodological robustness outside N=20.
+
 This should **not** be silently "corrected" in the notebook or Streamlit model. Options for the research team to resolve: obtain the actual elicitation matrix or original weight computation, document the intended weighting algorithm, and issue a carefully labeled manuscript correction or alternative sensitivity scenario if warranted. Existing numerical baselines remain preserved.
 
 ## Reproducible method and pass/fail meaning
@@ -83,7 +87,7 @@ python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>
 python -m pytest prototypes/streamlit_water_quality/tests/test_n20_reference.py -q -s
 ```
 
-The test runs both the **notebook-code weights** and the **paper-weight sensitivity scenario**. For each it:
+The test runs **three** cases: **notebook-code weights**, **paper-reported Table IV weight sensitivity**, and **Table III eigenvector weight sensitivity (counterfactual)**. For each it:
 
 1. Reloads the committed GeoJSON from disk; reconstructs utility, existing/fallback station selection, water mask, hex-pool snapping, FPS and coefficients using the original notebook Cells 2–4 as the specification, **without calling the pilot's reconstruction or feasibility functions**.
 2. Asserts that the pilot's free and fixed master indices (zero-based GeoJSON feature positions), utilities, complete linear coefficients, all nonzero free-free interactions, neighborhood graph, fixed neighbors and D_max equal the independently reconstructed arrays.

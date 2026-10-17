@@ -37,6 +37,15 @@ PAPER_EXPECTED = np.array(
     [0.276095907, 0.276095907, 0.179220150, 0.089610075,
      0.087188181, 0.043594091, 0.024097845, 0.024097845]
 )
+# Counterfactual AHP scenario: principal eigenvector of the *printed*
+# Table III main matrix, split by its own four 2x2 local matrices.
+# This is not the published Table IV vector or a claim of original elicitation.
+PAPER_MATRIX_EIGEN_WEIGHTS = np.array([
+    0.30848767748481226, 0.30848767748481226,
+    0.15221292182361240, 0.07610646091180620,
+    0.06974006275820807, 0.03487003137910404,
+    0.02504758407882235, 0.02504758407882235,
+])
 PAPER_ENERGY_N20 = -3.301319
 PAPER_SELECTED_N20 = [0, 1, 3, 6, 7]
 
@@ -187,7 +196,9 @@ def exact_brute_force(reference: dict) -> tuple[float, list[tuple[int, ...]]]:
 
 @pytest.mark.parametrize(
     ("label", "weights"),
-    [("notebook", NOTEBOOK_EXPECTED), ("paper-weight sensitivity", PAPER_EXPECTED)],
+    [("notebook", NOTEBOOK_EXPECTED),
+     ("paper-weight sensitivity", PAPER_EXPECTED),
+     ("paper-table-iii eigenvector sensitivity", PAPER_MATRIX_EIGEN_WEIGHTS)],
 )
 def test_n20_reference_matches_pilot_and_scip(label, weights):
     assert GEOJSON.is_file() and NOTEBOOK.is_file(), "Immutable sources must be committed"
@@ -240,8 +251,10 @@ def test_n20_reference_matches_pilot_and_scip(label, weights):
     assert len(instance.quadratic) == 12
     if label == "notebook":
         assert expected_energy == pytest.approx(-3.3012934918564647, abs=1e-8)
-    else:
+    elif label == "paper-weight sensitivity":
         assert expected_energy == pytest.approx(-3.473640036773477, abs=1e-8)
+    # Third (counterfactual) scenario's observed energy is printed and
+    # reviewed before freezing a source-specific numerical baseline.
 
     # Printed in CI; not golden figures, which would incorrectly conflate studies.
     details = {

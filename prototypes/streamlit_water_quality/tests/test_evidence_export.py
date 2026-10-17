@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from evidence import (
     BUDGET, N_FREE, PAPER_REPORTED_SCIP_ENERGY, SCENARIO_NOTES,
     TABLE_III, eigenvector_weights, enumerated_optimum, weights_for,
-    write_bundle,
+    numerical_fingerprint, write_bundle,
 )
 from model import Instance, PAPER_WEIGHTS, NOTEBOOK_WEIGHTS
 
@@ -27,6 +27,16 @@ def test_ahp_weight_scenario_ids_are_not_interchangeable():
     assert TABLE_III.shape == (4, 4)
     with pytest.raises(ValueError, match="Unknown"):
         weights_for("published-historical-scip")
+
+
+def test_tolerance_fingerprint_keeps_integrity_hash_separate():
+    a = {"weights": [0.25, 0.75], "coefficient": 0.0002699584704684191}
+    b = {"weights": [0.25 + 1e-16, 0.75 - 1e-16],
+         "coefficient": 0.0002699584704685191}
+    changed = {"weights": [0.25, 0.75], "coefficient": 0.0002699684704684191}
+    assert a != b  # The exact input is different.
+    assert numerical_fingerprint(a) == numerical_fingerprint(b)
+    assert numerical_fingerprint(a) != numerical_fingerprint(changed)
 
 
 def test_exhaustive_enumerator_respects_all_combinations_and_feasibility():
@@ -91,6 +101,15 @@ def test_headless_exports_three_proven_n20_scip_scenarios(tmp_path):
         assert len(rows) == 21  # one header and one row per free candidate
         assert result["instance_sha256"] == manifest["scenarios"][
             list(expect).index(scenario)]["instance_sha256"]
+        assert result["numerical_fingerprint_precision_decimals"] == 12
+        assert result["config_numerical_fingerprint_sha256"] == numerical_fingerprint(config)
+        normalized_instance = dict(instance)
+        normalized_instance["config_sha256"] = result[
+            "config_numerical_fingerprint_sha256"
+        ]
+        assert result["instance_numerical_fingerprint_sha256"] == numerical_fingerprint(
+            normalized_instance
+        )
         assert result["proven_optimal"] is True
         assert result["status"] == "optimal"
         assert result["solver_energy"] == pytest.approx(expected_energy, abs=1e-7)

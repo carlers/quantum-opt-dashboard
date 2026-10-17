@@ -25,4 +25,4 @@ jobs:
       - name: Check Python syntax
         run: python -m compileall -q prototypes/streamlit_water_quality
       - name: Run model invariants
-        run: python -m pytest prototypes/streamlit_water_quality/tests -q
+        run: python -m pytest prototypes/streamlit_water_quality/tests -q -s

@@ -1,3 +1,31 @@
+# Active checkpoint: headless N20 evidence export (2026-10-18)
+
+## Current task
+Draft PR [#17](https://github.com/carlers/quantum-opt-dashboard/pull/17), branch `science-headless-evidence-export`, stacked on `science-n20-scip-parity` (draft PR #15). Add automated, archived, reproducible N=20 SCIP JSON/CSV evidence to remove dependency on manual Streamlit interaction. No changes to live `plugin-water-streamlit-pilot`; user approval required before any merge that can update the deployed app.
+
+### Scoped changes
+- `prototypes/streamlit_water_quality/evidence.py`: headless 3-scenario N20 (K=5) SCIP runner, exact enumeration, explicit objective decomposition and independent feasibility checks; export config, numerical instance, results and candidate sites to JSON/CSV with SHA-256 provenance manifest.
+- `prototypes/streamlit_water_quality/tests/test_evidence_export.py`: scenario IDs, all 15,504 combinations, zero-feasible-case rejection, complete export schema and checksums, golden energies, tamper detection.
+- `.github/workflows/streamlit-pilot.yml`: automatically generate and upload artifact `n20-scip-evidence` (14-day retention) on scoped PR CI.
+- `prototypes/streamlit_water_quality/HEADLESS_EVIDENCE.md`: run instructions, schemas, epistemic boundaries.
+
+### N20 scientific reference retained
+- 5,417 GeoJSON records; 15 actually flagged fixed stations.
+- Original notebook AHP weights: SCIP optimum **−3.3012934918564643**, selected local indices **[0,1,3,6,7]**.
+- Published Table IV AHP weights on same data: **−3.473640036773477**.
+- Hypothetical Table III principal-eigenvector priorities: **−3.629863700075275**.
+- The published paper's SCIP result −3.301319 is not proven to arise from the committed input files. Historical AHP and solver uncertainties tracked at issue #16.
+
+### Review gates
+- [x] Current branch CI passed: https://github.com/carlers/quantum-opt-dashboard/actions/runs/39072903613 — **17 tests passed**, CLI ran all three scenarios, archive upload succeeded (artifact ID 12115499202). Archive: https://github.com/carlers/quantum-opt-dashboard/actions/runs/39072903613/artifacts/12115499202. Evidence coefficients and settings validated by CI; hosted Streamlit app itself was not tested.
+- [ ] Record final head SHA and CI verification in PR #17 and issue #12 after final documentation commit.
+- [ ] Do not deploy or merge to `plugin-water-streamlit-pilot` without explicit user approval.
+- [ ] Original Streamlit app's real N20 output and historical paper-era solver inputs remain unverified; neither blocks the automated cold-build evidence generation.
+
+---
+
+## Previous N20 scientific validation checkpoint
+
 # Active scientific-validation checkpoint (2026-10-18)
 
 - Active priority: N=20 water-quality original-notebook → pilot SCIP scientific parity; see roadmap #2, issue #12 and #6.

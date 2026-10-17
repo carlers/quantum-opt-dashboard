@@ -5,6 +5,13 @@ notebook-derived Streamlit pilot**, not a reconstruction of the unpublished
 historical input snapshot underlying the paper's reported optimal energy.
 It preserves the source notebook, GeoJSON, solver, and deployed UI unchanged.
 
+## Verified automated run
+
+- [PR #17](https://github.com/carlers/quantum-opt-dashboard/pull/17) provides the executable implementation.
+- [GitHub Actions run 39072903613](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39072903613) passed **17 tests**, including three SCIP + exact enumeration export scenarios.
+- [Download archived JSON/CSV evidence](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39072903613/artifacts/12115499202) (GitHub-generated artifact, 14-day retention). The ZIP includes all three scenario directories and `manifest.json`.
+- Results are auditable against source checksums and the supplied prior paper, but **are not the historical paper's raw experimental artifacts**.
+
 ## Execute locally or in GitHub Actions
 
 Run from the repository root using Python 3.12 and SCIP dependencies:

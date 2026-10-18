@@ -1,3 +1,14 @@
+# Current task: exact float64 coefficient precision diagnosis — issue #24 (2026-10-18)
+
+- Isolated scoped branch `science-sa-precision-probe` stacked above **unmerged** PR #23, not deployed and not merged to live Streamlit.
+- Read-only `precision_probe.py` exports original N=20 instance 64-bit float values as `float.hex`, exact per-penalty QUBO coefficient digests/slack metadata and narrow CPU/BLAS environment metadata. Rebuild twice per process to test local stability, never infer cross-run sameness from one pass.
+- CI adds `n20-precision-probe` archive (14-day retention) and `test_precision_probe.py` checks mathematical source/frozen hashes and file integrity.
+- **Observed issue #24:** nominally fixed-seed row-sum SA yields 698 or 665 feasible draws out of 1,024 across successful GitHub Actions runs, each associated with a different **exact** N20 model-instance SHA while 12-decimal numerical fingerprints and SCIP optima agree. Root cause unverified; do not silently average runs or change paper/notebook/model/penalty.
+- Goal: compare fresh diagnostic artifacts from at least two different runners, localize whether source floats/QUBO coefficients or CPU settings drift, and record a scientifically justified next validation gate.
+- Live `plugin-water-streamlit-pilot` and `main` remain untouched. Explicit user approval required before any merge/deployment.
+
+---
+
 # Cross-run scientific reproducibility warning (2026-10-18; issue #24)
 
 **Do not treat the first 3,072-draw paired-SA report as byte-for-byte replayable.** In GitHub Actions [39096889778](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778), row-sum feasibility was **698/1024**, whereas successful documentation-only reruns [39097001668](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097001668) and [39097023374](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097023374) each yielded **665/1024** with identical registered seeds. Row-sum optimum hits remained **13**, midpoint/global feasibility remained **790** each, and their optimum hits stayed **0/1**. The **raw input instance SHA differed** (`22c6bdf...` vs `07181560...`), though the **12-decimal numerical fingerprint and certified SCIP optimum matched**. The notebook row-sum penalty differed in its last binary rounding digit. Root cause is **unverified**; this correlation does not prove that the float drift alone caused the changed SA trajectories.

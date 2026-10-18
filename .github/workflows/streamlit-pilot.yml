@@ -55,3 +55,17 @@ jobs:
           path: ${{ runner.temp }}/n20-sa-benchmark
           if-no-files-found: error
           retention-days: 14
+
+      - name: Run pre-registered N20 paired-seed replication
+        env:
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python prototypes/streamlit_water_quality/sa_paired_replication.py \
+            --output-dir "${{ runner.temp }}/n20-sa-paired-replication"
+      - name: Upload N20 paired-block uncertainty and all sampled states
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-sa-paired-replication
+          path: ${{ runner.temp }}/n20-sa-paired-replication
+          if-no-files-found: error
+          retention-days: 14

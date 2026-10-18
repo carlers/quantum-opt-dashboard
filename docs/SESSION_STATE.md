@@ -1,3 +1,24 @@
+# Cross-run scientific reproducibility warning (2026-10-18; issue #24)
+
+**Do not treat the first 3,072-draw paired-SA report as byte-for-byte replayable.** In GitHub Actions [39096889778](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778), row-sum feasibility was **698/1024**, whereas successful documentation-only reruns [39097001668](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097001668) and [39097023374](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097023374) each yielded **665/1024** with identical registered seeds. Row-sum optimum hits remained **13**, midpoint/global feasibility remained **790** each, and their optimum hits stayed **0/1**. The **raw input instance SHA differed** (`22c6bdf...` vs `07181560...`), though the **12-decimal numerical fingerprint and certified SCIP optimum matched**. The notebook row-sum penalty differed in its last binary rounding digit. Root cause is **unverified**; this correlation does not prove that the float drift alone caused the changed SA trajectories.
+
+First-run feasibility differences of **+8.984 pp** for each higher penalty vs row sum became **+12.207 pp** in the reruns. Preserve BOTH and the separate paired-block intervals. Do not select a favorable number, average repeated CI runs as new independent experiment blocks, claim guaranteed OpenJij cross-run seed determinism, or infer general performance across different research instances. Dedicated blocker: [issue #24](https://github.com/carlers/quantum-opt-dashboard/issues/24). Original preregistration issue #22, draft PR #23 and historical provenance issue #16 remain open. No live merger/deployment.
+
+---
+
+# Current scoped milestone — preregistered paired-seed SA replication (2026-10-18)
+
+- Scope: [issue #22](https://github.com/carlers/quantum-opt-dashboard/issues/22) preregistered **before results**, on isolated `science-sa-paired-replication` stacked above unmerged PR #21. New draft PR targets `science-openjij-sa-benchmark`, not the live Streamlit branch.
+- Registered design: **32 NEW parent seeds `270010001..270010032`**, 32 independently child-seeded single reads per parent × 3 **unchanged** QUBO penalty configurations, **300 sweeps/read**, total **3,072 samples** from OpenJij 0.12.2 classical SA.
+- Primary outcome: *original-feasible AND exact SCIP-optimum hit* (1e-7), denominator all samples including infeasible. Secondary: original feasibility. Report two paired differences against row-sum penalty, each with descriptive **10,000-resample parent-seed-block percentile bootstrap** intervals, fixed bootstrap PRNG seed 734021; no significance or generalization claim.
+- Implementation: `sa_paired_replication.py`, `tests/test_sa_paired_replication.py`, `SA_PAIRED_REPLICATION.md` and scoped GitHub Actions artifact `n20-sa-paired-replication`.
+- Independent SCIP 20-choose-5 certification and historical source checksums retained. No original notebook, GeoJSON, deployed app, model, or paper modification. Unresolved paper provenance issue #16.
+- **Verified validation:** [GitHub Actions run 39096889778](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778) **30/30 tests passed**, original SCIP + 288 exploratory SA + preregistered 3072-sample analysis all executed and **three archives uploaded**. [Paired-study ZIP](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778/artifacts/12124762924) expires approximately 2026-11-01 04:23 UTC. No live merge/deploy without user approval.
+- **Observed preregistered 1024-draw-per-penalty counts:** notebook row-sum 698 feasible (68.164%), 13 certified-optimum hits (1.270%); midpoint 790 feasible (77.148%), 0 optimum hits; global bound 790 feasible (77.148%), 1 optimum hit. Row-sum SCIP optimum −3.3012934918564643. Both larger penalty settings are +8.984 percentage points more feasible in this fixed experiment, but produce fewer optimum hits.
+- **Paired-block descriptive bootstrap 95% intervals (10,000 × 32 parent blocks):** midpoint feasibility − row-sum +8.984 pp [5.469, 12.305], global − row-sum +8.984 pp [5.273,12.598]; midpoint optimum-hit − row-sum −1.270 pp [−1.855,−0.781], global − row-sum −1.172 pp [−1.758,−0.586]. No multiple testing inference or cross-instance generalization. The midpoint zero-hit bootstrap point interval [0,0] is degenerate and **not** a valid claim of zero underlying rare-event probability. Full interpretation in SA_PAIRED_REPLICATION.md.
+
+---
+
 # Active scientific checkpoint — seeded OpenJij N20 benchmark (2026-10-18)
 
 - Scope: [issue #20](https://github.com/carlers/quantum-opt-dashboard/issues/20), draft PR #21 on non-live `science-openjij-sa-benchmark` stacked above PR #19 (exact QUBO).

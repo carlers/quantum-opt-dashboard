@@ -1,3 +1,16 @@
+# Active scientific-validation checkpoint (2026-10-18)
+
+- **Current task:** issue #18 — exact auxiliary-slack QUBO encoding, after headless N=20 SCIP evidence PR #17. Branch `science-qubo-exact-encoding`, stacked on `science-headless-evidence-export` (draft PR #17; non-live).
+- **Changes:** `prototypes/streamlit_water_quality/qubo.py`, `tests/test_qubo.py`, `QUBO_ENCODING.md`. Correctness-first independent quadratic encoding of budget and per-site local connectivity constraints, with sufficient global penalties and exhaustive tiny-instance bit enumeration. No stochastic SA claims yet.
+- **Verification gate:** scoped GitHub Actions Python syntax and all pilot tests, including QUBO; review outcome and failures before claiming validated.
+- **Known verified SCIP baseline:** notebook-weight N=20/K=5 = −3.3012934918564643, selected local indices [0,1,3,6,7], 15 existing real stations; full evidence JSON/CSV from PR #17. Paper mathematical/provenance disagreements tracked in issue #16.
+- **Safety:** live deployment branch `plugin-water-streamlit-pilot` at `e383d1f887eded3e808dd4dec909dc6283b01a5e`; no merge or deployment without explicit user approval. Original notebook, GeoJSON, paper, and existing SCIP model remain intact.
+- **After review:** seeded, repeated OpenJij SA evaluation with explicit penalty sweeps and independently checked feasibility, as a separate follow-up task.
+
+---
+
+## Historical scientific checkpoint from preceding PR
+
 # Active checkpoint: headless N20 evidence export (2026-10-18)
 
 ## Current task

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import json
-import os
+import threading
 from math import comb
 from pathlib import Path
 import sys
@@ -187,7 +187,7 @@ def _artifact_zip(directory: Path) -> bytes:
 
 
 def main() -> None:
-    if not os.environ.get("QOPT_UNIFIED_DASHBOARD"):
+    if not getattr(threading.current_thread(), "_qopt_unified_page", False):
         st.set_page_config(page_title="QOpt Configurable Problem Workbench (Synthetic)", layout="wide")
     st.title("Configurable Optimization Workbench")
     st.warning(

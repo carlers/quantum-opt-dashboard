@@ -8,6 +8,7 @@ MIQP, arbitrary expressions, real shelter decisions, or quantum computation.
 from __future__ import annotations
 
 from itertools import product
+import json
 from math import isfinite, prod
 from pathlib import Path
 import re
@@ -347,6 +348,11 @@ def run_typed_ir(data: dict, parameters: dict, output_dir: Path) -> dict:
     if reference["status"] == "optimal" and abs(reference["objective"] - scip["objective"]) > TOL:
         raise AssertionError("SCIP and independent reference original objectives differ")
     qubo = exact_unconstrained_qubo(ir)
+    if qubo is not None:
+        (output_dir / "exact-unconstrained-qubo.json").write_text(
+            json.dumps(qubo, sort_keys=True, indent=2, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
     return {
         "typed_ir": ir,
         "equation_from_same_compiled_ir": source,

@@ -9,6 +9,7 @@ on:
       - "problems/water_quality/data/LDB_centroids_clean.geojson"
       - "problems/water_quality/notebooks/experiment9 grid search copy.ipynb"
       - "scripts/run_n20_reference_notebook.py"
+      - "scripts/tests/test_n20_manifest.py"
       - ".github/workflows/notebook-n20-replay.yml"
   workflow_dispatch:
 
@@ -29,6 +30,8 @@ jobs:
         run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
       - name: Compile clean replay driver
         run: python -m compileall -q scripts/run_n20_reference_notebook.py
+      - name: Reject altered exact coefficients and one-hop contracts
+        run: python -m unittest discover -s scripts/tests -p "test_n20_manifest.py" -v
       - name: Execute N20 notebook from a fresh kernel
         run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-reference-result.json"
       - name: Archive metadata-only verification result

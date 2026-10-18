@@ -8,6 +8,7 @@ Neither quantum hardware nor previous-paper numerical replication is claimed.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -31,10 +32,11 @@ DATA_PATH = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"
 N_FREE = 20
 SCIP_TIME_LIMIT = 30
 
-st.set_page_config(
-    page_title="Water-quality Placement · Research MVP",
-    page_icon="🧪", layout="wide",
-)
+if not os.environ.get("QOPT_UNIFIED_DASHBOARD"):
+    st.set_page_config(
+        page_title="Water-quality Placement · Research MVP",
+        page_icon="🧪", layout="wide",
+    )
 st.title("Water-quality sensor placement")
 st.caption("Research MVP · Laguna de Bay · source-pinned notebook-derived model")
 st.warning(

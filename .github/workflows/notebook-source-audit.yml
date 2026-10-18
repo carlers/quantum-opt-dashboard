@@ -1,0 +1,36 @@
+# Source-preservation gate; no notebook execution or numerical solver installation.
+name: Archived notebook source audit
+
+on:
+  pull_request:
+    paths:
+      - "scripts/notebook_inventory.py"
+      - "scripts/tests/test_notebook_inventory.py"
+      - "docs/WATER_NOTEBOOK_SOURCE_AUDIT.md"
+      - "problems/water_quality/notebooks/experiment9 grid search copy.ipynb"
+      - ".github/workflows/notebook-source-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pinned-notebook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile audit code without notebook execution
+        run: python -m compileall -q scripts
+      - name: Check immutable input and notebook structure
+        run: python scripts/notebook_inventory.py --report "$RUNNER_TEMP/source-inventory.json"
+      - name: Run original-source and safe-copy tests
+        run: python -m unittest discover -s scripts/tests -p "test_notebook_inventory.py" -v
+      - name: Create derived candidate without executing it
+        run: >
+          python scripts/notebook_inventory.py
+          --report "$RUNNER_TEMP/derived-inventory.json"
+          --working-copy "$RUNNER_TEMP/working-copy.ipynb"

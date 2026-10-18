@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bounded typed mathematical optimization IR v1",
+  "description": "Structural contract for SYNTHETIC typed MILP with quadratic binary×binary terms only. Python runtime enforces domain-specific bounds, identifiers, component sizes, and independent equivalence checks. Not a general MIQP/LaTeX parser.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "classification",
+    "variables",
+    "objective",
+    "constraints"
+  ],
+  "properties": {
+    "classification": {
+      "const": "SYNTHETIC_TYPED_OPTIMIZATION"
+    },
+    "variables": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "domain",
+          "lower",
+          "upper"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$"
+          },
+          "domain": {
+            "enum": [
+              "binary",
+              "integer",
+              "continuous"
+            ]
+          },
+          "lower": {
+            "type": "number"
+          },
+          "upper": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sense",
+        "linear",
+        "quadratic"
+      ],
+      "properties": {
+        "sense": {
+          "enum": [
+            "minimize",
+            "maximize"
+          ]
+        },
+        "constant": {
+          "type": "number"
+        },
+        "linear": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "quadratic": {
+          "type": "array",
+          "maxItems": 66,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "first",
+              "second",
+              "coefficient"
+            ],
+            "properties": {
+              "first": {
+                "type": "string"
+              },
+              "second": {
+                "type": "string"
+              },
+              "coefficient": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "sense",
+          "rhs",
+          "linear"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$"
+          },
+          "sense": {
+            "enum": [
+              "<=",
+              "==",
+              ">="
+            ]
+          },
+          "rhs": {
+            "type": "number"
+          },
+          "linear": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
+}

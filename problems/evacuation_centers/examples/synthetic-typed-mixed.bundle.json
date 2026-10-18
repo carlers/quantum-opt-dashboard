@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "classification": "SYNTHETIC",
+  "problem_id": "structured.synthetic",
+  "formulation_id": "typed_milp",
+  "dataset": {
+    "path": "synthetic-typed-mixed.json"
+  },
+  "parameters": {},
+  "description": "Structured typed synthetic math example synthetic-typed-mixed.json"
+}

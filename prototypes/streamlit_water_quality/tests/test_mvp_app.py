@@ -19,11 +19,11 @@ def fresh():
 def test_first_page_has_true_reference_preview_without_executing_scip():
     at = fresh()
     assert any("Water-quality sensor placement" in x.value for x in at.title)
-    assert any("Review the mathematical problem" in x.value for x in at.subheader)
+    assert any("Understand the current model" in x.value for x in at.subheader)
     assert "mvp_result" not in at.session_state
-    assert any(b.label == "Run SCIP placement" for b in at.button)
+    assert any(b.label == "Find monitoring locations (SCIP)" for b in at.button)
     assert len(at.metric) >= 3
-    assert any("Opening the dashboard does not run a solver" in str(x.proto)
+    assert any("Nothing is solved until you run it" in str(x.proto)
                for x in at.info)
 
 
@@ -87,3 +87,46 @@ def test_weight_source_switch_invalidates_a_previously_solved_result():
     assert any("Inputs changed" in str(x.proto) for x in at.info)
     assert any("Exploratory parameter comparison" in str(x.proto) for x in at.info)
     assert not [x for x in at.metric if x.label == "Original objective (min.)"]
+
+
+def test_cloud_warm_reload_with_legacy_preview_helper_still_renders_and_runs(monkeypatch):
+    """Regression for 2026-10-18 Cloud traceback at app.py:157.
+
+    Streamlit can rerun the updated page while the earlier imported audit
+    module remains cached in sys.modules with the old five-argument preview
+    signature. This test deliberately gives the app that legacy call boundary
+    rather than running only in a clean Python process.
+    """
+    import hashlib
+    import sys
+
+    sys.path.insert(0, str(APP.parent))
+    import mvp_audit
+
+    modern = mvp_audit.preview
+
+    def old_cached_preview(instance, *, dataset_sha256, weights,
+                           weight_source, time_limit_seconds):
+        return modern(instance, dataset_sha256=dataset_sha256,
+                      weights=weights, weight_source=weight_source,
+                      time_limit_seconds=time_limit_seconds)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(mvp_audit, "preview", old_cached_preview)
+        at = fresh()
+        beta = next(x for x in at.number_input
+                    if x.label == "Redundancy strength (β)")
+        beta.set_value(2.).run()
+        assert not at.exception
+        assert any("redundancy 2" in str(x.proto) for x in at.caption)
+        at.button(key="mvp_run").click().run()
+        assert not at.exception
+        result = at.session_state["mvp_result"]
+        assert result["independent"]["original_feasible"]
+        with ZipFile(BytesIO(result["zip"])) as archive:
+            model = json.loads(archive.read("model.json"))
+            assert model["settings"]["beta"] == 2.
+            assert model["settings"]["delta"] == 1.
+            saved = model.pop("model_fingerprint_sha256")
+            assert saved == hashlib.sha256(mvp_audit.canonical(model)).hexdigest()
+            assert saved == result["fingerprint"]

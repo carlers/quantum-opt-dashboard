@@ -15,7 +15,7 @@ def startup():
 def test_unified_opens_source_pinned_water_problem_and_preserves_scip_run():
     app = startup()
     assert any("Water-quality sensor placement" in item.value for item in app.title)
-    assert any("Review the mathematical problem" in item.value for item in app.subheader)
+    assert any("Understand the current model" in item.value for item in app.subheader)
     assert not app.session_state.get("mvp_result")
     app.button(key="mvp_run").click().run()
     assert not app.exception
@@ -70,3 +70,12 @@ def test_bounded_classical_sampler_reports_seeded_original_feasibility():
     assert len(record["child_seeds"]) == 2
     assert record["summary"]["sample_count"] == 2
     assert record["summary"]["feasible_sample_count"] <= 2
+
+
+def test_qubo_penalty_has_a_default_with_plain_language_explanation():
+    app = startup().switch_page("pages/research.py").run()
+    assert not app.exception
+    selector = next(s for s in app.selectbox
+                    if s.label == "QUBO penalty (equal budget and connectivity penalties)")
+    assert selector.value == "notebook-local-row-sum"
+    assert any("not a guarantee" in str(i.proto) for i in app.info)

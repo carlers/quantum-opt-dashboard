@@ -48,7 +48,7 @@ def test_preview_is_solver_free_then_real_scip_run_exports_actual_lp():
     assert at.session_state["preview_fingerprint"]
     _button(at, "Run this validated synthetic model with SCIP").click().run()
     assert not at.exception
-    assert any("SCIP result and independent original-model audit" in x.value
+    assert any("Your optimization result" in x.value
                for x in at.subheader)
     with ZipFile(BytesIO(at.session_state["completed_run"]["archive"])) as zipf:
         names = set(zipf.namelist())

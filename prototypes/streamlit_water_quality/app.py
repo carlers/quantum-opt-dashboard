@@ -7,6 +7,7 @@ Neither quantum hardware nor previous-paper numerical replication is claimed.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import threading
 from pathlib import Path
@@ -19,18 +20,29 @@ import streamlit as st
 from pyproj import Transformer
 
 from model import (
-    NOTEBOOK_WEIGHTS, PAPER_WEIGHTS, existing_stations, load_data,
+    FACTOR_NAMES, NOTEBOOK_WEIGHTS, PAPER_WEIGHTS, existing_stations, load_data,
     make_instance, site_utility, solve_scip,
 )
 from mvp_audit import (
     NOTEBOOK_N20_K5_LOCAL_INDICES, NOTEBOOK_N20_K5_OPTIMUM,
-    check_selected, evidence_zip, preview, selected_csv, source_sha,
+    canonical, check_selected, evidence_zip, preview, selected_csv, source_sha,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"
 N_FREE = 20
 SCIP_TIME_LIMIT = 30
+
+FACTOR_LABELS = (
+    "River proximity",
+    "Runoff proximity",
+    "Fishpen density",
+    "Low-oxygen proximity",
+    "Bathymetric depressions",
+    "Outlet proximity",
+    "Boat ramp proximity",
+    "Road proximity",
+)
 
 if not getattr(threading.current_thread(), "_qopt_unified_page", False):
     st.set_page_config(
@@ -75,14 +87,62 @@ with st.sidebar:
     )
     source = st.radio(
         "Criterion weights",
-        ["Notebook weights · reference", "Paper weights · comparison only"],
-        help="The paper and notebook weights differ. Switching presets is a new exploratory experiment.",
+        ["Notebook weights · reference", "Paper weights · comparison only",
+         "Custom weights · exploratory"],
+        help="Each of the eight environmental factors contributes to the site suitability "
+             "score. Notebook and paper profiles differ; custom weights define a new experiment.",
     )
-    weights = NOTEBOOK_WEIGHTS.copy() if source.startswith("Notebook") else PAPER_WEIGHTS.copy()
-    st.caption("Redundancy β=1 · Wake δ=1 · SCIP time limit=30 s")
-    st.caption("For now, we intentionally omit arbitrary datasets, nonlinear custom formulas, and annealer tuning.")
+    weights = (NOTEBOOK_WEIGHTS.copy() if source.startswith("Notebook")
+               else PAPER_WEIGHTS.copy() if source.startswith("Paper")
+               else None)
+    with st.expander("Eight factors and their importance", expanded=True):
+        st.caption(
+            "These are the eight measured criteria in the committed dataset. "
+            "Higher relative weight gives a criterion more influence on site suitability. "
+            "Missing criteria are renormalized per site."
+        )
+        if weights is None:
+            weights = np.array([
+                st.number_input(
+                    label + " weight", min_value=0.0, max_value=5.0,
+                    value=float(NOTEBOOK_WEIGHTS[i]), step=0.01, format="%.4f",
+                    key=f"water-custom-weight-{i}",
+                    help=f"Criterion {FACTOR_NAMES[i]}. Set zero to exclude it from the "
+                         "weighted site suitability score; at least one weight must be positive.",
+                )
+                for i, label in enumerate(FACTOR_LABELS)
+            ], dtype=float)
+        else:
+            st.dataframe(pd.DataFrame({
+                "Environmental factor": FACTOR_LABELS,
+                "Relative weight": [round(float(w), 6) for w in weights],
+            }), hide_index=True, use_container_width=True)
+            st.caption("Choose Custom weights above to edit each of these eight values.")
+        st.caption("Criterion values themselves come from the source GeoJSON; "
+                   "this reference page changes their importance, not the measured data.")
+    with st.expander("Advanced: interaction strengths", expanded=False):
+        st.caption("These model parameters change penalties for placing sensors close "
+                   "together. They do not change the one-hop connectivity requirement.")
+        beta = st.number_input(
+            "Redundancy strength (β)", min_value=0.0, max_value=10.0,
+            value=1.0, step=0.1,
+            help="Strength of the penalty for nearby stations that may duplicate "
+                 "each other's spatial coverage. Zero removes this interaction penalty.",
+        )
+        delta = st.number_input(
+            "Wake strength (δ)", min_value=0.0, max_value=10.0,
+            value=1.0, step=0.1,
+            help="Strength of the distance-and-current-direction wake overlap penalty. "
+                 "Zero removes this interaction penalty.",
+        )
+    if np.sum(weights) <= 0:
+        st.error("At least one environmental factor must have a positive weight.")
+        st.stop()
+    st.caption("20 possible new sites · SCIP time limit 30 seconds")
     run = st.button(
-        "Run SCIP placement", key="mvp_run", type="primary", use_container_width=True,
+        "Find monitoring locations (SCIP)", key="mvp_run",
+        type="primary", use_container_width=True,
+        help="Solve the currently selected budget, eight factor weights and interaction strengths.",
     )
 
 try:
@@ -91,14 +151,24 @@ try:
     if simulated or len(fixed) != 15:
         raise ValueError("The immutable reference requires 15 explicitly marked existing stations.")
     instance, simulated_instance = make_instance(
-        data, weights, N_FREE, int(k), beta=1.0, delta=1.0
+        data, weights, N_FREE, int(k), beta=float(beta), delta=float(delta)
     )
     if simulated_instance:
         raise ValueError("Reference fallback stations are forbidden in the MVP.")
+    # Streamlit may hot-reload this page while retaining an older imported
+    # mvp_audit.preview from a previous Cloud deployment. The legacy function
+    # accepts the original five inputs, but not beta/delta. Pass the stable
+    # interface, then explicitly bind all current model parameters and rebuild
+    # the source-derived fingerprint from the *actual* compiled instance.
+    # This preserves numerical provenance AND survives a warm Cloud reload.
     model = preview(
         instance, dataset_sha256=dataset_sha, weights=weights.tolist(),
         weight_source=source, time_limit_seconds=SCIP_TIME_LIMIT,
     )
+    model["settings"]["beta"] = float(beta)
+    model["settings"]["delta"] = float(delta)
+    model.pop("model_fingerprint_sha256", None)
+    model["model_fingerprint_sha256"] = hashlib.sha256(canonical(model)).hexdigest()
 except (ValueError, RuntimeError, IndexError) as exc:
     st.error("Could not construct this mathematical scenario: " + str(exc))
     st.stop()
@@ -109,9 +179,13 @@ if old is not None and old["fingerprint"] != fingerprint:
     st.session_state.pop("mvp_result", None)
     st.info("Inputs changed. The previous result is hidden; rerun SCIP to solve this model.")
 
-is_reference = k == 5 and source.startswith("Notebook")
+is_reference = (k == 5 and source.startswith("Notebook")
+                and beta == 1.0 and delta == 1.0)
 
-st.subheader("2 · Review the mathematical problem")
+st.subheader("2 · Understand the current model")
+st.caption("Your choices: " + str(int(k)) + " new monitoring sites · " + source +
+           f" · redundancy {beta:g} · wake {delta:g}. "
+           "Changing any setting requires a new solution.")
 a, b, c = st.columns(3)
 a.metric("Original sites", f"{len(data.ids):,}")
 b.metric("Existing stations", str(len(instance.fixed_indices)))
@@ -131,12 +205,13 @@ else:
         "notebook default and must not be labeled a publication reproduction."
     )
 
-st.latex(
-    r"\min_{\mathbf{x}\in\{0,1\}^{20}}\ "
-    r"\sum_i a_i x_i+\sum_{i<j}q_{ij}x_ix_j"
-)
-st.latex(r"\sum_i x_i=" + str(int(k)))
-st.latex(r"x_i\leq f_i+\sum_{j\in\mathcal{N}(i)}x_j")
+with st.expander("Scientific equation and model constraints", expanded=False):
+    st.latex(
+        r"\min_{\mathbf{x}\in\{0,1\}^{20}}\ "
+        r"\sum_i a_i x_i+\sum_{i<j}q_{ij}x_ix_j"
+    )
+    st.latex(r"\sum_i x_i=" + str(int(k)))
+    st.latex(r"x_i\leq f_i+\sum_{j\in\mathcal{N}(i)}x_j")
 st.caption(
     "The coefficients aᵢ and qᵢⱼ below are generated from the actual current "
     "instance. The local one-hop rule does NOT establish global path connectivity. "
@@ -174,7 +249,7 @@ with st.expander("Inspect actual coefficients, sites, adjacency and source finge
         use_container_width=True,
     )
 
-st.subheader("3 · Solve and review")
+st.subheader("3 · Placement results")
 if run:
     with st.spinner("Solving the exact selected formulation with SCIP…"):
         try:
@@ -205,7 +280,7 @@ if run:
 
 current = st.session_state.get("mvp_result")
 if current is None or current["fingerprint"] != fingerprint:
-    st.info("Review the formulation, then press **Run SCIP placement**. Opening the dashboard does not run a solver.")
+    st.info("Choose settings in the sidebar, then select **Find monitoring locations (SCIP)**. Nothing is solved until you run it.")
     st.stop()
 
 selected = np.asarray(current["chosen"], dtype=int)

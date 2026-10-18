@@ -186,14 +186,158 @@ def _artifact_zip(directory: Path) -> bytes:
     return buff.getvalue()
 
 
+def _set_quick_budget(preset: str, parameter_name: str) -> None:
+    """Apply a simple GUI setting to the SAME parameter editor/source bytes."""
+    key = "parameters-" + preset
+    params = json.loads(st.session_state[key])
+    params[parameter_name] = int(st.session_state["quick-budget-" + preset])
+    st.session_state[key] = json.dumps(params, indent=2)
+
+
+def _set_quick_demand(preset: str, zone_index: int, widget_key: str) -> None:
+    """One source-of-truth edit; source fingerprint still guards all old output."""
+    key = "input-data-" + preset
+    source = json.loads(st.session_state[key])
+    source["demands"][zone_index] = int(st.session_state[widget_key])
+    st.session_state[key] = json.dumps(source, indent=2)
+
+
+def _quick_model_controls(preset: str, domain: str, suggested: dict,
+                          sample_text: str) -> None:
+    """First-run controls for users who should never need to open a JSON editor."""
+    if domain not in ("evacuation.synthetic", "binary_quadratic.synthetic"):
+        return
+    st.subheader("2 · Adjust the example")
+    st.caption("You can change these settings using normal controls. "
+               "The advanced input editor below is optional.")
+    params_key = "parameters-" + preset
+    try:
+        raw_params = json.loads(st.session_state.get(
+            params_key, json.dumps(suggested["parameters"])
+        ))
+        if not isinstance(raw_params, dict):
+            return
+    except (ValueError, TypeError, json.JSONDecodeError):
+        # Existing central model preflight renders the useful invalid-input
+        # error; quick widgets must not bypass its trust boundary.
+        return
+    if domain == "evacuation.synthetic":
+        try:
+            source = json.loads(st.session_state.get("input-data-" + preset, sample_text))
+            if not isinstance(source, dict) or not all(
+                key in source for key in ("site_ids", "zone_ids", "demands", "max_open")
+            ):
+                return
+            count = len(source["site_ids"])
+        except (ValueError, TypeError, json.JSONDecodeError):
+            return
+        current = int(raw_params.get("max_open", source["max_open"]))
+        budget_key = "quick-budget-" + preset
+        source_key = "quick-budget-source-" + preset
+        if st.session_state.get(source_key) != current:
+            st.session_state[budget_key] = current
+            st.session_state[source_key] = current
+        st.number_input(
+            "Maximum evacuation centers to open", min_value=0, max_value=count,
+            step=1, key=budget_key, on_change=_set_quick_budget,
+            args=(preset, "max_open"),
+            help="A limit on how many of these fictional shelters can open. "
+                 "Try changing it and compare the number of people served.",
+        )
+        zone = st.selectbox("Demand zone to adjust", source["zone_ids"],
+                            key="quick-zone-" + preset)
+        idx = source["zone_ids"].index(zone)
+        demand_key = f"quick-demand-{preset}-{idx}"
+        sync_key = f"quick-demand-source-{preset}-{idx}"
+        current_demand = int(source["demands"][idx])
+        if st.session_state.get(sync_key) != current_demand:
+            st.session_state[demand_key] = current_demand
+            st.session_state[sync_key] = current_demand
+        st.number_input(
+            "People needing shelter in selected zone (fictional)",
+            min_value=0, max_value=100, step=1,
+            key=demand_key, on_change=_set_quick_demand,
+            args=(preset, idx, demand_key),
+            help="Changes synthetic demand for the selected zone. No real people "
+                 "or emergency facility information is used.",
+        )
+    else:
+        # The tiny binary model and synthetic CSV both expose the budget
+        # through their existing named RHS parameter override.
+        rows = raw_params.get("rhs_overrides", {})
+        current = int(rows.get("budget", 1))
+        budget_key = "quick-budget-" + preset
+        source_key = "quick-budget-source-" + preset
+        if st.session_state.get(source_key) != current:
+            st.session_state[budget_key] = current
+            st.session_state[source_key] = current
+        st.number_input(
+            "Maximum choices to select", min_value=0, max_value=16,
+            step=1, key=budget_key,
+            on_change=_set_quick_rhs_budget, args=(preset,),
+            help="Changes the named budget constraint used by SCIP. "
+                 "Your changes can be inspected in the model evidence.",
+        )
+
+
+def _set_quick_rhs_budget(preset: str) -> None:
+    key = "parameters-" + preset
+    params = json.loads(st.session_state[key])
+    overrides = dict(params.get("rhs_overrides", {}))
+    overrides["budget"] = int(st.session_state["quick-budget-" + preset])
+    params["rhs_overrides"] = overrides
+    st.session_state[key] = json.dumps(params, indent=2)
+
+
+def _human_result(domain: str, report: dict) -> None:
+    """Translate verified numerical results to readable outcomes, not raw JSON."""
+    st.subheader("Your optimization result")
+    if domain == "evacuation.synthetic":
+        result = report["result"]
+        if "capacitated_scip" in result:
+            solved = result["capacitated_scip"]
+            sites = report["scenario"]["sites"]
+            selected = [sites[i] for i in solved["selected_sites_zero_based"]]
+            a, b, c = st.columns(3)
+            a.metric("People served (fictional)", f'{solved["served_persons"]:g}')
+            b.metric("People not served", f'{solved["unserved_persons"]:g}')
+            c.metric("Open facilities", len(selected))
+            st.write("**Selected sites:**", ", ".join(selected) if selected else "None")
+            st.caption("Capacity is enforced. SCIP and an independent small-instance "
+                       "reference checked the result.")
+        else:
+            sites = report["scenario"]["sites"]
+            selected = [sites[i] for i in result["selected_site_indices"]]
+            st.metric("Potentially reachable people (not people served)",
+                      f'{result["potentially_reachable_persons_NOT_served"]:g}')
+            st.write("**Selected sites:**", ", ".join(selected) if selected else "None")
+            st.warning("This covering formulation does not enforce facility capacity. "
+                       "It must not be read as a count of people actually served.")
+    elif domain in ("structured.synthetic", "binary_quadratic.synthetic"):
+        solved = report["scip"]
+        st.write("**SCIP solver status:**", solved["status"])
+        if solved["status"] == "optimal":
+            st.metric("Objective value", f'{solved["objective"]:.6g}')
+            if "selected_variables" in solved:
+                st.write("**Chosen variables:**",
+                         ", ".join(solved["selected_variables"]) or "None")
+            elif "assignment" in solved:
+                st.write("**Decision values:**", {
+                    k: round(float(v), 5) for k, v in solved["assignment"].items()
+                })
+        st.caption("The result is verified against the supported original model "
+                   "and independent reference before it is exported.")
+    else:
+        st.caption("See the independent model verification and source below.")
+
+
 def main() -> None:
     if not getattr(threading.current_thread(), "_qopt_unified_page", False):
         st.set_page_config(page_title="QOpt Configurable Problem Workbench (Synthetic)", layout="wide")
     st.title("Configurable Optimization Workbench")
-    st.warning(
-        "Experimental research prototype using synthetic inputs ONLY. "
-        "Not the deployed Laguna de Bay dashboard, a live shelter finder, "
-        "or a quantum-computing benchmark."
+    st.info(
+        "Safe practice problems with fictional data. You can change a setting, "
+        "solve it, and learn what the results mean. This is not real emergency guidance."
     )
     st.caption(
         "Upload or edit a supported synthetic JSON, CSV, or projected GeoJSON dataset, "
@@ -201,7 +345,10 @@ def main() -> None:
         "run SCIP, and export the audit."
     )
 
-    preset = st.selectbox("Example problem", list(PRESETS))
+    st.subheader("1 · Choose a problem to explore")
+    preset = st.selectbox("Example problem", list(PRESETS),
+                          help="Start with the first fictional shelter example, or try "
+                               "the structured mathematical model for variable-level editing.")
     suggested, sample_text, extension = _bundle_spec(preset)
     domain = suggested["problem_id"]
     choices = (["maximal_coverage", "capacitated_lexicographic"]
@@ -225,49 +372,70 @@ def main() -> None:
     structured = domain == "structured.synthetic"
     if structured:
         sample_object = json.loads(sample_text)
-        st.caption("Structured term editor: edit variable types/bounds, coefficient terms, "
-                   "and named constraints independently. LaTeX is never executed.")
-        with st.expander("Advanced JSON component editor (optional)", expanded=False):
+        st.subheader("2 · Adjust the example")
+        st.caption("Use the tabs below to edit variable bounds, numerical scores "
+                   "and constraints. Advanced JSON is optional.")
+        vars_key, obj_key, cons_key = (
+            "typed-vars-" + preset,
+            "typed-objective-" + preset,
+            "typed-constraints-" + preset,
+        )
+        vars_text = st.session_state.get(
+            vars_key, json.dumps(sample_object["variables"], indent=2)
+        )
+        obj_text = st.session_state.get(
+            obj_key, json.dumps(sample_object["objective"], indent=2)
+        )
+        cons_text = st.session_state.get(
+            cons_key, json.dumps(sample_object["constraints"], indent=2)
+        )
+        params_for_controls = st.session_state.get(
+            "parameters-" + preset, json.dumps(suggested["parameters"], indent=2)
+        )
+        if st.session_state.get("dataset-upload-" + preset) is None:
+            show_guided_controls(
+                preset, vars_text, obj_text, cons_text, params_for_controls
+            )
+        else:
+            st.info("An uploaded model takes precedence; remove it to use guided controls.")
+        with st.expander("Advanced: edit underlying model JSON", expanded=False):
             vars_text = st.text_area(
                 "Variables — JSON list of names, domains and bounds",
                 value=json.dumps(sample_object["variables"], indent=2),
-                height=175, key="typed-vars-" + preset,
+                height=175, key=vars_key,
             )
             obj_text = st.text_area(
                 "Objective — JSON sense, constant, linear and binary-pair terms",
                 value=json.dumps(sample_object["objective"], indent=2),
-                height=175, key="typed-objective-" + preset,
+                height=175, key=obj_key,
             )
             cons_text = st.text_area(
                 "Constraints — JSON linear rows with named RHS",
                 value=json.dumps(sample_object["constraints"], indent=2),
-                height=175, key="typed-constraints-" + preset,
+                height=175, key=cons_key,
             )
         editable = None
     else:
-        editable = st.text_area(
-            "Dataset " + suffix_label + " — editable", value=sample_text,
-            height=210, key="input-data-" + preset,
-            help="Modify artificial values or upload a replacement with the SAME supported format.",
-        )
-    uploaded = st.file_uploader(
-        "Replace dataset with " + suffix_label + " (takes precedence over editor)",
-        type=[extension.lstrip(".")], key="dataset-upload-" + preset,
-    )
-    params = st.text_area(
-        "Formulation parameters JSON — editable",
-        value=json.dumps(suggested["parameters"], indent=2),
-        height=86, key="parameters-" + preset,
-        help="For example: max_open or named binary constraint rhs_overrides.",
-    )
-    if structured:
-        if uploaded is None:
-            show_guided_controls(preset, vars_text, obj_text, cons_text, params)
-        else:
-            st.info(
-                "Guided controls are disabled while an uploaded source takes precedence. "
-                "Remove the upload to edit the component fields."
+        _quick_model_controls(preset, domain, suggested, sample_text)
+        with st.expander("Advanced: edit or upload raw data", expanded=False):
+            editable = st.text_area(
+                "Dataset " + suffix_label + " — editable", value=sample_text,
+                height=210, key="input-data-" + preset,
+                help="You can modify fictional dataset values. "
+                     "The quick controls above update this same input.",
             )
+    with st.expander("Advanced: input files and parameters", expanded=False):
+        uploaded = st.file_uploader(
+            "Replace dataset with " + suffix_label + " (takes precedence over editor)",
+            type=[extension.lstrip(".")], key="dataset-upload-" + preset,
+        )
+        params = st.text_area(
+            "Formulation parameters JSON — editable",
+            value=json.dumps(suggested["parameters"], indent=2),
+            height=86, key="parameters-" + preset,
+            help="This is the exact configuration sent to SCIP, "
+                 "including any changes from quick controls.",
+        )
 
     valid = False
     validation_error = ""
@@ -301,6 +469,9 @@ def main() -> None:
         st.session_state.pop("completed_run", None)
         st.stop()
 
+    st.subheader("3 · Preview and solve")
+    st.caption("A validated preview is generated without running the solver. "
+               "You can inspect the math before choosing to run SCIP.")
     st.caption("Resolved source/model fingerprint: " + fingerprint)
     st.button("Validate and preview formulation", key="preview_btn",
               on_click=lambda: st.session_state.update(preview_fingerprint=fingerprint))
@@ -347,8 +518,9 @@ def main() -> None:
 
     run = st.session_state.get("completed_run")
     if run is not None and run["fingerprint"] == fingerprint:
-        st.subheader("SCIP result and independent original-model audit")
-        st.json(run["report"])
+        _human_result(domain, run["report"])
+        with st.expander("Advanced: verified numerical report and provenance", expanded=False):
+            st.json(run["report"])
         st.download_button(
             "Download input, actual SCIP LP, source hashes and verified result (.zip)",
             data=run["archive"], file_name="qopt-synthetic-audit.zip",

@@ -1,3 +1,17 @@
+> **Integrated MVP candidate — 2026-10-18 (unmerged draft [PR #51](https://github.com/carlers/quantum-opt-dashboard/pull/51))**: Previous water-quality SCIP/MIQP reference, read-only QUBO inspector and classical OpenJij SA research, synthetic evacuation examples, versioned JSON/CSV/GeoJSON datasets, and guided typed formula editor are now brought together in one Streamlit launch path on `integration/unified-scientific-mvp`. **This has not been merged into `main` or deployed to the live pilot.** The sections below retain historical status for the default branch. Follow the integrated [one-app guide](prototypes/unified_dashboard/README.md) for this PR.
+
+## Try the combined MVP locally (integration branch)
+
+```bash
+git checkout integration/unified-scientific-mvp
+python -m pip install -r requirements.txt
+streamlit run prototypes/unified_dashboard/app.py
+```
+
+The app opens **Water-quality placement**, **Configure another problem**, **QUBO and classical SA**, and **About the research** through one sidebar. Research caveats still apply: the historical paper's inputs are not reproduced exactly, one-hop adjacency is not globally connected placement, and OpenJij `SASampler` is classical annealing. The configurable synthetic evacuation examples are not emergency advice.
+
+---
+
 # Quantum Optimization Research Dashboard
 
 **Status (2026-10-18): Active undergraduate computational-science research, not a validated generalized optimization or emergency-planning service.** This repository preserves earlier **Laguna de Bay water-quality sensor-placement** work and is building toward a transparent, reproducible classical/QUBO optimization workbench. **Evacuation-center siting** is a proposed second application, not yet a validated model or deployed tool.

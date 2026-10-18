@@ -62,7 +62,7 @@ def build_audit(
     compiled = make_qubo(instance, budget_penalty=budget_penalty,
                          connectivity_penalty=connectivity_penalty)
     pair_terms = [
-        {"i": int(i), "j": int(j), "q": _number(q), "z_name": f"z_{i}_{j}"}
+        {"i": int(i), "j": int(j), "q": _number(q), "z_name": f"p{i}_{j}"}
         for i, j, q in instance.quadratic
     ]
     original = {
@@ -96,7 +96,7 @@ def build_audit(
         ),
     }
     # These are the *actual* x_i*x_j -> z_ij inequalities used by solve_scip:
-    # z>=xi+xj-1, z<=xi, z<=xj (binary z).
+    # p>=xi+xj-1, p<=xi, p<=xj (binary p).
     milp = {
         "solver": "PySCIPOpt/SCIP",
         "implemented_representation": "exact binary pair-product MILP, not native MIQP",

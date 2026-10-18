@@ -115,6 +115,20 @@ def test_real_openjij_n20_seeded_benchmark_and_export_contract(tmp_path):
     assert summary["runtime"]["openjij"] == "0.12.2"
     assert len(summary["aggregate"]) == 3
     assert len(summary["seeds"]) == 2
+    assert summary["individual_one_read_sampler_calls"] is True
+    assert "SeedSequence" in summary["read_seed_derivation"]
+    import csv
+    with (tmp_path / "samples.csv").open(newline="", encoding="utf-8") as file:
+        sample_rows = list(csv.DictReader(file))
+    assert len(sample_rows) == 48
+    assert all(row["sample_seed"] and row["read_index"] for row in sample_rows)
+    for penalty in summary["penalty_points"]:
+        for parent_seed in summary["seeds"]:
+            part = [r for r in sample_rows if r["penalty"] == penalty
+                    and int(r["seed"]) == parent_seed]
+            assert len(part) == 8
+            assert {int(r["read_index"]) for r in part} == set(range(8))
+            assert len({int(r["sample_seed"]) for r in part}) == 8
     for key, group in summary["aggregate"].items():
         assert group["total_samples"] == 16
         assert group["feasible_samples"] <= group["total_samples"]

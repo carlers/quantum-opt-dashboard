@@ -15,7 +15,7 @@ def startup():
 def test_unified_opens_source_pinned_water_problem_and_preserves_scip_run():
     app = startup()
     assert any("Water-quality sensor placement" in item.value for item in app.title)
-    assert any("Review the mathematical problem" in item.value for item in app.subheader)
+    assert any("Understand the current model" in item.value for item in app.subheader)
     assert not app.session_state.get("mvp_result")
     app.button(key="mvp_run").click().run()
     assert not app.exception

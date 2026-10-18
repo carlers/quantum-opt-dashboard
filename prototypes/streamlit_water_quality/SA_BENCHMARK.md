@@ -23,8 +23,8 @@ Official external references: [OpenJij SASampler guide](https://tutorial.openjij
 | Penalty point A | Original notebook Cell 6 row-sum single-flip coefficient heuristic `max_i(|a_i| + sum_j |Q_ij|)`; **not** a global-feasibility theorem |
 | Penalty point B | Arithmetic midpoint between A and C; exploratory |
 | Penalty point C | Globally sufficient conservative `2B+1`, `B=sum_i |a_i| + sum_{i<j}|Q_ij|`, conditional on original feasibility |
-| Independent seeds | `20261018`, `20261019`, `20261020` |
-| Sampling | `num_reads=32`, `num_sweeps=300` for **each** of nine penalty×seed trials |
+| Independent parent seeds | `20261018`, `20261019`, `20261020` |
+| Sampling | **32 separate** `num_reads=1` sampler calls per penalty×parent-seed trial, 300 sweeps per call; every call uses a distinct recorded child seed |
 | Computational ceiling | 9 trials × 32 reads = **288 total returned draws**, with bounded CLI limits on reads, sweeps, seed count |
 | Sample decoding | Use response `indices` to map *both original and slack variables*; honor `num_occurrences` for weighting |
 | Optimum success definition | Original constraints feasible and original *unpenalized* objective within `1e-7` of SCIP optimal energy |
@@ -35,9 +35,9 @@ Official external references: [OpenJij SASampler guide](https://tutorial.openjij
 - Original feasibility: **exact budget** + notebook's **local one-hop connectivity**. This is not a guarantee of global graph connectivity to a fixed station.
 - Original/raw MIQP energy (for both feasible and infeasible samples, clearly labeled).
 - Full augmented QUBO energy including nonnegative penalties and constant offset. Sampler's raw `response.record.energy` omits the separately stored constant offset, so offset handling is checked explicitly.
-- Row-wise number of occurrences, which weights **all reported feasible fractions and averages**. A compressed record is not counted as a single read unless its occurrence count is 1.
+- Row-wise number of occurrences, which weights **all reported feasible fractions and averages**. A compressed record is not counted as a single read unless its occurrence count is 1.\n- **Per-read seed**: pinned OpenJij 0.12.2 tests initially showed that using `num_reads>1` under one fixed seed produced repeated original placement patterns across reads. The fixed benchmark now constructs reproducible child seeds via `numpy.random.SeedSequence(parent_seed).spawn(reads)`, records each 32-bit child seed and its `read_index`, and issues **one OpenJij read per child seed**. This addresses seed-level pseudo-replication in the benchmark configuration. Shared model convergence can still produce duplicate final placements; identical outcomes are not, by themselves, evidence of improper randomization.
 
-**Metrics:** seed-level feasible fraction, feasible/infeasible counts, best/mean *feasible* raw energy, gap to SCIP among feasible results, number of exact-optimum hits, and elapsed wall seconds; aggregated counts, fractions, best/mean raw energies and gaps per penalty. Null best/gap means **no feasible draws**, not zero energy or solver failure. Seeded replay is tested within the same pinned CI environment, not promised across different platforms or later OpenJij versions.
+**Metrics:** seed-level feasible fraction, feasible/infeasible counts, best/mean *feasible* raw energy, gap to SCIP among feasible results, number of exact-optimum hits, and elapsed wall seconds; aggregated counts, fractions, best/mean raw energies and gaps per penalty. Null best/gap means **no feasible draws**, not zero energy or solver failure. Seeded replay is tested within the same pinned CI environment, not promised across different platforms or later OpenJij versions. Each trial's **32 sampled states are generated using 32 distinct child PRNG seeds**, rather than assuming a `num_reads=32` call with one seed yields statistically independent draws.
 
 ## Artifact contract and replay
 
@@ -55,7 +55,7 @@ The branch's scoped GitHub Actions workflow also exports artifact `n20-openjij-s
 
 - `summary.json` — run configuration, SRC hashes, source feature positions, environment and OpenJij versions, SCIP certificate, exhaustive reference, penalty grid and aggregate summaries.
 - `trials.csv` — all 9 individual penalty×seed trial summaries, with durations and sample counts.
-- `samples.csv` — every sample record including its complete binary string, occurrence count, selected indices, budget/connection indicators, raw and augmented energies. **Infeasible rows retained.**
+- `samples.csv` — every sample record including its complete binary string, `parent seed` + `sample_seed` + `read_index`, occurrence count, selected indices, budget/connection indicators, raw and augmented energies. **Infeasible rows retained.**
 - `manifest.json` — SHA-256 for each exported file to detect any post-run alteration. Runtime and run identifiers mean byte-for-byte artifacts need not match across machines or replays.
 
 ### Interpretation limitations

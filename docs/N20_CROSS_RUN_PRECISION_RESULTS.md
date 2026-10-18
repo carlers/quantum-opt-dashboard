@@ -39,6 +39,24 @@ All six independent processes across three separate jobs again passed real SCIP,
 
 **Interpretation:** Study B supports repeatability for the observed 7763 runs. The utility-numerator-versus-interaction source of the Study A hardware-associated linear-bit drift is **still unresolved**, because Study B did not encounter a contrasting CPU configuration. It would be incorrect to infer that the added fields “fixed” scientific numerical instability. Repeating the instrumented workload on an independently provisioned host is an exploratory follow-up, not the originally preregistered Study A.
 
+## Study C — explicitly exploratory instrumented repeat on heterogeneous hosted CPUs
+
+Study C is a follow-up performed **after observing** Studies A/B, not preregistered confirmation. The N20 notebook's physics/solver code, diagnostic serialization, fixed direct package versions, dataset and source hashes remained unchanged from Study B; subsequent PR commits edited **docs and the workflow comment only**. GitHub hosted runners were independently reallocated.
+
+- [Study C final exact SHA run #39166137073](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39166137073) at `907be6158d0ca61fa35824b83754d2924c141bd0`: **SUCCESS**, three runner jobs × two fresh processes and the 8/8 comparator tests; separate clean notebook replay [#39166137178](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39166137178) also passed.
+- r1: **AMD EPYC 7763** and exact instrumented SHA `301afef26e86802852ec3f87412d11405b79e9e9067856e5503daa85253b4af2` in both local runs.
+- r2/r3: **Intel Xeon Platinum 8370C** and exact instrumented SHA `3047107f6c718ba2774ed90af298f2618a85aeacbd94820ccd8a4c4a9dde0feb` in all four local runs.
+- Independent exploratory doc-only SHA runs [#39166092230](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39166092230) and [#39166120079](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39166120079) also each completed with two observed exact model SHA types, SCIP/exhaustive parity and 8/8 fast comparator tests.
+
+**New localization from the full field-by-field artifact** [#12150871595](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39166137073/artifacts/12150871595): the only fields that changed across CPU families were **the same four final linear coefficients** `linear_float64_hex[9]`, `[10]`, `[17]`, `[19]`, with the **same absolute differences** reported in Study A. The new `utility_numerator_free_float64_hex`, `utility_denominator_free_float64_hex`, `utility_free_float64_hex` and `linear_before_fixed_pairs_float64_hex` were **all bitwise identical**. Model structure, candidate/fixed station arrays, free-free quadratic interactions, and all original science canaries were also identical within documented tolerance.
+
+**Consequence:** This observation places the first recorded exact-bit variation **after** the utility/pre-interaction-linear step, in the source-derived stage that computes/adds free-to-fixed pair effects. It does **not** determine whether the first low-bit change occurs in distance calculation, geometric predicate/edge selection, wake exponent/cosine, or coefficient accumulation. Neither an AMD-vs-Intel distinction nor any single reported CPU model explains the observation on its own: Study A's AMD EPYC 9V74 had the same *four-coefficient numerical variant* as Study C's Intel Xeon, while AMD EPYC 7763 had the other variant. Hardware association is still not proof of cause.
+
+**All 18 observations across A/B/C?** Not a pooled one-protocol experiment: Study A has a **different input manifest schema** from B/C and cannot have its digest pooled with later runs. Every reported batch comprises 6 distinct fresh processes; each batch passed its own original solver and scientific checks. Do not compute a misleading pooled statistical rate or treat the adaptive follow-up as confirmatory sampling.
+
+**Stop condition for this PR:** Original input drift is localized to free-to-fixed interaction formation within a tiny numerical tolerance. The remaining #24 research tasks — pinpoint *individual operations* under controlled hardware/software assumptions, then independently replay frozen exact QUBO inputs and preregistered OpenJij seeds — require separate protocols, not automatic rounding of the validated reference.
+
+
 ## Remaining Issue #24 gates
 
 - Identify whether original weighted utility numerator, missingness denominator, final utility or pair contribution first changes **in a run that actually exhibits contrasting exact-bit input**.

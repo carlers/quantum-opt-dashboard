@@ -1,4 +1,4 @@
-> **Streamlit preview:** This app should be launched from the permanent GitHub branch `preview` with Cloud entrypoint `prototypes/unified_dashboard/app.py` and Python 3.12. Preview URL pending one-time Community Cloud creation; production remains the unchanged older pilot. See [the two-app setup guide](../../docs/STREAMLIT_MAIN_PREVIEW.md). Every later tested push to `preview` refreshes the same preview app automatically.
+> **[Open the integrated Streamlit preview](https://quantum-opt-dashboard-55zt76rpzbn2n3dltqfgis.streamlit.app/)** — owner-provided URL, tracking permanent `preview` branch with Python 3.12 and `prototypes/unified_dashboard/app.py`. Production remains the [unchanged water-quality pilot](https://v3wzqpbn8w6nmdgkxh5kum.streamlit.app/). Preview deployment/runtime and downloads still need hands-on validation. [Two-app release guide](../../docs/STREAMLIT_MAIN_PREVIEW.md).
 
 # Unified optimization dashboard · MVP integration candidate
 

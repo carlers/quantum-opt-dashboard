@@ -7,6 +7,7 @@ Neither quantum hardware nor previous-paper numerical replication is claimed.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import threading
 from pathlib import Path
@@ -24,7 +25,7 @@ from model import (
 )
 from mvp_audit import (
     NOTEBOOK_N20_K5_LOCAL_INDICES, NOTEBOOK_N20_K5_OPTIMUM,
-    check_selected, evidence_zip, preview, selected_csv, source_sha,
+    canonical, check_selected, evidence_zip, preview, selected_csv, source_sha,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -154,11 +155,20 @@ try:
     )
     if simulated_instance:
         raise ValueError("Reference fallback stations are forbidden in the MVP.")
+    # Streamlit may hot-reload this page while retaining an older imported
+    # mvp_audit.preview from a previous Cloud deployment. The legacy function
+    # accepts the original five inputs, but not beta/delta. Pass the stable
+    # interface, then explicitly bind all current model parameters and rebuild
+    # the source-derived fingerprint from the *actual* compiled instance.
+    # This preserves numerical provenance AND survives a warm Cloud reload.
     model = preview(
         instance, dataset_sha256=dataset_sha, weights=weights.tolist(),
         weight_source=source, time_limit_seconds=SCIP_TIME_LIMIT,
-        beta=float(beta), delta=float(delta),
     )
+    model["settings"]["beta"] = float(beta)
+    model["settings"]["delta"] = float(delta)
+    model.pop("model_fingerprint_sha256", None)
+    model["model_fingerprint_sha256"] = hashlib.sha256(canonical(model)).hexdigest()
 except (ValueError, RuntimeError, IndexError) as exc:
     st.error("Could not construct this mathematical scenario: " + str(exc))
     st.stop()

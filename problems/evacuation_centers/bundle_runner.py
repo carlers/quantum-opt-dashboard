@@ -138,14 +138,20 @@ def execute(manifest_path: Path, output_dir: Path) -> dict:
         if bundle.formulation_id != "binary_quadratic":
             raise ValueError("Unsupported binary problem formulation")
         result = run_binary_quadratic(bundle.data, bundle.parameters, output_dir)
+    elif bundle.problem_id == "water_quality.reference":
+        # Import scientific GIS dependency lazily: a basic binary/evacuation
+        # bundle never requires Shapely or reads the original lake GeoJSON.
+        sys.path.insert(0, str(REPO / "problems" / "water_quality"))
+        from water_bundle_adapter import run_water_bundle
+        result = run_water_bundle(bundle, output_dir)
     else:
         raise ValueError("Unknown problem adapter; registry lookup is fail-closed")
 
     audited = {
         "schema_version": 1,
-        "kind": "SYNTHETIC-VALIDATED-CONFIGURATION",
+        "kind": "RESEARCH-REFERENCE-IMMUTABLE" if bundle.source_manifest["classification"] == "RESEARCH_REFERENCE" else "SYNTHETIC-VALIDATED-CONFIGURATION",
         "bundle_audit": bundle.audit(), "result": result,
-        "disclaimer": "Only synthetic examples. Not live Streamlit, real shelters, or quantum hardware.",
+        "disclaimer": "No deployed system, real shelter decisions or quantum hardware. The committed water-quality reference is read-only and NOT paper parity.",
     }
     (output_dir / "run.json").write_bytes(canonical(audited))
     audited_names = sorted(p.name for p in output_dir.iterdir()

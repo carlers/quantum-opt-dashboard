@@ -17,7 +17,7 @@ The sidebar already allows N, K, AHP weight source/custom weights, beta/delta an
 
 ### Actual SCIP MILP view
 
-The deployed `solve_scip` uses **binary pair-product linearization** (rather than directly submitting native quadratic `x_i*x_j` terms). For every original pair, `z_ij` is binary, with exactly `z_ij >= x_i + x_j - 1`, `z_ij <= x_i`, and `z_ij <= x_j`. The inspector derives those pair variable rows and objective coefficients from the same `instance.quadratic` used by SCIP and preserves the original budget/local adjacency.
+The deployed `solve_scip` uses **binary pair-product linearization** (rather than directly submitting native quadratic `x_i*x_j` terms). For every original pair, the **actual SCIP variable name** is `p{i}_{j}` (for example `p0_1`), binary, with `p{i}_{j} >= x_i + x_j - 1`, `p{i}_{j} <= x_i`, and `p{i}_{j} <= x_j`. The inspector derives those terms from the same `instance.quadratic` used by SCIP, and preserves the original budget/local adjacency. The human-readable table describes the solver implementation; it is not by itself proof of the exact serialized solver input. After pressing **Run SCIP experiment**, the dashboard also offers the **actual `.lp` problem file**, exported by PySCIPOpt from the very same constructed `Model` immediately before `optimize()` (using `trans=False`). This file lets users examine the real submitted variables, objective coefficients and constraints independently of the view.
 
 ### Encoded QUBO view (inspection only)
 
@@ -42,6 +42,7 @@ The mathematical equation labels are deliberately symbolic for readability; **th
 - Source GeoJSON N20/K5 experiment checks the dataset SHA, fixed/free positions, 12 free-free interactions, real PySCIPOpt optimum `−3.3012934918564643`, original feasibility, exact mapped local selections `[0,1,3,6,7]`, and minimized QUBO-energy witness.
 - Deliberate single-ULP coefficient, altered graph, adjusted penalties/settings cause new model fingerprints.
 - Streamlit's `AppTest` verifies preview does not invoke SCIP, one real SCIP run is independently auditable, and changed K hides stale solver results.
+- A real SCIP LP-export regression confirms the mathematical inspector's variable names match PySCIPOpt's actual model and that `solve_scip(export_lp_path=...)` writes the solver's original MILP without changing the optimization result.
 - Scoped GitHub Actions compiles all Python and executes tests and existing scientific CI evidence jobs without deploying any app.
 
 ## Later design choices, not part of this PR

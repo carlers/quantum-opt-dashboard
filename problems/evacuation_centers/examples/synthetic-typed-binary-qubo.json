@@ -1,0 +1,33 @@
+{
+  "classification": "SYNTHETIC_TYPED_OPTIMIZATION",
+  "variables": [
+    {
+      "name": "a",
+      "domain": "binary",
+      "lower": 0,
+      "upper": 1
+    },
+    {
+      "name": "b",
+      "domain": "binary",
+      "lower": 0,
+      "upper": 1
+    }
+  ],
+  "objective": {
+    "sense": "maximize",
+    "constant": 2,
+    "linear": {
+      "a": 3,
+      "b": 2
+    },
+    "quadratic": [
+      {
+        "first": "a",
+        "second": "b",
+        "coefficient": -4
+      }
+    ]
+  },
+  "constraints": []
+}

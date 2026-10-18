@@ -7,6 +7,7 @@ Neither quantum hardware nor previous-paper numerical replication is claimed.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -153,9 +154,19 @@ with st.expander("Inspect actual coefficients, sites, adjacency and source finge
         f"{len(instance.quadratic)} free-free quadratic interactions; "
         "fixed-station effects have been folded into linear terms."
     )
+    with st.expander("Show every numerical quadratic interaction qᵢⱼ"):
+        st.dataframe(pd.DataFrame([
+            {
+                "local_i": int(i),
+                "local_j": int(j),
+                "q_ij": float(q),
+                "q_ij_float64_hex": float(q).hex(),
+            }
+            for i, j, q in instance.quadratic
+        ]), hide_index=True, use_container_width=True)
     st.download_button(
         "Download current formulation JSON",
-        data=__import__("json").dumps(model, sort_keys=True, indent=2),
+        data=json.dumps(model, sort_keys=True, indent=2),
         file_name=f"water-formulation-{fingerprint[:12]}.json",
         mime="application/json",
         use_container_width=True,

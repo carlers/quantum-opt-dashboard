@@ -138,6 +138,11 @@ def execute(manifest_path: Path, output_dir: Path) -> dict:
         if bundle.formulation_id != "binary_quadratic":
             raise ValueError("Unsupported binary problem formulation")
         result = run_binary_quadratic(bundle.data, bundle.parameters, output_dir)
+    elif bundle.problem_id == "structured.synthetic":
+        if bundle.formulation_id != "typed_milp":
+            raise ValueError("Unsupported typed mathematical formulation")
+        from qopt.core.math_ir import run_typed_ir
+        result = run_typed_ir(bundle.data, bundle.parameters, output_dir)
     elif bundle.problem_id == "water_quality.reference":
         # Import scientific GIS dependency lazily: a basic binary/evacuation
         # bundle never requires Shapely or reads the original lake GeoJSON.

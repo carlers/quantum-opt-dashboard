@@ -10,13 +10,13 @@ operational claims. This is an intentionally bounded research prototype.
 """
 from __future__ import annotations
 
+import re
 from itertools import product
 from math import isfinite
 from pathlib import Path
-import re
+from typing import cast
 
-from pyscipopt import Model, quicksum
-
+from pyscipopt import Model, quicksum  # type: ignore[import-not-found]
 
 _ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
 
@@ -30,9 +30,12 @@ def _keys(obj: object, allowed: set[str], required: set[str], label: str) -> dic
 
 
 def _scalar(x: object, name: str) -> float:
-    if type(x) not in (int, float) or not isfinite(x) or abs(float(x)) > 1e10:
+    if type(x) not in (int, float):
         raise ValueError(f"{name} must be bounded finite numeric")
-    return float(x)
+    numeric = float(cast(int | float, x))
+    if not isfinite(numeric) or abs(numeric) > 1e10:
+        raise ValueError(f"{name} must be bounded finite numeric")
+    return numeric
 
 
 def validate_binary_problem(data: dict, parameters: dict) -> dict:
@@ -191,7 +194,7 @@ def compile_and_solve_scip(problem: dict, lp_path: Path) -> dict:
     status = str(model.getStatus())
     if status != "optimal":
         return {"status": status, "solver": "SCIP MILP exact linearization"}
-    solution = {key: int(round(model.getVal(v))) for key,v in variables.items()}
+    solution = {key: round(model.getVal(v)) for key,v in variables.items()}
     if not independent_audit(problem, solution):
         raise AssertionError("SCIP solution fails original binary problem")
     energy = original_energy(problem, solution)

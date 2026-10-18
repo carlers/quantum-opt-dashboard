@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - "problems/evacuation_centers/**"
+      - "framework/python/qopt/core/math_ir.py"
+      - "contracts/typed_math_ir.schema.json"
       - "framework/python/qopt/core/experiment_bundle.py"
       - "framework/python/qopt/core/binary_quadratic.py"
       - "contracts/optimization_bundle.schema.json"

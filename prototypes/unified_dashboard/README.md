@@ -1,3 +1,5 @@
+> **Streamlit preview:** This app should be launched from the permanent GitHub branch `preview` with Cloud entrypoint `prototypes/unified_dashboard/app.py` and Python 3.12. Preview URL pending one-time Community Cloud creation; production remains the unchanged older pilot. See [the two-app setup guide](../../docs/STREAMLIT_MAIN_PREVIEW.md). Every later tested push to `preview` refreshes the same preview app automatically.
+
 # Unified optimization dashboard · MVP integration candidate
 
 **Status: integrated DRAFT branch, not live, not merged.**

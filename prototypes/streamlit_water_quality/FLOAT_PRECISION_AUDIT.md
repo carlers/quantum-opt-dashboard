@@ -53,10 +53,10 @@ The remainder of this file is a diagnostic plan. A second independent CI run mus
 | Row-sum QUBO SHA-256 | `2f0f635c5d662b4d6fad3bdc60ba5bd0a0bcf8f3bd055ce499c24b6ac311be5d` | **Same** |
 | Midpoint / global QUBO SHA-256 | `e05a14ff...` / `8629d1fd...` | **Same** |
 | Row-sum P (exact `float.hex`) | `0x1.190ab5b15d1b3p+0` | **Same** |
-| SCIP original instance SHA-256 | `0718156034e83d46223fa3e4e086bc9997c16f7252e3e348ca8ac70cf19d5532` | **Same** |
+| SCIP original instance SHA-256 | `0718156034e83d46223fa3e4e086bc9997c16f7252e3c348ca8ac70cf19d5532` | **Same** |
 | SA row-sum original-feasible | **665 / 1024** | **665 / 1024** |
 | SA row-sum exact-optimum hits | **13 / 1024** | **13 / 1024** |
 
-**Caution:** The exact instance SHA in the above row should be read from the emitted `N20_EVIDENCE` log and artifact, not reconstructed from model-probe SHA; these represent **different serialized payload formats**. The correct SCIP `instance.json` SHA for both second-mode runs is `0718156034e83d46223fa3e4e086bc9997c16f7252e3e348ca8ac70cf19d5532`.
+**Caution:** The exact instance SHA in the above row should be read from the emitted `N20_EVIDENCE` log and artifact, not reconstructed from model-probe SHA; these represent **different serialized payload formats**. The correct SCIP `instance.json` SHA for both second-mode runs is `0718156034e83d46223fa3e4e086bc9997c16f7252e3c348ca8ac70cf19d5532`.
 
 These two runs establish **cross-host reproducibility for this one raw coefficient/QUBO mode**, despite two different reported AMD EPYC CPU models. They **do not resolve** why earlier runs sometimes emitted the alternative exact SCIP `instance.json` SHA `22c6bdf...` and 698 row-sum-feasible samples. Capturing the probe's float64 payload under that alternative mode (or running a controlled fixed-QUBO numerical-perturbation experiment) remains the #24 acceptance gate. CPU model differences alone are **not supported as the explanation** by these two runs.

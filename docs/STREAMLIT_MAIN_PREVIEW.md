@@ -4,9 +4,9 @@
 
 ## Deployment contracts
 
-| | Production (already deployed, unchanged) | Preview (new, one-time manual setup pending) |
+| | Production (already deployed, unchanged) | Preview (owner-created Cloud app; runtime smoke pending) |
 |---|---|---|
-| Streamlit app | [Existing water-quality pilot](https://v3wzqpbn8w6nmdgkxh5kum.streamlit.app/) | **URL assigned when owner creates second Streamlit app** |
+| Streamlit app | [Existing water-quality pilot](https://v3wzqpbn8w6nmdgkxh5kum.streamlit.app/) | [Integrated MVP preview](https://quantum-opt-dashboard-55zt76rpzbn2n3dltqfgis.streamlit.app/) |
 | GitHub repository | `carlers/quantum-opt-dashboard` | `carlers/quantum-opt-dashboard` |
 | **Branch** | `plugin-water-streamlit-pilot` | **`preview`** (permanent staging branch) |
 | Main entrypoint | `prototypes/streamlit_water_quality/app.py` | **`prototypes/unified_dashboard/app.py`** |
@@ -15,14 +15,14 @@
 
 **The existing public main link does not mean the GitHub default `main` branch.** The actual deployed production pilot tracks the separate `plugin-water-streamlit-pilot` branch; GitHub `main` still has early scaffolding and is not the current live Streamlit app. Do not switch production's tracked branch until the owner approves a real release.
 
-## One-time preview app creation (owner, Streamlit account)
+## Preview app created — original setup details (for recovery)
 
 1. Go to https://share.streamlit.io/ and sign in with GitHub. Choose the `carlers` workspace if Streamlit asks.
 2. Choose **Create app → Yup, I have an app**.
 3. Enter **repository `carlers/quantum-opt-dashboard`**, **branch `preview`**, **main file `prototypes/unified_dashboard/app.py`**. Or choose **Paste GitHub URL** and paste `https://github.com/carlers/quantum-opt-dashboard/blob/preview/prototypes/unified_dashboard/app.py`. The app path is relative to repo root.
 4. In **Advanced settings**, select **Python 3.12**. No app secrets are required by these committed synthetic/reference example workflows. Do not copy production secrets without specific need and approval.
 5. Optional: choose a memorable subdomain containing `quantum-opt-dashboard-preview` **if available** (not reserved or verified). Otherwise accept the URL that Community Cloud assigns.
-6. Click **Deploy**, check the Streamlit build logs and open all four pages. **Send the actual working URL back** so it can be stored in GitHub README and consistently linked in future PR summaries. Do not infer or fabricate a preview URL from the repo/branch name.
+6. Deploy and open the app. **Owner reported the preview URL above on 2026-10-18**. The next check is to verify the app has successfully built and all four pages work in a real browser.
 
 Community Cloud deploys different apps from the same repo independently. Once deployed, committing to its tracked `preview` branch automatically updates **only the preview app**. Committing to `plugin-water-streamlit-pilot` affects **only production**. You do not need a new Streamlit app for every PR. Changes to requirements trigger slower environment rebuilds.
 
@@ -41,8 +41,12 @@ Official docs:
 
 ## Constraints
 
-There is currently **no Streamlit Community Cloud account/deployment tool connected to this conversation**; GitHub edits can prepare the branch but cannot create or verify a Cloud app URL on the owner's account. The second app must be created once through the logged-in Streamlit workspace. The repo is public, so this demo app will usually be public too. Be careful not to upload real restricted data to a public research preview.
+There is currently **no Streamlit Community Cloud deployment tool connected to this conversation**. The owner created the second app and supplied its URL, but successful Cloud startup and runtime behavior have **not been independently verified** here. The repo is public, so avoid uploading restricted data. Be careful not to upload real restricted data to a public research preview.
 
-Community Cloud has shared resource limits; SCIP and OpenJij may run slower or cause memory pressure than CI. Build a separate staging URL and check actual resource behavior before promoting a release.
+Community Cloud has shared resource limits; SCIP and OpenJij may run slower or cause memory pressure than CI. Check actual preview resource behavior before promoting a release.
 
-**Preview app URL:** PENDING THE ONE-TIME OWNER DEPLOYMENT. Replace this line with the actual URL, only after it exists.
+**Preview app URL (owner-provided 2026-10-18):** https://quantum-opt-dashboard-55zt76rpzbn2n3dltqfgis.streamlit.app/
+
+**Production app URL (unchanged):** https://v3wzqpbn8w6nmdgkxh5kum.streamlit.app/
+
+**Staging verification:** Preview URL has been supplied, but page loading, numerical solves and downloads have not yet been browser-verified by the assistant. Opening the link is the next acceptance step.

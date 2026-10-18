@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "classification": "SYNTHETIC",
+  "problem_id": "binary_quadratic.synthetic",
+  "formulation_id": "binary_quadratic",
+  "dataset": {
+    "path": "fake-binary-scores.csv"
+  },
+  "parameters": {
+    "rhs_overrides": {
+      "budget": 1
+    }
+  },
+  "description": "CSV adapter: arbitrary tiny binary candidate scores with one user-configurable cardinality budget"
+}

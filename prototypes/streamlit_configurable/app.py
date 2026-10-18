@@ -175,28 +175,39 @@ def main() -> None:
         "or a quantum-computing benchmark."
     )
     st.caption(
-        "Upload or edit a JSON dataset, choose a compatible formulation, "
-        "review its actual numeric terms, run SCIP, and export the full model audit."
+        "Upload or edit a supported synthetic JSON, CSV, or projected GeoJSON dataset, "
+        "choose a compatible formulation, review exact numeric terms, "
+        "run SCIP, and export the audit."
     )
 
     preset = st.selectbox("Example problem", list(PRESETS))
-    suggested, sample = _bundle_spec(preset)
+    suggested, sample_text, extension = _bundle_spec(preset)
     domain = suggested["problem_id"]
     choices = (["maximal_coverage", "capacitated_lexicographic"]
-               if domain == "evacuation.synthetic" else ["binary_quadratic"])
+               if domain == "evacuation.synthetic"
+               else ["notebook_one_hop_milp"] if domain == "water_quality.reference"
+               else ["binary_quadratic"])
     formulation = st.selectbox(
         "Mathematical formulation", choices,
         index=choices.index(suggested["formulation_id"]),
         key="formula-" + preset,
     )
+    suffix_label = {".json": "JSON", ".geojson": "GeoJSON", ".csv": "CSV"}[extension]
+    st.caption(
+        "Input format: " + suffix_label +
+        (" | Explicit EPSG:32651 projected meters, eight named factor columns and fixed-station flags"
+         if extension == ".geojson" else
+         " | Columns: variable,linear_coefficient; at most 16 binary variables"
+         if extension == ".csv" else " | Schema and units checked by the selected model adapter")
+    )
     editable = st.text_area(
-        "Dataset JSON — editable", value=json.dumps(sample, indent=2),
+        "Dataset " + suffix_label + " — editable", value=sample_text,
         height=210, key="input-data-" + preset,
-        help="Edit the synthetic numbers in place, or upload a replacement JSON file below.",
+        help="Modify artificial values or upload a replacement with the SAME supported format.",
     )
     uploaded = st.file_uploader(
-        "Replace dataset with JSON (takes precedence over editor)",
-        type=["json"], key="dataset-upload-" + preset,
+        "Replace dataset with " + suffix_label + " (takes precedence over editor)",
+        type=[extension.lstrip(".")], key="dataset-upload-" + preset,
     )
     params = st.text_area(
         "Formulation parameters JSON — editable",
@@ -214,7 +225,7 @@ def main() -> None:
             manifest = dict(suggested)
             manifest["formulation_id"] = formulation
             manifest["parameters"] = parameters
-            bundle = _prepare(manifest, source_bytes, Path(folder))
+            bundle = _prepare(manifest, source_bytes, Path(folder), extension)
             fingerprint = bundle.fingerprint
             desc = _model_text(bundle)
             validated_input = bundle.audit()
@@ -247,7 +258,7 @@ def main() -> None:
                 manifest["formulation_id"] = formulation
                 manifest["parameters"] = parameters
                 root = Path(folder)
-                checked = _prepare(manifest, source_bytes, root)
+                checked = _prepare(manifest, source_bytes, root, extension)
                 output = root / "evidence"
                 result = execute(root / "bundle.json", output)
                 if checked.fingerprint != fingerprint:
@@ -260,14 +271,14 @@ def main() -> None:
                     with ZipFile(src_zip, "r") as original:
                         for item in original.infolist():
                             dest.writestr(item, original.read(item.filename))
-                    dest.writestr("input-source.json", source_bytes)
+                    dest.writestr("input-source" + extension, source_bytes)
                     dest.writestr("input-bundle.json", (root / "bundle.json").read_bytes())
                 st.session_state["completed_run"] = {
                     "fingerprint": fingerprint,
                     "report": result["result"],
                     "archive": final_zip.getvalue(),
                 }
-        except (ValueError, KeyError, TypeError, AssertionError, OSError) as exc:
+        except (ValueError, KeyError, TypeError, AssertionError, OSError, RuntimeError) as exc:
             st.error("Solver or post-solve audit failed: " + str(exc))
             st.session_state.pop("completed_run", None)
 

@@ -87,6 +87,9 @@ def test_evidence_archive_contains_genuine_model_and_all_source_checksums():
         assert json.loads(zipped.read("model.json"))["model_fingerprint_sha256"] == (
             witness["model_fingerprint_sha256"]
         )
+        versions = json.loads(zipped.read("result.json"))["software_versions"]
+        assert versions["python"] and versions["numpy"] and versions["scipy"]
+        assert versions["pyscipopt"] and versions["streamlit"]
         assert "not reproduced" not in zipped.read("result.json").decode()
     with pytest.raises(ValueError, match="empty SCIP"):
         evidence_zip(model, witness, solver, csv_bytes, b"")

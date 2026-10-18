@@ -38,5 +38,5 @@ def test_dashboard_inspects_math_without_running_solver_then_audits_real_scip():
     k_input[0].set_value(6).run()
     assert not app.exception
     assert not app.metric
-    assert any("previous result is hidden" in item.message
+    assert any("previous result is hidden" in str(item.proto)
                for item in app.warning)

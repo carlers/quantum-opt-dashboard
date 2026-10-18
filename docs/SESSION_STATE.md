@@ -1,3 +1,9 @@
+# Issue #60 follow-up checkpoint — frozen math microprobe (2026-10-18 UTC)
+
+Original N20 edge trace [CI #39177889565](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39177889565) showed 20/300 free-fixed records different across CPU-heterogeneous runs; 12 first at identical-displacement `np.linalg.norm`, 4 first at separately evaluated `np.exp`, 4 only propagated an already different linear accumulator. Affected final free-site indices 9,10,17,19, original SCIP/exhaustive N20 parity unchanged; stage details `docs/N20_FREE_FIXED_ULP_TRACE_RESULTS.md`. Separate frozen-operand experiment [#39178324563](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39178324563) passed 6 fast tests and 6 process executions, but *all* sampled EPYC 7763 hosts and got identical norm/exp results. This negative observation motivated one explicitly exploratory **two-x86 + one-ARM** same-NumPy hex-operand follow-up, committed before inspecting that run's outcome. No model, source dataset or historical QUBO/SA change. Current PR #61 draft/unmerged.
+
+---
+
 # Precision Phase #60 — original N20 free-to-fixed pair-stage trace (2026-10-18 UTC)
 
 Owner requested to continue; work specifically follows issue #60 after verified prior frozen-QUBO classical SA experiment PR #59 and prior original-model study PR #57. Current branch `science-n20-free-fixed-ulp-trace` **stacks on unmerged `science-n20-cross-run-manifests` at `cac8dbfb`**, which stacks on source-reviewed working N20 reference PR #56. All original historical notebook, source GeoJSON, main, preview and production remain unchanged.

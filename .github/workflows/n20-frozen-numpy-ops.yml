@@ -13,12 +13,20 @@ permissions:
 jobs:
   independent-numpy:
     name: Frozen math / ${{ matrix.replica }}
-    runs-on: ubuntu-24.04
+    # Exploratory architecture stress AFTER observing six homogeneous EPYC 7763 runs.
+    # Exact same committed NumPy-operand fixture; same Linux OS generation.
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 8
     strategy:
       fail-fast: false
       matrix:
-        replica: [r1, r2, r3]
+        include:
+          - replica: r1
+            os: ubuntu-24.04
+          - replica: r2
+            os: ubuntu-24.04
+          - replica: r3
+            os: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

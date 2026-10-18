@@ -70,3 +70,14 @@ def test_bounded_classical_sampler_reports_seeded_original_feasibility():
     assert len(record["child_seeds"]) == 2
     assert record["summary"]["sample_count"] == 2
     assert record["summary"]["feasible_sample_count"] <= 2
+
+
+def test_qubo_penalty_has_a_default_with_plain_language_explanation():
+    app = startup().switch_page("pages/research.py").run()
+    assert not app.exception
+    selector = next(s for s in app.selectbox
+                    if s.label == "QUBO penalty (equal budget and connectivity penalties)")
+    assert selector.value == "notebook-local-row-sum"
+    assert any("What is a penalty" in str(i.proto) for i in app.get("markdown"))
+    assert any("Start with the notebook heuristic" in str(i.proto)
+               for i in app.get("caption"))

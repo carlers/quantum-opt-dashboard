@@ -1,3 +1,15 @@
+# Canonical integration handoff — 2026-10-18
+
+**Current review-only PR [#51](https://github.com/carlers/quantum-opt-dashboard/pull/51)**: `integration/unified-scientific-mvp` → `main`. The branch combines three diverged Git histories through a real multi-parent commit: [guided and typed optimization workbench #47](https://github.com/carlers/quantum-opt-dashboard/pull/47), [narrow lake MVP #49](https://github.com/carlers/quantum-opt-dashboard/pull/49), and [bounded scientific QUBO/SA/inspector #35](https://github.com/carlers/quantum-opt-dashboard/pull/35) (which includes the original research stack #13–#29). Existing source notebook/GeoJSON and manuscript have not been rewritten. Prior state entries below are retained as dated history, **not the current scope**.
+
+- **One user app**: `streamlit run prototypes/unified_dashboard/app.py`; root `requirements.txt` installs a combined Python 3.12 Streamlit/SCIP/Shapely/OpenJij (pinned classical SA) environment. Sidebar pages: (1) water-quality N20 SCIP/map/LP/ZIP, (2) configurable synthetic JSON/CSV/GeoJSON and guided typed IR, (3) explicit slack-encoded N20 QUBO and manually triggered bounded classical SA with audited seeds/results, (4) scope notes.
+- **Standalone apps kept for regression**, `prototypes/streamlit_water_quality/app.py` and `prototypes/streamlit_configurable/app.py`. They use thread-scoped routing context rather than environment-wide flags so multiple Streamlit sessions cannot interfere with `set_page_config`.
+- **Science code kept**: provenance/precision probe, controlled one-ULP replay, preregistered paired SA study, QUBO energy checks, evidence exports, original laguna notebook reference and independent synthetic evacuation checks. The expensive five-bundle research workflow is now `workflow_dispatch` only, not triggered automatically by an MVP styling change. Other fast core/unit/regression workflows remain enabled.
+- **Scientific caveats**: OpenJij `SASampler` is classical; no quantum advantage; one-hop is not global connectivity; original paper AHP/D2/energy parity unresolved #16; floating precision source drift and SA sensitivity #24; evacuation fixtures entirely synthetic; constrained generic QUBO conversions only where proven.
+- **Acceptance status**: integration CI workflows are required green at the latest PR SHA (reverify after edits). A real staged browser/mobile smoke and the owner's explicit merge/deploy approval remain outstanding. `main` and `plugin-water-streamlit-pilot` are not modified by this draft.
+
+---
+
 # Current user-facing customizability checkpoint — synthetic model workbench (2026-10-18)
 
 - **User requirement:** Thesis-specific data and mathematical formulation must be **swappable**, not embedded permanently in a lake/shelter dashboard. The long-term target is a user-configurable and mathematically auditable optimization workbench with user-selectable input sources, supported formulations/solver compatibility and exact input/result provenance.

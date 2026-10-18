@@ -6,7 +6,9 @@ It performs a bounded N20 exact reconstruction and actual SCIP solve.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
 from pathlib import Path
 
 import nbformat
@@ -15,6 +17,14 @@ from nbclient import NotebookClient
 ROOT = Path(__file__).resolve().parents[1]
 NOTEBOOK = ROOT / "problems/water_quality/notebooks/water_quality_n20_reproducible.ipynb"
 EXPECTED_SELECTED = [0, 1, 3, 6, 7]
+EXPECTED_FREE_MASTER = [
+    5253, 2394, 1894, 1557, 3225, 4623, 47, 5409, 3922, 2408,
+    2694, 4136, 2567, 1164, 4973, 4537, 2726, 968, 16, 1762,
+]
+EXPECTED_FIXED_MASTER = [
+    417, 454, 725, 1055, 1076, 1709, 2771, 3402, 3520, 3529,
+    3732, 3886, 4613, 4868, 5038,
+]
 EXPECTED_MASTER = [5253, 2394, 1557, 47, 5409]
 EXPECTED_DATA_SHA = "e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7"
 EXPECTED_NOTEBOOK_SHA = "08cbc1572048f4c34aab508ae195c82575acd685c7d29695d0eccecdf67cc048"
@@ -37,7 +47,69 @@ def read_unexecuted(path: Path = NOTEBOOK):
     return original
 
 
+def verify_exact_model(record: dict) -> None:
+    """Audit published N20 coefficient payload, not only selected-score canaries."""
+    model = record["model_input"]
+    canonical = (json.dumps(model, sort_keys=True, separators=(",", ":"),
+                            ensure_ascii=False, allow_nan=False) + "\\n").encode("utf-8")
+    digest = hashlib.sha256(canonical).hexdigest()
+    if digest != record["model_input_sha256"]:
+        raise AssertionError("Exact numerical model SHA-256 does not match model payload")
+    if record["model_input_hash_scope"] != (
+        "IEEE754 exact model; compare tolerance-based parity separately"
+    ):
+        raise AssertionError("Numerical digest must retain precision warning")
+    if model["model_family"] != "notebook_derived_laguna_N20_local_one_hop":
+        raise AssertionError("Expected the notebook-derived one-hop model")
+    if model["dataset_sha256"] != EXPECTED_DATA_SHA:
+        raise AssertionError("Model has unexpected source data SHA")
+    if model["archived_notebook_sha256"] != EXPECTED_NOTEBOOK_SHA:
+        raise AssertionError("Model has unexpected original notebook SHA")
+    if model["candidate_master_feature_positions"] != EXPECTED_FREE_MASTER:
+        raise AssertionError("Candidate cohort or ordering differs from the N20 canary")
+    if model["fixed_master_feature_positions"] != EXPECTED_FIXED_MASTER:
+        raise AssertionError("Existing station cohort differs from the source fixture")
+    if model["budget_exact"] != 5:
+        raise AssertionError("The original N20 reference budget changed")
+    linear = [float.fromhex(s) for s in model["linear_float64_hex"]]
+    edges = [(int(i), int(j), float.fromhex(q))
+             for i, j, q in model["quadratic_ij_float64_hex"]]
+    fixed = model["fixed_neighbor_flags"]
+    neighbors = model["free_neighbor_indices"]
+    coordinates = model["site_coords_epsg32651_float64_hex"]
+    weights = [float.fromhex(s) for s in model["factor_weights_float64_hex"]]
+    if len(linear) != 20 or len(edges) != 12 or len(neighbors) != 20 or len(fixed) != 20:
+        raise AssertionError("N20 objective or one-hop model shape changed")
+    if len(coordinates) != 35 or any(len(row) != 2 for row in coordinates):
+        raise AssertionError("Expected 20 free and 15 fixed projected coordinates")
+    if len(weights) != 8 or not all(w >= 0 and math.isfinite(w) for w in weights):
+        raise AssertionError("Invalid environmental factor weights")
+    if not all(math.isfinite(a) for a in linear):
+        raise AssertionError("Nonfinite original linear coefficient")
+    if not all(0 <= i < j < 20 and q >= 0 and math.isfinite(q)
+               for i, j, q in edges):
+        raise AssertionError("Invalid binary quadratic interaction term")
+    if not all(value in (0, 1) for value in fixed):
+        raise AssertionError("Invalid fixed-station adjacency flag")
+    if any(j == i or j < 0 or j >= 20 or i not in neighbors[j]
+           for i, members in enumerate(neighbors) for j in members):
+        raise AssertionError("One-hop free adjacency is not symmetric")
+    if not all(math.isfinite(float.fromhex(s)) for row in coordinates for s in row):
+        raise AssertionError("Nonfinite projected candidate coordinate")
+    selected = set(record["selected_local_positions"])
+    if any(not fixed[i] and not selected.intersection(neighbors[i]) for i in selected):
+        raise AssertionError("Selected stations violate the reported one-hop rules")
+    reconstructed_energy = sum(linear[i] for i in selected) + sum(
+        q for i, j, q in edges if i in selected and j in selected
+    )
+    if abs(reconstructed_energy - record["original_energy"]) >= 1e-7:
+        raise AssertionError("Decoded complete coefficient model differs from claimed score")
+
+
 def verify_result(record: dict) -> None:
+    if record["schema_version"] != 2:
+        raise AssertionError("N20 report schema has changed")
+    verify_exact_model(record)
     if record["dataset_sha256"] != EXPECTED_DATA_SHA:
         raise AssertionError("The source GeoJSON digest does not match the pinned baseline")
     if record["archived_notebook_sha256"] != EXPECTED_NOTEBOOK_SHA:

@@ -1,0 +1,228 @@
+"""Experimental Streamlit UI for versioned, replaceable synthetic model bundles.
+
+NOT the deployed water-quality pilot. Upload/paste local JSON, choose a
+validated formulation, inspect the resolved source model, run SCIP on demand
+and download the original input + EXACT SCIP LP + independent result audit.
+
+No arbitrary Python/LaTeX execution; no real shelter/hazard data supported.
+"""
+from __future__ import annotations
+
+from io import BytesIO
+import json
+from pathlib import Path
+import sys
+from tempfile import TemporaryDirectory
+from zipfile import ZipFile, ZIP_DEFLATED
+
+import streamlit as st
+
+ROOT = Path(__file__).resolve().parents[2]
+EXAMPLES = ROOT / "problems" / "evacuation_centers" / "examples"
+sys.path.insert(0, str(ROOT / "framework" / "python"))
+sys.path.insert(0, str(ROOT / "problems" / "evacuation_centers"))
+
+from qopt.core.experiment_bundle import canonical, load_bundle
+from qopt.core.binary_quadratic import validate_binary_problem
+from bundle_runner import _synthetic_evacuation, execute
+
+
+PRESETS = {
+    "Evacuation — capacitated allocation": "evac-capacitated.json",
+    "Evacuation — maximum potential coverage": "evac-covering.json",
+    "Evacuation — alternate artificial dataset": "evac-alternate-data.json",
+    "Generic binary quadratic": "generic-binary-quadratic.json",
+}
+
+
+def _bundle_spec(preset: str) -> tuple[dict, dict]:
+    manifest = json.loads((EXAMPLES / PRESETS[preset]).read_text(encoding="utf-8"))
+    data = json.loads((EXAMPLES / manifest["dataset"]["path"]).read_text(encoding="utf-8"))
+    return manifest, data
+
+
+def _prepare(manifest: dict, data_bytes: bytes, directory: Path):
+    if len(data_bytes) > 1_000_000:
+        raise ValueError("Prototype only supports at most 1 MB of synthetic JSON data")
+    (directory / "source.json").write_bytes(data_bytes)
+    config = dict(manifest)
+    config["dataset"] = {"path": "source.json"}
+    (directory / "bundle.json").write_bytes(canonical(config))
+    b = load_bundle(directory / "bundle.json")
+    # A preview is a validated data/model configuration, not a SCIP run.
+    if b.problem_id == "evacuation.synthetic":
+        if b.formulation_id not in ("maximal_coverage", "capacitated_lexicographic"):
+            raise ValueError("Unsupported mathematical formulation")
+        _synthetic_evacuation(b.data, b.parameters)
+    elif b.problem_id == "binary_quadratic.synthetic":
+        if b.formulation_id != "binary_quadratic":
+            raise ValueError("Unsupported binary quadratic formulation")
+        validate_binary_problem(b.data, b.parameters)
+    else:
+        raise ValueError("Unsupported scientific problem adapter")
+    return b
+
+
+def _model_text(b) -> str:
+    if b.problem_id == "evacuation.synthetic":
+        p = _synthetic_evacuation(b.data, b.parameters)
+        first = ("maximize sum(d_i * covered_i); z_i <= sum(reachable open_j)"
+                 if b.formulation_id == "maximal_coverage"
+                 else "stage 1: minimize sum(unserved_i)\nstage 2: minimize sum(travel_minutes_ij * assigned_persons_ij)")
+        return "\n".join([
+            first,
+            "budget: sum(open_j) <= " + str(p.max_open),
+            "eligible sites: " + str(list(p.eligible)),
+            "zone demand (persons): " + str(list(p.demands)),
+            "site capacities (persons): " + str(list(p.capacities)) +
+            (" [NOT ENFORCED IN COVERING MODEL]" if b.formulation_id == "maximal_coverage" else ""),
+            "travel times (minutes, null = unreachable): " + str([list(row) for row in p.travel_minutes]),
+            "important: these are fake people/shelters; no real emergency advice",
+        ])
+    p = validate_binary_problem(b.data, b.parameters)
+    obj = p["objective"]
+    parts = [f"{value:+g}*{name}" for name,value in obj["linear"].items()]
+    parts += [f"{t['coefficient']:+g}*{t['first']}*{t['second']}"
+              for t in obj["quadratic"]]
+    if obj.get("constant"):
+        parts.append(f"{obj['constant']:+g}")
+    rows = [
+        f"{obj['sense']} " + (" ".join(parts) if parts else "0"),
+        "binary variables: " + ", ".join(p["variables"]),
+    ]
+    rows += [
+        str(" ".join(f"{coeff:+g}*{name}" for name,coeff in row["linear"].items()) or "0")
+        + " " + row["sense"] + " " + str(row["rhs"]) + "  [" + row["id"] + "]"
+        for row in p["constraints"]
+    ]
+    return "\n".join(rows)
+
+
+def _artifact_zip(directory: Path) -> bytes:
+    buff = BytesIO()
+    with ZipFile(buff, "w", ZIP_DEFLATED) as archive:
+        for file in sorted(directory.glob("*.json")) + sorted(directory.glob("*.lp")):
+            archive.write(file, file.name)
+    return buff.getvalue()
+
+
+def main() -> None:
+    st.set_page_config(page_title="QOpt Configurable Problem Workbench (Synthetic)", layout="wide")
+    st.title("Configurable Optimization Workbench")
+    st.warning(
+        "Experimental research prototype using synthetic inputs ONLY. "
+        "Not the deployed Laguna de Bay dashboard, a live shelter finder, "
+        "or a quantum-computing benchmark."
+    )
+    st.caption(
+        "Upload or edit a JSON dataset, choose a compatible formulation, "
+        "review its actual numeric terms, run SCIP, and export the full model audit."
+    )
+
+    preset = st.selectbox("Example problem", list(PRESETS))
+    suggested, sample = _bundle_spec(preset)
+    domain = suggested["problem_id"]
+    choices = (["maximal_coverage", "capacitated_lexicographic"]
+               if domain == "evacuation.synthetic" else ["binary_quadratic"])
+    formulation = st.selectbox(
+        "Mathematical formulation", choices,
+        index=choices.index(suggested["formulation_id"]),
+        key="formula-" + preset,
+    )
+    editable = st.text_area(
+        "Dataset JSON — editable", value=json.dumps(sample, indent=2),
+        height=210, key="input-data-" + preset,
+        help="Edit the synthetic numbers in place, or upload a replacement JSON file below.",
+    )
+    uploaded = st.file_uploader(
+        "Replace dataset with JSON (takes precedence over editor)",
+        type=["json"], key="dataset-upload-" + preset,
+    )
+    params = st.text_area(
+        "Formulation parameters JSON — editable",
+        value=json.dumps(suggested["parameters"], indent=2),
+        height=86, key="parameters-" + preset,
+        help="For example: max_open or named binary constraint rhs_overrides.",
+    )
+
+    valid = False
+    validation_error = ""
+    try:
+        parameters = json.loads(params)
+        source_bytes = uploaded.getvalue() if uploaded is not None else editable.encode("utf-8")
+        with TemporaryDirectory(prefix="qopt-synthetic-preview-") as folder:
+            manifest = dict(suggested)
+            manifest["formulation_id"] = formulation
+            manifest["parameters"] = parameters
+            bundle = _prepare(manifest, source_bytes, Path(folder))
+            fingerprint = bundle.fingerprint
+            desc = _model_text(bundle)
+            validated_input = bundle.audit()
+        valid = True
+    except (ValueError, KeyError, TypeError, json.JSONDecodeError, OSError) as exc:
+        validation_error = str(exc)
+    if not valid:
+        st.error("Data / model preflight failed: " + validation_error)
+        st.session_state.pop("preview_fingerprint", None)
+        st.session_state.pop("completed_run", None)
+        st.stop()
+
+    st.caption("Resolved source/model fingerprint: " + fingerprint)
+    st.button("Validate and preview formulation", key="preview_btn",
+              on_click=lambda: st.session_state.update(preview_fingerprint=fingerprint))
+    if st.session_state.get("preview_fingerprint") != fingerprint:
+        st.info("Changed inputs require a new formulation preview before solving.")
+        st.session_state.pop("completed_run", None)
+        return
+
+    st.subheader("Verified original formulation (from selected inputs)")
+    st.code(desc, language="text")
+    with st.expander("Resolved exact configuration and source input"):
+        st.json(validated_input)
+
+    if st.button("Run this validated synthetic model with SCIP", key="run_btn"):
+        try:
+            with TemporaryDirectory(prefix="qopt-synthetic-run-") as folder:
+                manifest = dict(suggested)
+                manifest["formulation_id"] = formulation
+                manifest["parameters"] = parameters
+                root = Path(folder)
+                checked = _prepare(manifest, source_bytes, root)
+                output = root / "evidence"
+                result = execute(root / "bundle.json", output)
+                if checked.fingerprint != fingerprint:
+                    raise AssertionError("Preview model fingerprint changed before SCIP run")
+                artifacts = _artifact_zip(output)
+                # Include the precise data/model submitted, not only results.
+                src_zip = BytesIO(artifacts)
+                final_zip = BytesIO()
+                with ZipFile(final_zip, "w", ZIP_DEFLATED) as dest:
+                    with ZipFile(src_zip, "r") as original:
+                        for item in original.infolist():
+                            dest.writestr(item, original.read(item.filename))
+                    dest.writestr("input-source.json", source_bytes)
+                    dest.writestr("input-bundle.json", (root / "bundle.json").read_bytes())
+                st.session_state["completed_run"] = {
+                    "fingerprint": fingerprint,
+                    "report": result["result"],
+                    "archive": final_zip.getvalue(),
+                }
+        except (ValueError, KeyError, TypeError, AssertionError, OSError) as exc:
+            st.error("Solver or post-solve audit failed: " + str(exc))
+            st.session_state.pop("completed_run", None)
+
+    run = st.session_state.get("completed_run")
+    if run is not None and run["fingerprint"] == fingerprint:
+        st.subheader("SCIP result and independent original-model audit")
+        st.json(run["report"])
+        st.download_button(
+            "Download input, actual SCIP LP, source hashes and verified result (.zip)",
+            data=run["archive"], file_name="qopt-synthetic-audit.zip",
+            mime="application/zip", key="download_bundle",
+        )
+    else:
+        st.caption("No SCIP result for these settings yet. Preview first, then run.")
+
+
+if __name__ == "__main__":
+    main()

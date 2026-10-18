@@ -11,6 +11,8 @@ import csv
 import hashlib
 import io
 import json
+import platform
+from importlib.metadata import PackageNotFoundError, version
 from math import isclose, isfinite
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -152,6 +154,13 @@ def selected_csv(instance: Instance, selected: np.ndarray) -> bytes:
     return file.getvalue().encode("utf-8")
 
 
+def _installed_version(distribution: str) -> str:
+    try:
+        return version(distribution)
+    except PackageNotFoundError:
+        return "not installed"
+
+
 def evidence_zip(model: dict, independent: dict, solver: dict,
                  selected_sites_csv: bytes, original_lp: bytes) -> bytes:
     if not original_lp.strip():
@@ -160,6 +169,14 @@ def evidence_zip(model: dict, independent: dict, solver: dict,
         "schema_version": 1,
         "model_fingerprint_sha256": model["model_fingerprint_sha256"],
         "source_sha256": model["dataset_sha256"],
+        "software_versions": {
+            "python": platform.python_version(),
+            "numpy": _installed_version("numpy"),
+            "scipy": _installed_version("scipy"),
+            "shapely": _installed_version("shapely"),
+            "pyscipopt": _installed_version("PySCIPOpt"),
+            "streamlit": _installed_version("streamlit"),
+        },
         "solver": "SCIP exact MILP binary-product linearization",
         "scip_status": solver["status"],
         "scip_optimal_proven": bool(solver["optimal"]),

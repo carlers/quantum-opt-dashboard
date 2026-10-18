@@ -118,3 +118,28 @@ def test_guided_add_remove_unreferenced_variable():
     change(at, "selectbox", "Select variable to edit", "c")
     press(at, "Remove selected variable")
     assert [v["name"] for v in json.loads(at.session_state["typed-vars-" + preset])] == ["a", "b"]
+
+
+def test_advanced_json_edit_resynchronizes_guided_values_and_solver():
+    preset = "Structured math — unconstrained binary QUBO"
+    at = start(preset)
+    change(at, "selectbox", "Objective variable", "b")
+    # Advanced source JSON stays authoritative even when guided numeric
+    # widgets were initialized earlier; no shadow model can become stale.
+    raw = json.loads(at.session_state["typed-objective-" + preset])
+    raw["linear"]["b"] = 9.
+    change(
+        at, "text_area",
+        "Objective — JSON sense, constant, linear and binary-pair terms",
+        json.dumps(raw),
+    )
+    change(at, "selectbox", "Objective variable", "b")
+    fields = [x for x in at.number_input if x.label == "Linear objective coefficient"]
+    assert len(fields) == 1
+    assert fields[0].value == 9.
+    press(at, "Validate and preview formulation")
+    press(at, "Run this validated synthetic model with SCIP")
+    output = at.session_state["completed_run"]["report"]
+    assert output["scip"]["objective"] == 11.
+    assert output["independent_reference"]["objective"] == 11.
+    assert output["exact_unconstrained_qubo"]["diagonal"]["b"] == -9.

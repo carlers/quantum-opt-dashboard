@@ -78,6 +78,4 @@ def test_qubo_penalty_has_a_default_with_plain_language_explanation():
     selector = next(s for s in app.selectbox
                     if s.label == "QUBO penalty (equal budget and connectivity penalties)")
     assert selector.value == "notebook-local-row-sum"
-    assert any("What is a penalty" in str(i.proto) for i in app.get("markdown"))
-    assert any("Start with the notebook heuristic" in str(i.proto)
-               for i in app.get("caption"))
+    assert any("not a guarantee" in str(i.proto) for i in app.info)

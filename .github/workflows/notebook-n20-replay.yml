@@ -1,0 +1,40 @@
+# Bounded scientific gate for the cleaned research notebook; no N=2000 or SA grid search.
+name: Clean N20 notebook scientific replay
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/notebooks/water_quality_n20_reproducible.ipynb"
+      - "problems/water_quality/notebooks/requirements-n20.txt"
+      - "problems/water_quality/data/LDB_centroids_clean.geojson"
+      - "problems/water_quality/notebooks/experiment9 grid search copy.ipynb"
+      - "scripts/run_n20_reference_notebook.py"
+      - ".github/workflows/notebook-n20-replay.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  n20-cold-replay:
+    name: Independent enumeration and SCIP against archived lake inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install bounded numerical and Jupyter kernel dependencies
+        run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
+      - name: Compile clean replay driver
+        run: python -m compileall -q scripts/run_n20_reference_notebook.py
+      - name: Execute N20 notebook from a fresh kernel
+        run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-reference-result.json"
+      - name: Archive metadata-only verification result
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-n20-notebook-metadata
+          path: ${{ runner.temp }}/n20-reference-result.json
+          retention-days: 14
+          if-no-files-found: error

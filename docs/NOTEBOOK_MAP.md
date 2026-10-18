@@ -1,3 +1,5 @@
+> **Working N20 reference (2026-10-18):** [`water_quality_n20_reproducible.ipynb`](../problems/water_quality/notebooks/water_quality_n20_reproducible.ipynb) is the proposed **maintained, readable N20/K5 notebook**. The 25-cell `experiment9 grid search copy.ipynb` below is the **immutable historical source**. Do not extract arbitrary cells from the legacy notebook to redefine the model. The clean N20 notebook explicitly pins original hashes, displays the original local one-hop model, independently checks all 15,504 combinations and proves the original objective using SCIP. It does not cover historical N=50–2000 experiments or historical stochastic penalties, and does **not** reconcile manuscript #16 or float64 reproducibility #24. CI and review are prerequisites to treating it as the working reference; science parity to the published paper is not asserted.
+
 # Notebook cell → plugin module map
 
 | Cell | Plugin module |

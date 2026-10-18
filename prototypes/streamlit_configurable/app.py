@@ -86,8 +86,8 @@ def _prepare(manifest: dict, data_bytes: bytes, directory: Path, extension: str 
         _validate_geojson(b)
         settings = _water_parameters(b.parameters)
         # Keep interactive preview and exact subset proof bounded on shared UI.
-        if settings["n_free"] > 12 or settings["time_limit"] > 20:
-            raise ValueError("UI water-quality experiment is capped at N=12 and time_limit=20 seconds")
+        if settings["n_free"] > 12 or settings["time_limit"] > 30:
+            raise ValueError("UI water-quality experiment is capped at N=12 and time_limit=30 seconds")
         if len(b.data["features"]) > 200:
             raise ValueError("UI synthetic water GeoJSON is capped at 200 features")
         if comb(settings["n_free"], settings["budget"]) > 200000:

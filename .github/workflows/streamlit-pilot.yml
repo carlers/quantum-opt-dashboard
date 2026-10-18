@@ -1,10 +1,15 @@
-name: Streamlit water-quality pilot
+# Required fast gate for prototype pull requests and approved pilot pushes.
+# Bounded stochastic evidence is a SEPARATE workflow (see #34).
+name: Streamlit pilot fast regression
 
 on:
   pull_request:
     paths:
       - "prototypes/streamlit_water_quality/**"
+      - "prototypes/unified_dashboard/**"
+      - "requirements.txt"
       - ".github/workflows/streamlit-pilot.yml"
+      - ".github/workflows/streamlit-research-evidence.yml"
   push:
     branches:
       - "plugin-water-streamlit-pilot"
@@ -12,22 +17,28 @@ on:
       - "prototypes/streamlit_water_quality/**"
       - ".github/workflows/streamlit-pilot.yml"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: pilot-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   model-tests:
+    name: Full fast Python/Streamlit/SCIP regression (no 3072/4096-read study)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pinned-major SCIP and Streamlit MVP dependencies
+      - name: Install integrated numerical, exact SCIP and pinned classical SA dependencies
         run: |
-          python -m pip install -r prototypes/streamlit_water_quality/requirements.txt
+          python -m pip install -r requirements.txt
           python -m pip install "pytest>=8,<10"
       - name: Check Python syntax
-        run: python -m compileall -q prototypes/streamlit_water_quality
-      - name: Run N20 scientific audit and real headless Streamlit MVP interactions
-        run: python -m pytest prototypes/streamlit_water_quality/tests -q -s
+        run: python -m compileall -q prototypes/streamlit_water_quality prototypes/unified_dashboard
+      - name: Run all model, QUBO, SCIP, replay and Streamlit UI tests
+        run: python -m pytest prototypes/streamlit_water_quality/tests prototypes/unified_dashboard/tests -q -s

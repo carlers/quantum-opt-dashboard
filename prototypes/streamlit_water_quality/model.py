@@ -221,7 +221,8 @@ def evaluate(instance: Instance, x: np.ndarray) -> dict:
             "feasible": int(x.sum()) == instance.budget and not isolated}
 
 
-def solve_scip(instance: Instance, *, time_limit: float = 30.0) -> tuple[np.ndarray, dict]:
+def solve_scip(instance: Instance, *, time_limit: float = 30.0,
+               export_lp_path: str | Path | None = None) -> tuple[np.ndarray, dict]:
     """SCIP via PySCIPOpt. Exact MILP representation for nonnegative Q terms.
 
     Unlike source notebook's OMMX adapter, this introduces z_ij=x_i*x_j.
@@ -250,6 +251,10 @@ def solve_scip(instance: Instance, *, time_limit: float = 30.0) -> tuple[np.ndar
     objective += quicksum(float(q) * z[k] for k, (_, _, q) in enumerate(instance.quadratic))
     model.setObjective(objective, "minimize")
     model.setRealParam("limits/time", float(time_limit))
+    # Read-only export of the EXACT MILP passed to SCIP. This is the same
+    # model-export hook independently tested in research draft PR #29.
+    if export_lp_path is not None:
+        model.writeProblem(str(export_lp_path), trans=False)
     model.optimize()
     status = str(model.getStatus())
     if model.getNSols() == 0:

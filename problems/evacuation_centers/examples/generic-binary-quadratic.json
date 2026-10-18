@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "classification": "SYNTHETIC",
+  "problem_id": "binary_quadratic.synthetic",
+  "formulation_id": "binary_quadratic",
+  "dataset": {
+    "path": "fake-binary-quadratic.json"
+  },
+  "parameters": {
+    "rhs_overrides": {
+      "budget": 1
+    }
+  },
+  "description": "Domain-neutral editable binary quadratic objective and linear constraint"
+}

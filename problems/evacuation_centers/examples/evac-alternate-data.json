@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "classification": "SYNTHETIC",
+  "problem_id": "evacuation.synthetic",
+  "formulation_id": "capacitated_lexicographic",
+  "dataset": {
+    "path": "fake-evacuation-alternate.json"
+  },
+  "parameters": {
+    "max_open": 1
+  },
+  "description": "Same model, swapped hypothetical population and capacity"
+}

@@ -1,0 +1,40 @@
+{
+  "classification": "SYNTHETIC TEST FIXTURE ONLY - not real population or evacuation guidance",
+  "units": {
+    "demands": "persons",
+    "capacity": "persons",
+    "travel_times": "minutes",
+    "budget": "maximum number of opened shelters"
+  },
+  "zone_ids": [
+    "FAKE-ZONE-A",
+    "FAKE-ZONE-B"
+  ],
+  "site_ids": [
+    "FAKE-SHELTER-1",
+    "FAKE-SHELTER-2"
+  ],
+  "demands": [
+    4,
+    3
+  ],
+  "capacities": [
+    5,
+    5
+  ],
+  "max_open": 1,
+  "eligible": [
+    true,
+    true
+  ],
+  "travel_minutes": [
+    [
+      1,
+      9
+    ],
+    [
+      2,
+      4
+    ]
+  ]
+}

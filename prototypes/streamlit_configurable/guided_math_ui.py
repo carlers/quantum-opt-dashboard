@@ -7,6 +7,7 @@ never construct a second model or change the solver definition.
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 
 import streamlit as st
 
@@ -46,6 +47,20 @@ def _button(label: str, preset: str, action: str, **values) -> None:
 def show_guided_controls(preset: str, variables_text: str,
                          objective_text: str, constraints_text: str,
                          parameters_text: str) -> None:
+    # Advanced JSON fields and guided widgets are ONE model. Reset only
+    # guided display state when the authoritative JSON changes, before any
+    # guided widgets are instantiated in this rerun. This avoids a stale
+    # coefficient or relation being shown after direct advanced edits.
+    signature = sha256(json.dumps([
+        variables_text, objective_text, constraints_text, parameters_text,
+    ], separators=(",", ":")).encode("utf-8")).hexdigest()
+    identity = "guided-source-signature-" + preset
+    if st.session_state.get(identity) != signature:
+        for key in list(st.session_state.keys()):
+            if key.startswith("guide-") and ("-" + preset) in key:
+                del st.session_state[key]
+        st.session_state[identity] = signature
+
     with st.expander("Guided math controls — no JSON editing required", expanded=True):
         st.caption(
             "Changes update the SAME source as the advanced JSON fields above. "

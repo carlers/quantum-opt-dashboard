@@ -1,34 +1,8 @@
-# Full bounded research evidence is intentionally NOT run for every UI/doc PR.
-# On a research-model/solver change it runs automatically; after this workflow
-# is merged to default it can also be run explicitly via workflow_dispatch.
-# Workflow CI artifacts expire after 14 days and are NOT archival releases.
+# Expensive preregistered N20 study is available ON DEMAND during MVP integration.
+# Deliberately not run for every broad integration PR; script/protocol retained.
 name: Water-quality research evidence (SCIP + classical OpenJij)
 
 on:
-  pull_request:
-    paths:
-      - "problems/water_quality/data/**"
-      - "problems/water_quality/notebooks/**"
-      - "prototypes/streamlit_water_quality/model.py"
-      - "prototypes/streamlit_water_quality/qubo.py"
-      - "prototypes/streamlit_water_quality/formulation_audit.py"
-      - "prototypes/streamlit_water_quality/evidence.py"
-      - "prototypes/streamlit_water_quality/sa_benchmark.py"
-      - "prototypes/streamlit_water_quality/sa_paired_replication.py"
-      - "prototypes/streamlit_water_quality/sa_ulp_replay.py"
-      - "prototypes/streamlit_water_quality/precision_probe.py"
-      - "prototypes/streamlit_water_quality/compare_archived_sa.py"
-      - "prototypes/streamlit_water_quality/requirements.txt"
-      - "prototypes/streamlit_water_quality/tests/test_evidence_export.py"
-      - "prototypes/streamlit_water_quality/tests/test_n20_reference.py"
-      - "prototypes/streamlit_water_quality/tests/test_qubo.py"
-      - "prototypes/streamlit_water_quality/tests/test_sa_benchmark.py"
-      - "prototypes/streamlit_water_quality/tests/test_sa_paired_replication.py"
-      - "prototypes/streamlit_water_quality/tests/test_sa_ulp_replay.py"
-      - "prototypes/streamlit_water_quality/tests/test_scip_solver.py"
-      - "prototypes/streamlit_water_quality/tests/test_precision_probe.py"
-      - "prototypes/streamlit_water_quality/tests/test_compare_archived_sa.py"
-      - ".github/workflows/streamlit-research-evidence.yml"
   workflow_dispatch:
 
 permissions:

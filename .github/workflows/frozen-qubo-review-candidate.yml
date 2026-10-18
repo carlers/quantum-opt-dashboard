@@ -1,0 +1,39 @@
+# Issue #58 first gate: generate exact fixture once for human/source review.
+# No stochastic sampler execution and no GitHub Actions self-commit.
+name: Historical B-mode QUBO candidate generation
+on:
+  pull_request:
+    paths:
+      - "prototypes/streamlit_water_quality/freeze_legacy_qubo.py"
+      - ".github/workflows/frozen-qubo-review-candidate.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen-qubo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install source numerical dependencies
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+      - name: Run syntax checks
+        run: >
+          python -m compileall -q
+          prototypes/streamlit_water_quality/freeze_legacy_qubo.py
+      - name: Create B-mode candidate in temporary scratch storage
+        run: >
+          python prototypes/streamlit_water_quality/freeze_legacy_qubo.py
+          --output "$RUNNER_TEMP/frozen_B_mode_candidate.json"
+      - name: Upload B-mode candidate for review (no sampler runs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-B-mode-QUBO-candidate
+          path: ${{ runner.temp }}/frozen_B_mode_candidate.json
+          retention-days: 14
+          if-no-files-found: error

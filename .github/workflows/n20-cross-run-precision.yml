@@ -1,0 +1,98 @@
+# Observational issue #24 experiment. Does NOT run SA or change source coefficients.
+name: N20 exact-model cross-run precision
+
+on:
+  pull_request:
+    paths:
+      - "scripts/compare_n20_replays.py"
+      - "scripts/tests/test_compare_n20_replays.py"
+      - ".github/workflows/n20-cross-run-precision.yml"
+      - "problems/water_quality/notebooks/water_quality_n20_reproducible.ipynb"
+      - "scripts/run_n20_reference_notebook.py"
+      - "problems/water_quality/data/LDB_centroids_clean.geojson"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fresh-processes:
+    name: Fresh processes / ${{ matrix.replica }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [r1, r2, r3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install fixed *direct* numerical dependency versions
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          matplotlib==3.11.2 nbclient==0.11.0 nbformat==5.11.1
+          ipykernel==6.31.0
+      - name: Record non-secret runner and numerical environment
+        run: >
+          python scripts/compare_n20_replays.py
+          --metadata-output "$RUNNER_TEMP/runtime.json"
+          --replica "${{ matrix.replica }}"
+      - name: Cold N20 replay in first independent Python and Jupyter process
+        run: >
+          python scripts/run_n20_reference_notebook.py
+          --result "$RUNNER_TEMP/replicate-${{ matrix.replica }}-a.json"
+      - name: Cold N20 replay in second independent Python and Jupyter process
+        run: >
+          python scripts/run_n20_reference_notebook.py
+          --result "$RUNNER_TEMP/replicate-${{ matrix.replica }}-b.json"
+      - name: Compare raw coefficients for two isolated processes on this host
+        run: >
+          python scripts/compare_n20_replays.py
+          --inputs-root "$RUNNER_TEMP"
+          --report "$RUNNER_TEMP/comparison-within.json"
+          --min-results 2
+      - name: Upload exact coefficient evidence without rewriting it
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-precision-${{ matrix.replica }}
+          path: |
+            ${{ runner.temp }}/replicate-*.json
+            ${{ runner.temp }}/runtime.json
+            ${{ runner.temp }}/comparison-within.json
+          retention-days: 14
+          if-no-files-found: error
+
+  compare-cross-host:
+    needs: fresh-processes
+    name: Compare all six independent kernel executions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run adversarial comparator tests (no solver dependency)
+        run: python -m unittest discover -s scripts/tests -p "test_compare_n20_replays.py" -v
+      - name: Retrieve unmodified results from three independent runner jobs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: n20-precision-*
+          path: _n20-precision-results
+          merge-multiple: false
+      - name: Classify cross-host exact-bit and semantic differences
+        run: >
+          python scripts/compare_n20_replays.py
+          --inputs-root _n20-precision-results
+          --report _n20-precision-comparison.json
+          --min-results 6
+      - name: Archive observed cross-run comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-cross-host-comparison
+          path: _n20-precision-comparison.json
+          retention-days: 14
+          if-no-files-found: error

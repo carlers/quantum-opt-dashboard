@@ -1,3 +1,13 @@
+# Current priority — controlled A/B ULP sensitivity test (2026-10-18)
+
+- [Issue #26](https://github.com/carlers/quantum-opt-dashboard/issues/26) follows numeric drift blocker #24. **Archived GitHub Actions evidence A/B downloaded and compared directly:** source `notebook/instance.json` 20-site models differ **ONLY** at four linear coefficients (local 9,10,17,19) by 1-2e-16; common quadratic/graph/coordinates/utility and fixed-site data agree. SCIP optimum unchanged. The correlation with old SA 698 vs 665 feasible per 1024 has **not been causally established**.
+- New isolated stacked branch `science-sa-ulp-causal-replay` (base `science-sa-precision-probe`, unmerged PR #25). Frozen four arms: B/B, A/B, B/A, A/A (linear instance source vs one-ULP notebook penalty); same 32 parent seeds × 32 child seeds × 300 sweeps per arm; total 4096 classical SA reads.
+- `sa_ulp_replay.py` freezes archived B exact float coefficients/graph and four A `float.hex` overrides; validates source N20 reference via independent enumeration. `tests/test_sa_ulp_replay.py` checks exact coefficient differences, penalty bits, QUBO size, certified optimum. `SA_ULP_CONTROLLED_REPLAY.md` and issue #26 *pre-register experiment before CI result review*.
+- CI adds `n20-ulp-controlled-replay` archive (JSON, all samples, trial rows, SHA-256 checksums). **Verification pending**; do not claim causal explanation until actual results and reproducibility reviewed.
+- Strict safety: no merges or live deployments; default `main` and deployed `plugin-water-streamlit-pilot` frozen, original GeoJSON/notebook/paper/model untouched.
+
+---
+
 # Current task: exact float64 coefficient precision diagnosis — issue #24 (2026-10-18)
 
 - Isolated scoped branch `science-sa-precision-probe` stacked above **unmerged** PR #23, not deployed and not merged to live Streamlit.

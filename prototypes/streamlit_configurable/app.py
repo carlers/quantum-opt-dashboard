@@ -225,21 +225,22 @@ def main() -> None:
         sample_object = json.loads(sample_text)
         st.caption("Structured term editor: edit variable types/bounds, coefficient terms, "
                    "and named constraints independently. LaTeX is never executed.")
-        vars_text = st.text_area(
-            "Variables — JSON list of names, domains and bounds",
-            value=json.dumps(sample_object["variables"], indent=2),
-            height=175, key="typed-vars-" + preset,
-        )
-        obj_text = st.text_area(
-            "Objective — JSON sense, constant, linear and binary-pair terms",
-            value=json.dumps(sample_object["objective"], indent=2),
-            height=175, key="typed-objective-" + preset,
-        )
-        cons_text = st.text_area(
-            "Constraints — JSON linear rows with named RHS",
-            value=json.dumps(sample_object["constraints"], indent=2),
-            height=175, key="typed-constraints-" + preset,
-        )
+        with st.expander("Advanced JSON component editor (optional)", expanded=False):
+            vars_text = st.text_area(
+                "Variables — JSON list of names, domains and bounds",
+                value=json.dumps(sample_object["variables"], indent=2),
+                height=175, key="typed-vars-" + preset,
+            )
+            obj_text = st.text_area(
+                "Objective — JSON sense, constant, linear and binary-pair terms",
+                value=json.dumps(sample_object["objective"], indent=2),
+                height=175, key="typed-objective-" + preset,
+            )
+            cons_text = st.text_area(
+                "Constraints — JSON linear rows with named RHS",
+                value=json.dumps(sample_object["constraints"], indent=2),
+                height=175, key="typed-constraints-" + preset,
+            )
         editable = None
     else:
         editable = st.text_area(

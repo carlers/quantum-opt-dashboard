@@ -7,15 +7,15 @@ MIQP, arbitrary expressions, real shelter decisions, or quantum computation.
 """
 from __future__ import annotations
 
-from itertools import product
 import json
+import re
+from itertools import product
 from math import isfinite, prod
 from pathlib import Path
-import re
 
 import numpy as np
-from scipy.optimize import linprog
 from pyscipopt import Model, quicksum
+from scipy.optimize import linprog
 
 
 IDENT = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
@@ -61,9 +61,10 @@ def validate_ir(data: dict, parameters: dict) -> dict:
             raise ValueError("Variable has lower bound greater than upper bound")
         if domain == "binary" and (low, high) != (0.0, 1.0):
             raise ValueError("Binary variables must have exact [0,1] bounds")
-        if domain == "integer":
-            if not low.is_integer() or not high.is_integer() or high - low > 4:
-                raise ValueError("Integer bounds must be integral with at most five domain values")
+        if domain == "integer" and (
+            not low.is_integer() or not high.is_integer() or high - low > 4
+        ):
+            raise ValueError("Integer bounds must be integral with at most five domain values")
         normalized.append({"name": name, "domain": domain, "lower": low, "upper": high})
     ids = [v["name"] for v in normalized]
     if len(set(ids)) != len(ids):

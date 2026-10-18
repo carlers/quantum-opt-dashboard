@@ -176,7 +176,6 @@ st.subheader("2 · Understand the current model")
 st.caption("Your choices: " + str(int(k)) + " new monitoring sites · " + source +
            f" · redundancy {beta:g} · wake {delta:g}. "
            "Changing any setting requires a new solution.")
-with st.expander("Scientific equation and model constraints", expanded=False):
 a, b, c = st.columns(3)
 a.metric("Original sites", f"{len(data.ids):,}")
 b.metric("Existing stations", str(len(instance.fixed_indices)))
@@ -196,6 +195,7 @@ else:
         "notebook default and must not be labeled a publication reproduction."
     )
 
+with st.expander("Scientific equation and model constraints", expanded=False):
     st.latex(
         r"\min_{\mathbf{x}\in\{0,1\}^{20}}\ "
         r"\sum_i a_i x_i+\sum_{i<j}q_{ij}x_ix_j"

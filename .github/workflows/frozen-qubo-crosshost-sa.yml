@@ -1,0 +1,101 @@
+# Issue #58: exactly frozen, committed B-mode QUBO and fixed read seeds.
+# This is classical OpenJij simulated annealing, NOT QPU execution.
+name: Frozen historical B QUBO OpenJij reproducibility
+on:
+  pull_request:
+    paths:
+      - "prototypes/streamlit_water_quality/fixtures/frozen_B_row_sum_qubo.json"
+      - "prototypes/streamlit_water_quality/replay_frozen_qubo.py"
+      - "prototypes/streamlit_water_quality/compare_frozen_qubo_replays.py"
+      - "prototypes/streamlit_water_quality/tests/test_frozen_qubo_replay.py"
+      - "docs/FROZEN_QUBO_CROSSHOST_PROTOCOL.md"
+      - ".github/workflows/frozen-qubo-crosshost-sa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-sa:
+    runs-on: ubuntu-24.04
+    name: Frozen QUBO OpenJij / ${{ matrix.replica }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [r1, r2, r3]
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install fixed direct numerical and sampler versions
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          openjij==0.12.2
+      - name: Confirm fixture unchanged before starting sampler
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' '51d47e9a6ad320784019f02110e6543abee60da92453bc26e5c39b91e52398cb' 'prototypes/streamlit_water_quality/fixtures/frozen_B_row_sum_qubo.json' | sha256sum --check
+      - name: First independent Python process — original 1024 child seeds
+        run: >
+          python prototypes/streamlit_water_quality/replay_frozen_qubo.py
+          --replica "${{ matrix.replica }}-a"
+          --output "$RUNNER_TEMP/frozen-samples-${{ matrix.replica }}-a.json"
+      - name: Second independent Python process — same exact QUBO and seeds
+        run: >
+          python prototypes/streamlit_water_quality/replay_frozen_qubo.py
+          --replica "${{ matrix.replica }}-b"
+          --output "$RUNNER_TEMP/frozen-samples-${{ matrix.replica }}-b.json"
+      - name: Upload every read-level sample in both processes
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-qubo-${{ matrix.replica }}
+          path: |
+            ${{ runner.temp }}/frozen-samples-${{ matrix.replica }}-a.json
+            ${{ runner.temp }}/frozen-samples-${{ matrix.replica }}-b.json
+          retention-days: 14
+          if-no-files-found: error
+
+  compare-across-hosts:
+    needs: independent-sa
+    name: Independent audit of all six process records and 6144 full states
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned scientific audit dependencies
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          openjij==0.12.2 pytest==8.4.2
+      - name: Compile scripts and run adversarial correctness checks
+        run: |
+          python -m compileall -q prototypes/streamlit_water_quality
+          python -m pytest prototypes/streamlit_water_quality/tests/test_frozen_qubo_replay.py -q -s
+      - name: Fetch six unmodified full-state artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: frozen-qubo-r*
+          path: _frozen_qubo_results
+          merge-multiple: false
+      - name: Independently audit QUBO energies, feasibility and each 46-bit state
+        run: >
+          python prototypes/streamlit_water_quality/compare_frozen_qubo_replays.py
+          --input-dir _frozen_qubo_results
+          --report _frozen_qubo_comparison.json
+      - name: Retain complete cross-host mismatch and environment report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-qubo-six-process-comparison
+          path: _frozen_qubo_comparison.json
+          retention-days: 14
+          if-no-files-found: error

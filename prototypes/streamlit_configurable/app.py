@@ -19,6 +19,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 EXAMPLES = ROOT / "problems" / "evacuation_centers" / "examples"
 WATER_EXAMPLES = ROOT / "problems" / "water_quality" / "examples"
 sys.path.insert(0, str(ROOT / "problems" / "water_quality"))
@@ -31,6 +32,7 @@ from qopt.core.math_ir import validate_ir, render_original
 from bundle_runner import _synthetic_evacuation, execute
 from water_bundle_adapter import _parameters as _water_parameters, _validate_geojson
 from notebook_reference_model import make_instance, load_data
+from guided_math_ui import show_guided_controls
 
 
 PRESETS = {
@@ -223,21 +225,22 @@ def main() -> None:
         sample_object = json.loads(sample_text)
         st.caption("Structured term editor: edit variable types/bounds, coefficient terms, "
                    "and named constraints independently. LaTeX is never executed.")
-        vars_text = st.text_area(
-            "Variables — JSON list of names, domains and bounds",
-            value=json.dumps(sample_object["variables"], indent=2),
-            height=175, key="typed-vars-" + preset,
-        )
-        obj_text = st.text_area(
-            "Objective — JSON sense, constant, linear and binary-pair terms",
-            value=json.dumps(sample_object["objective"], indent=2),
-            height=175, key="typed-objective-" + preset,
-        )
-        cons_text = st.text_area(
-            "Constraints — JSON linear rows with named RHS",
-            value=json.dumps(sample_object["constraints"], indent=2),
-            height=175, key="typed-constraints-" + preset,
-        )
+        with st.expander("Advanced JSON component editor (optional)", expanded=False):
+            vars_text = st.text_area(
+                "Variables — JSON list of names, domains and bounds",
+                value=json.dumps(sample_object["variables"], indent=2),
+                height=175, key="typed-vars-" + preset,
+            )
+            obj_text = st.text_area(
+                "Objective — JSON sense, constant, linear and binary-pair terms",
+                value=json.dumps(sample_object["objective"], indent=2),
+                height=175, key="typed-objective-" + preset,
+            )
+            cons_text = st.text_area(
+                "Constraints — JSON linear rows with named RHS",
+                value=json.dumps(sample_object["constraints"], indent=2),
+                height=175, key="typed-constraints-" + preset,
+            )
         editable = None
     else:
         editable = st.text_area(
@@ -255,6 +258,14 @@ def main() -> None:
         height=86, key="parameters-" + preset,
         help="For example: max_open or named binary constraint rhs_overrides.",
     )
+    if structured:
+        if uploaded is None:
+            show_guided_controls(preset, vars_text, obj_text, cons_text, params)
+        else:
+            st.info(
+                "Guided controls are disabled while an uploaded source takes precedence. "
+                "Remove the upload to edit the component fields."
+            )
 
     valid = False
     validation_error = ""

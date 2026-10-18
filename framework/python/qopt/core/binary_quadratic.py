@@ -10,10 +10,10 @@ operational claims. This is an intentionally bounded research prototype.
 """
 from __future__ import annotations
 
+import re
 from itertools import product
 from math import isfinite
 from pathlib import Path
-import re
 
 from pyscipopt import Model, quicksum
 
@@ -191,7 +191,7 @@ def compile_and_solve_scip(problem: dict, lp_path: Path) -> dict:
     status = str(model.getStatus())
     if status != "optimal":
         return {"status": status, "solver": "SCIP MILP exact linearization"}
-    solution = {key: int(round(model.getVal(v))) for key,v in variables.items()}
+    solution = {key: round(model.getVal(v)) for key,v in variables.items()}
     if not independent_audit(problem, solution):
         raise AssertionError("SCIP solution fails original binary problem")
     energy = original_energy(problem, solution)

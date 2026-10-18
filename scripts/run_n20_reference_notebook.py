@@ -48,10 +48,10 @@ def read_unexecuted(path: Path = NOTEBOOK):
 
 
 def verify_exact_model(record: dict) -> None:
-    """Audit published N20 coefficient payload, not only selected-score canaries."""
+    """Audit source-derived N20 coefficients, not only selected-score canaries."""
     model = record["model_input"]
     canonical = (json.dumps(model, sort_keys=True, separators=(",", ":"),
-                            ensure_ascii=False, allow_nan=False) + "\\n").encode("utf-8")
+                            ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
     digest = hashlib.sha256(canonical).hexdigest()
     if digest != record["model_input_sha256"]:
         raise AssertionError("Exact numerical model SHA-256 does not match model payload")

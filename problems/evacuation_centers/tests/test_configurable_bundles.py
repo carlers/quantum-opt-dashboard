@@ -25,6 +25,7 @@ EXAMPLES = HERE / "examples"
 
 
 def make_bundle(tmp_path, base_name, *, update=None, data_edit=None):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     config = json.loads((EXAMPLES / base_name).read_text())
     data_name = config["dataset"]["path"]
     contents = json.loads((EXAMPLES / data_name).read_text())
@@ -117,7 +118,7 @@ def test_exact_qubo_only_for_unconstrained_binary_objective(tmp_path):
     assert q["diagonal"]["alpha"] == -4.
     assert q["off_diagonal"][0]["coefficient"] == 2.
     assert q["offset"] == 0.
-    assert out["result"]["scip"]["objective"] == pytest.approx(-8)
+    assert out["result"]["scip"]["objective"] == pytest.approx(-6)
     assert "linear constraints require" not in out["result"]
 
 

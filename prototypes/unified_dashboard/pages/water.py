@@ -1,17 +1,22 @@
-"""Navigate to the original source-pinned water-quality MVP page."""
-import os
+"""Run a validated standalone page inside the unified Streamlit shell.
+
+Use ScriptRunner-thread-scoped context, not process-global os.environ:
+overlapping browser sessions must never affect one another.
+"""
 import runpy
 import sys
+import threading
 from pathlib import Path
 
 target = Path(__file__).resolve().parents[2] / "streamlit_water_quality" / "app.py"
 sys.path.insert(0, str(target.parent))
-previous = os.environ.get("QOPT_UNIFIED_DASHBOARD")
+thread = threading.current_thread()
+previous = getattr(thread, "_qopt_unified_page", False)
 try:
-    os.environ["QOPT_UNIFIED_DASHBOARD"] = "1"
+    setattr(thread, "_qopt_unified_page", True)
     runpy.run_path(str(target), run_name="__main__")
 finally:
-    if previous is None:
-        os.environ.pop("QOPT_UNIFIED_DASHBOARD", None)
+    if previous:
+        setattr(thread, "_qopt_unified_page", True)
     else:
-        os.environ["QOPT_UNIFIED_DASHBOARD"] = previous
+        delattr(thread, "_qopt_unified_page")

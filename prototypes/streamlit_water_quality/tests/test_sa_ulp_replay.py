@@ -5,6 +5,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sa_benchmark import notebook_row_sum_bound
 from sa_ulp_replay import (
     A_LINEAR_OVERRIDES_HEX, B_LINEAR_REFERENCE_HEX, ARMS, B_LINEAR,
     B_QUADRATIC, PENALTY_HEX, build_arms, fixture_instance,
@@ -38,6 +39,18 @@ def test_four_arms_reproduce_source_energies_and_exact_penalty_bits():
     assert a["feasible_subsets"] == b["feasible_subsets"] == 1077
     assert a["enumerated_subsets"] == b["enumerated_subsets"] == 15504
     assert a["energy"] == b["energy"] == -3.3012934918564643
+
+    # The four ULP differences enter the notebook's heuristic through
+    # local candidate 17: it is the unique maximum abs-linear+pair row.
+    for mode in ("A", "B"):
+        instance = fixture_instance(mode)
+        row = np.abs(instance.linear).copy()
+        for i, j, q in instance.quadratic:
+            row[i] += abs(q)
+            row[j] += abs(q)
+        assert int(np.argmax(row)) == 17
+        assert float(row[17]).hex() == PENALTY_HEX[mode]
+        assert float(notebook_row_sum_bound(instance)).hex() == PENALTY_HEX[mode]
 
     arms = build_arms()
     assert [x[0] for x in arms] == [x[0] for x in ARMS]

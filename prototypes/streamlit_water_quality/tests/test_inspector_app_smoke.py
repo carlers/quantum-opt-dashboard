@@ -13,9 +13,9 @@ APP = Path(__file__).resolve().parents[1] / "app.py"
 def test_water_source_and_math_are_visible_before_explicit_solver_action():
     app = AppTest.from_file(str(APP), default_timeout=120).run()
     assert not app.exception
-    assert any("Review the mathematical problem" in h.value for h in app.subheader)
+    assert any("Understand the current model" in h.value for h in app.subheader)
     assert "mvp_result" not in app.session_state
-    assert any(b.label == "Run SCIP placement" for b in app.button)
+    assert any(b.label == "Find monitoring locations (SCIP)" for b in app.button)
     app.button(key="mvp_run").click().run()
     assert not app.exception
     result = app.session_state["mvp_result"]

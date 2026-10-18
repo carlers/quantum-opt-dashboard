@@ -73,3 +73,17 @@ def test_paper_weights_counterfactual_is_explicit_before_solver():
     assert any("Exploratory parameter comparison" in str(x.proto) for x in at.info)
     assert any("paper's published numerical inputs" in str(x.proto).lower()
                or "paper" in str(x.proto).lower() for x in at.warning)
+
+
+def test_weight_source_switch_invalidates_a_previously_solved_result():
+    at = fresh()
+    at.button(key="mvp_run").click().run()
+    assert not at.exception
+    before = at.session_state["mvp_result"]["fingerprint"]
+    switch = next(r for r in at.radio if r.label == "Criterion weights")
+    switch.set_value("Paper weights · comparison only").run()
+    assert not at.exception
+    assert "mvp_result" not in at.session_state
+    assert any("Inputs changed" in str(x.proto) for x in at.info)
+    assert any("Exploratory parameter comparison" in str(x.proto) for x in at.info)
+    assert not [x for x in at.metric if x.label == "Original objective (min.)"]

@@ -34,10 +34,10 @@ jobs:
         run: python -m unittest discover -s scripts/tests -p "test_n20_manifest.py" -v
       - name: Execute N20 notebook from a fresh kernel
         run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-reference-result.json"
-      - name: Archive metadata-only verification result
+      - name: Archive bounded exact-model coefficient manifest and result
         uses: actions/upload-artifact@v4
         with:
-          name: clean-n20-notebook-metadata
+          name: clean-n20-model-input-manifest
           path: ${{ runner.temp }}/n20-reference-result.json
           retention-days: 14
           if-no-files-found: error

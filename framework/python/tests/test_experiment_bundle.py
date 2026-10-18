@@ -2,9 +2,9 @@
 
 Scientific solver acceptance remains in the separate domain/UI workflows.
 """
+import json
 from hashlib import sha256
 from pathlib import Path
-import json
 
 import pytest
 

@@ -1,0 +1,10 @@
+# Isolated Python 3.12 research execution dependencies for the cleaned N20 notebook.
+# Major-version bounds are not a binary lock: CI emits exact resolved versions.
+numpy>=2.0,<3
+scipy>=1.11,<2
+shapely>=2.0,<3
+pyscipopt>=5.0,<7
+matplotlib>=3.8,<4
+nbclient>=0.10,<1
+nbformat>=5.10,<6
+ipykernel>=6.29,<7

@@ -7,8 +7,11 @@ on:
       - "prototypes/streamlit_water_quality/fixtures/frozen_B_row_sum_qubo.json"
       - "prototypes/streamlit_water_quality/replay_frozen_qubo.py"
       - "prototypes/streamlit_water_quality/compare_frozen_qubo_replays.py"
+      - "prototypes/streamlit_water_quality/compare_frozen_archived_b.py"
       - "prototypes/streamlit_water_quality/tests/test_frozen_qubo_replay.py"
+      - "prototypes/streamlit_water_quality/tests/test_compare_frozen_archived_b.py"
       - "docs/FROZEN_QUBO_CROSSHOST_PROTOCOL.md"
+      - "docs/FROZEN_QUBO_CROSSHOST_RESULTS.md"
       - ".github/workflows/frozen-qubo-crosshost-sa.yml"
   workflow_dispatch:
 
@@ -80,7 +83,7 @@ jobs:
       - name: Compile scripts and run adversarial correctness checks
         run: |
           python -m compileall -q prototypes/streamlit_water_quality
-          python -m pytest prototypes/streamlit_water_quality/tests/test_frozen_qubo_replay.py -q -s
+          python -m pytest prototypes/streamlit_water_quality/tests/test_frozen_qubo_replay.py prototypes/streamlit_water_quality/tests/test_compare_frozen_archived_b.py -q -s
       - name: Fetch six unmodified full-state artifacts
         uses: actions/download-artifact@v4
         with:

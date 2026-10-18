@@ -211,12 +211,26 @@ def _quick_model_controls(preset: str, domain: str, suggested: dict,
     st.caption("You can change these settings using normal controls. "
                "The advanced input editor below is optional.")
     params_key = "parameters-" + preset
-    raw_params = json.loads(st.session_state.get(
-        params_key, json.dumps(suggested["parameters"])
-    ))
+    try:
+        raw_params = json.loads(st.session_state.get(
+            params_key, json.dumps(suggested["parameters"])
+        ))
+        if not isinstance(raw_params, dict):
+            return
+    except (ValueError, TypeError, json.JSONDecodeError):
+        # Existing central model preflight renders the useful invalid-input
+        # error; quick widgets must not bypass its trust boundary.
+        return
     if domain == "evacuation.synthetic":
-        source = json.loads(st.session_state.get("input-data-" + preset, sample_text))
-        count = len(source["site_ids"])
+        try:
+            source = json.loads(st.session_state.get("input-data-" + preset, sample_text))
+            if not isinstance(source, dict) or not all(
+                key in source for key in ("site_ids", "zone_ids", "demands", "max_open")
+            ):
+                return
+            count = len(source["site_ids"])
+        except (ValueError, TypeError, json.JSONDecodeError):
+            return
         current = int(raw_params.get("max_open", source["max_open"]))
         budget_key = "quick-budget-" + preset
         source_key = "quick-budget-source-" + preset

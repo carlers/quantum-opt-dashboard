@@ -17,7 +17,6 @@ from pathlib import Path
 
 from pyscipopt import Model, quicksum
 
-
 _ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
 
 

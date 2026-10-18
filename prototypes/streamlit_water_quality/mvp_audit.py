@@ -43,7 +43,8 @@ def source_sha(path: Path) -> str:
 
 
 def preview(instance: Instance, *, dataset_sha256: str, weights: list[float],
-            weight_source: str, time_limit_seconds: int) -> dict:
+            weight_source: str, time_limit_seconds: int,
+            beta: float = 1.0, delta: float = 1.0) -> dict:
     """Create the actual model preview from the same Instance passed to SCIP."""
     n = len(instance.free_indices)
     if not 1 <= n <= 20 or not 0 <= instance.budget <= n:
@@ -52,6 +53,10 @@ def preview(instance: Instance, *, dataset_sha256: str, weights: list[float],
         raise ValueError("MVP requires the SHA-pinned source dataset")
     if len(weights) != 8 or any(not isfinite(float(x)) or x < 0 for x in weights):
         raise ValueError("Invalid eight nonnegative weights")
+    if not all(isfinite(float(value)) and 0 <= float(value) <= 10 for value in (beta, delta)):
+        raise ValueError("MVP interaction strengths must be finite and between 0 and 10")
+    if sum(weights) <= 0:
+        raise ValueError("At least one factor must have positive weight")
     if time_limit_seconds != 30:
         raise ValueError("MVP SCIP time limit is fixed to 30 seconds")
     settings = {
@@ -59,7 +64,7 @@ def preview(instance: Instance, *, dataset_sha256: str, weights: list[float],
         "new_sensors_k": int(instance.budget),
         "weights_source": weight_source,
         "eight_factor_weights": [float(w) for w in weights],
-        "beta": 1.0, "delta": 1.0,
+        "beta": float(beta), "delta": float(delta),
         "scip_time_limit_seconds": time_limit_seconds,
     }
     model = {

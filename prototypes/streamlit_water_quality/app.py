@@ -8,7 +8,7 @@ Neither quantum hardware nor previous-paper numerical replication is claimed.
 from __future__ import annotations
 
 import json
-import os
+import threading
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -32,7 +32,7 @@ DATA_PATH = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"
 N_FREE = 20
 SCIP_TIME_LIMIT = 30
 
-if not os.environ.get("QOPT_UNIFIED_DASHBOARD"):
+if not getattr(threading.current_thread(), "_qopt_unified_page", False):
     st.set_page_config(
         page_title="Water-quality Placement · Research MVP",
         page_icon="🧪", layout="wide",

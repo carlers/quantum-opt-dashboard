@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import json
+import os
 from math import comb
 from pathlib import Path
 import sys
@@ -186,7 +187,8 @@ def _artifact_zip(directory: Path) -> bytes:
 
 
 def main() -> None:
-    st.set_page_config(page_title="QOpt Configurable Problem Workbench (Synthetic)", layout="wide")
+    if not os.environ.get("QOPT_UNIFIED_DASHBOARD"):
+        st.set_page_config(page_title="QOpt Configurable Problem Workbench (Synthetic)", layout="wide")
     st.title("Configurable Optimization Workbench")
     st.warning(
         "Experimental research prototype using synthetic inputs ONLY. "

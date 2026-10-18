@@ -1,3 +1,5 @@
+> **2026-10-18 MVP release-candidate update (draft PR #49, not deployed):** The app is now intentionally limited to **one pinned 5,417-feature Laguna de Bay dataset**, **N=20**, a configurable K and two labeled weight-source presets. Its primary workflow is **Configure → Inspect → Run SCIP → Download independently checked model/result/LP evidence**. The original paper's differing AHP/D2/energy claims remain unresolved. See [MVP.md](MVP.md) for the exact release checklist. The broader generalized formula editor/quantum studies remain on separate unmerged branches. **Do not deploy or merge this draft without owner approval.**
+
 # Water-quality Streamlit feasibility prototype
 
 **Status: pilot, not yet validated against the previous paper.** The custom dashboard is deferred. This small experiment tests whether Streamlit Community Cloud can run real notebook-derived SCIP optimization with a mobile-accessible interface.

@@ -17,7 +17,6 @@ def _app():
 def test_preview_is_solver_free_then_real_scip_run_exports_actual_lp():
     at = _app()
     # No execution until the user explicitly previews and runs.
-    assert not at.button(key="run_btn") if False else True
     at.button(key="preview_btn").click().run()
     assert not at.exception
     assert "Run this validated synthetic model with SCIP" in [b.label for b in at.button]

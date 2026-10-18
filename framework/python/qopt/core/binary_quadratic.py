@@ -14,8 +14,9 @@ import re
 from itertools import product
 from math import isfinite
 from pathlib import Path
+from typing import cast
 
-from pyscipopt import Model, quicksum
+from pyscipopt import Model, quicksum  # type: ignore[import-not-found]
 
 _ID = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
 
@@ -29,9 +30,12 @@ def _keys(obj: object, allowed: set[str], required: set[str], label: str) -> dic
 
 
 def _scalar(x: object, name: str) -> float:
-    if type(x) not in (int, float) or not isfinite(x) or abs(float(x)) > 1e10:
+    if type(x) not in (int, float):
         raise ValueError(f"{name} must be bounded finite numeric")
-    return float(x)
+    numeric = float(cast(int | float, x))
+    if not isfinite(numeric) or abs(numeric) > 1e10:
+        raise ValueError(f"{name} must be bounded finite numeric")
+    return numeric
 
 
 def validate_binary_problem(data: dict, parameters: dict) -> dict:

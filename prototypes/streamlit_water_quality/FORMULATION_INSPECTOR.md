@@ -53,3 +53,10 @@ The mathematical equation labels are deliberately symbolic for readability; **th
 4. Only after that consider a general problem compiler / editor and direct multi-solver dashboard runs, long-running jobs or execution backends.
 
 **Deployment safety:** This isolated draft is stacked on `science-sa-ulp-causal-replay` PR #27. It is not a merge into `plugin-water-streamlit-pilot` or `main`. The existing Streamlit Community Cloud URL is unaffected until the user explicitly authorizes an integration and deploy.
+
+
+## Lightweight CI verification after issue #34 (workflow-only change)
+
+The mathematical inspector's functional tests remain in the new **fast** `streamlit-pilot.yml` pipeline, including actual Streamlit AppTest, real small SCIP checks and QUBO consistency. The separate `streamlit-research-evidence.yml` runs complete N20 + SA evidence only for explicitly scoped research code/inputs/workflow modifications or explicit manual runs after default-branch integration.
+
+**This documentation-only change intentionally exercises the fast PR trigger without touching math, source data, simulator code or the research workflow.** Acceptance requires its resulting fast Actions run to be green and no new full-research Actions run at the same documentation-only head. See `docs/SCIENTIFIC_CI_SPLIT.md` and [issue #34](https://github.com/carlers/quantum-opt-dashboard/issues/34). No live Streamlit deployment is authorized by this documentation change.

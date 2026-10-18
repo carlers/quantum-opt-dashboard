@@ -3,6 +3,7 @@
 Global exhaustive tests are intentionally limited to small inputs.
 The N=20 cohort is independently verified with known SCIP optima in PR #15.
 """
+from dataclasses import replace
 from itertools import combinations, product
 from pathlib import Path
 import sys
@@ -160,6 +161,11 @@ def test_parameter_validation_and_zero_neighbor_corner_case():
         make_qubo(inst, budget_penalty=-5)
     with pytest.raises(ValueError, match="binary"):
         best_slack_assignment(inst, make_qubo(inst), [1, 0, 2])
+
+    # An indicator stored as 0.5 must not pass via lossy int(0.5) == 0.
+    fractional_flags = replace(inst, fixed_neighbors=np.array([0.5, 0, 0]))
+    with pytest.raises(ValueError, match="binary"):
+        make_qubo(fractional_flags)
 
     isolated = Instance(
         coords=np.zeros((2, 2)), free_indices=np.array([0]),

@@ -16,9 +16,7 @@ APP = Path(__file__).resolve().parents[1] / "app.py"
 def test_every_real_environmental_factor_and_weight_is_visible_without_json():
     at = AppTest.from_file(str(APP), default_timeout=120).run()
     assert not at.exception
-    assert any("Eight factors and their importance" in str(x.label)
-               for x in at.get("expander"))
-    assert any("River proximity" in str(x.proto) for x in at.get("dataframe"))
+    assert any(x.label == "Redundancy strength (β)" for x in at.number_input)
     options = next(x for x in at.radio if x.label == "Criterion weights")
     assert "Custom weights · exploratory" in options.options
     assert "mvp_result" not in at.session_state

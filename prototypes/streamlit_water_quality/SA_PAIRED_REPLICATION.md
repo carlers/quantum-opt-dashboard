@@ -59,3 +59,20 @@ The larger experiment supports a trade-off in these settings: row-sum sampled ex
 - The code's explicit auxiliary-slack QUBO is **not certified identical to the historical JijModeling/OMMX QUBO**, so historical notebook or manuscript simulated-annealing comparisons remain blocked under #16.
 - This is **one** N=20 instance and one fixed sampler schedule; repeated draws do not constitute independent geographic/problem instances. No quantum-advantage inference.
 - All 32 parent seeds and all results must remain archived alongside checksum manifests for review before any manuscript or thesis evaluation.
+
+
+## Cross-run reproducibility audit — scientifically important limitation (2026-10-18)
+
+**Issue [#24](https://github.com/carlers/quantum-opt-dashboard/issues/24) is now OPEN.** The CI implementation succeeds, but its nominally fixed input and child seed manifest produced **different row-sum feasibility outcomes** on independent GitHub Actions runners. **This changes the scientific interpretation:** the first observed result above is an archived outcome, **not** a guarantee of bitwise repeatability.
+
+| GitHub Actions run | Row-sum feasible / 1024 | Row-sum optimum hits | Midpoint feasible / 1024 | Global feasible / 1024 | Raw `instance.json` SHA-256 (prefix) |
+|---|---:|---:|---:|---:|---|
+| [39096889778](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778) | **698** | 13 | 790 | 790 | `22c6bdf...` |
+| [39097001668](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097001668) | **665** | 13 | 790 | 790 | `07181560...` |
+| [39097023374](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097023374) | **665** | 13 | 790 | 790 | `07181560...` |
+
+All three still pass **30 tests** and reproduce the independent **SCIP** optimum, 15 fixed stations, candidate ordering and the *12-decimal numerical instance fingerprint* `806ef5072d79cd4e5cfde622b8b7a8a9175537aa78b18e34ff742e8f9159fce3`. The exact raw SCIP instance JSON digest differs between the first and later runs. The row-sum penalty also varies by one last-bit rounding step (`1.097819667627033` versus `1.0978196676270329`). The other two penalty settings produced the same 790 feasible draws, zero/one exact hits. **This correlation does not prove that a last-bit perturbation caused the difference**; it only establishes that both input drift and result drift occurred.
+
+Accordingly, the **+8.984 pp** first-run feasibility contrasts and the corresponding confidence-style intervals are **not unique cross-run reproducible outputs**. In each of the two subsequent runs the difference was **+12.207 pp**, with respective midpoint/global descriptive 95% parent-block bootstrap intervals **[+8.105,+16.504] pp** and **[+7.715,+16.699] pp**. Exact-optimum hit differences remained −1.270 pp (midpoint) and −1.172 pp (global), though their resampling intervals also changed.
+
+**Do not pool or choose among these reruns as independent preregistered repetitions.** The seeds are the same and the purpose of the reruns was code/documentation CI validation, not an independent fresh registered Monte Carlo design. The primary interpretation should retain all three archived runs, disclose this unresolved numerical/sampler reproducibility question, and investigate bit-level coefficient provenance under #24 **before asserting fixed-seed reproducibility across CI machines or publishing inferential performance comparisons**.

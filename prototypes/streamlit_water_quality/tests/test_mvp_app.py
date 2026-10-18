@@ -19,11 +19,11 @@ def fresh():
 def test_first_page_has_true_reference_preview_without_executing_scip():
     at = fresh()
     assert any("Water-quality sensor placement" in x.value for x in at.title)
-    assert any("Review the mathematical problem" in x.value for x in at.subheader)
+    assert any("Understand the current model" in x.value for x in at.subheader)
     assert "mvp_result" not in at.session_state
-    assert any(b.label == "Run SCIP placement" for b in at.button)
+    assert any(b.label == "Find monitoring locations (SCIP)" for b in at.button)
     assert len(at.metric) >= 3
-    assert any("Opening the dashboard does not run a solver" in str(x.proto)
+    assert any("Nothing is solved until you run it" in str(x.proto)
                for x in at.info)
 
 

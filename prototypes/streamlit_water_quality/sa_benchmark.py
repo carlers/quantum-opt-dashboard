@@ -63,7 +63,7 @@ def independent_augmented_energy(instance, qubo, bits: list[int]) -> float:
     return float(raw + budget_pen + connection_pen)
 
 
-def decode_records(response, qubo, instance, *, seed: int, penalty_name: str) -> list[dict]:
+def decode_records(response, qubo, instance, *, seed: int, penalty_name: str,\n                   sample_seed: int | None = None, read_index: int | None = None) -> list[dict]:
     """Respect response variable labels, frequencies, and QUBO-offset conventions.
 
     Dimod/OpenJij energies do NOT include our manually retained QUBO offset.
@@ -108,7 +108,7 @@ def decode_records(response, qubo, instance, *, seed: int, penalty_name: str) ->
         raw += sum(float(q) * x[i] * x[j] for i, j, q in instance.quadratic)
         budget_ok = len(selected) == instance.budget
         samples.append({
-            "penalty": penalty_name, "seed": seed, "record_row": row,
+            "penalty": penalty_name, "seed": seed, "record_row": row,\n            "sample_seed": sample_seed, "read_index": read_index,
             "occurrences": count, "full_bits": "".join(map(str, bits)),
             "selected_local_indices": json.dumps(selected, separators=(",", ":")),
             "selected_count": len(selected),
@@ -180,14 +180,29 @@ def run_benchmark(*, seeds: tuple[int, ...], reads: int, sweeps: int) -> tuple[d
         # in the sampler response, even if an exact zero diagonal was omitted.
         Q.update({(i, i): Q.get((i, i), 0.0) for i in range(qubo.n_variables)})
         for seed in seeds:
+            # A single sample_qubo(num_reads>1, seed=seed) produced the
+            # *same original x* across all reads for this pinned OpenJij build,
+            # despite different auxiliary bits. Avoid pseudo-replication:
+            # explicitly seed each individual one-read call with a child seed.
+            children = np.random.SeedSequence(seed).spawn(reads)
+            read_seeds = [int(child.generate_state(1, dtype=np.uint32)[0])
+                          for child in children]
+            if len(set(read_seeds)) != reads:
+                raise RuntimeError("Read-level OpenJij seed collision")
             start = perf_counter()
-            response = oj.SASampler().sample_qubo(
-                Q, num_reads=reads, num_sweeps=sweeps, seed=seed, sparse=True,
-            )
+            decoded = []
+            sampler = oj.SASampler()
+            for read_index, read_seed in enumerate(read_seeds):
+                response = sampler.sample_qubo(
+                    Q, num_reads=1, num_sweeps=sweeps,
+                    seed=read_seed, sparse=True,
+                )
+                decoded.extend(decode_records(
+                    response, qubo, instance, seed=seed,
+                    penalty_name=penalty_name,
+                    sample_seed=read_seed, read_index=read_index,
+                ))
             wall = perf_counter() - start
-            decoded = decode_records(
-                response, qubo, instance, seed=seed, penalty_name=penalty_name
-            )
             result = seed_summary(decoded, expected_reads=reads, optimum=float(scip["energy"]))
             trial = {
                 "penalty": penalty_name, "penalty_value": penalty, "seed": seed,
@@ -234,7 +249,7 @@ def run_benchmark(*, seeds: tuple[int, ...], reads: int, sweeps: int) -> tuple[d
         "schema_version": 1, "experiment": "water_quality_n20_classical_sa_benchmark",
         "scientific_warning": "Explicit slack QUBO is not the paper's historical JijModeling conversion; OpenJij SASampler is classical, stochastic, and not a quantum advantage test.",
         "scenario": "notebook", "N_free": N_FREE, "K_new": BUDGET,
-        "seeds": list(seeds), "reads_per_seed": reads, "sweeps_per_read": sweeps,
+        "seeds": list(seeds), "reads_per_seed": reads, "sweeps_per_read": sweeps,\n        "read_seed_derivation": "numpy.random.SeedSequence(parent_seed).spawn(reads); child.generate_state(1, uint32)[0]",\n        "individual_one_read_sampler_calls": True,
         "penalty_definition": "same positive P for both squared budget and squared local-connectivity residuals",
         "notebook_local_row_sum_is_only_a_heuristic": True,
         "global_sufficient_penalty_if_feasible": safe_penalty(instance),

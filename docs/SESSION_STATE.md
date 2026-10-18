@@ -1,3 +1,11 @@
+# Precision run checkpoint — measured before exploratory repeat (2026-10-18 UTC)
+
+The original controlled Study A (head `8b4611b3`, CI #39165632021) independently executed **six N20 notebook runs** in three Ubuntu runner jobs, each self-consistent but with **two distinct exact float64 model hashes**. Runner r1 reported AMD EPYC 9V74; r2/r3 AMD EPYC 7763. Differences isolated to four small N20 linear terms (local 9/10/17/19, absolute `1.1e-16` or `2.2e-16`), while all six original objectives, local site decisions, quadratic coefficients and constraints agree; hardware association is **not causal proof**. Study B (head `867c68bc`, CI #39165864942) added **read-only** weighted utility numerator/denominator, initial utility and pre-fixed-pair linear values to the model manifest; its three separate runner jobs all reported EPYC 7763 and all six input hashes matched. Both stages green, comparator has 8/8 adversarial tests, working SCIP fresh-kernel and old water CI are green. Exact factual report: `docs/N20_CROSS_RUN_PRECISION_RESULTS.md`, formal protocol: `docs/N20_CROSS_RUN_PRECISION_PROTOCOL.md`. Stage A/B exact SHAs are incomparable because Stage B adds debug fields.
+
+**Next gate:** one explicitly exploratory re-run with identical scientific notebook/calculation/dependency settings to sample alternate hosted CPUs; if no alternate CPU sampled, record that negative result (do not infer root cause). Then, only in a separately designed research issue/PR, freeze the legacy exact QUBO coefficients and test recorded OpenJij seeds. Do not change preregistered historical results or deploy to `main`/production. This PR #57 is stacked on unmerged PR #56.
+
+---
+
 # Precision phase — independent N20 fresh-process manifests (2026-10-18)
 
 **Working task:** Scientific reproducibility issue #24, stacked branch `science-n20-cross-run-manifests` based on **review-only draft PR #56** exact head `0c48f74c`. The proposed N20 working notebook remains unchanged; archived source GeoJSON/notebook and the Streamlit app remain untouched.

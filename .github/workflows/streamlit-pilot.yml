@@ -83,3 +83,15 @@ jobs:
           path: ${{ runner.temp }}/n20-precision-probe
           if-no-files-found: error
           retention-days: 14
+
+      - name: Replay controlled archived A/B last-bit QUBO perturbations
+        run: |
+          python prototypes/streamlit_water_quality/sa_ulp_replay.py \
+            --output-dir "${{ runner.temp }}/n20-ulp-controlled-replay"
+      - name: Upload ULP sensitivity replay states and per-arm summaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-ulp-controlled-replay
+          path: ${{ runner.temp }}/n20-ulp-controlled-replay
+          if-no-files-found: error
+          retention-days: 14

@@ -14,8 +14,8 @@ from math import isfinite, prod
 from pathlib import Path
 
 import numpy as np
-from pyscipopt import Model, quicksum
-from scipy.optimize import linprog
+from pyscipopt import Model, quicksum  # type: ignore[import-not-found]
+from scipy.optimize import linprog  # type: ignore[import-untyped]
 
 IDENT = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
 TOL = 1e-6
@@ -201,7 +201,7 @@ def independent_reference(ir: dict) -> dict:
     optimum, winner = None, None
     feasible_states = 0
     for state in product(*states):
-        fixed = {v["name"]: int(x) for v, x in zip(discrete, state)}
+        fixed: dict[str, float] = {str(v["name"]): float(x) for v, x in zip(discrete, state)}
         if not continuous:
             if not original_feasibility(ir, fixed):
                 continue

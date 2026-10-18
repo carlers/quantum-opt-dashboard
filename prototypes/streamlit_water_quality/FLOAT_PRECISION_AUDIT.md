@@ -24,3 +24,18 @@ The scoped CI workflow uploads `n20-precision-probe` with `precision_probe.json`
 **Do not silently fix by rounding.** If an explicit coefficient-normalization rule is needed, investigate it in a **new and separately labeled sensitivity experiment** with before/after scientific objective and optimum checks. Neither the preregistered benchmark's raw outcomes nor original scientific sources may be retrospectively rewritten.
 
 Tracking: [issue #24](https://github.com/carlers/quantum-opt-dashboard/issues/24), [PR #23](https://github.com/carlers/quantum-opt-dashboard/pull/23) and broader provenance #16.
+
+
+## First CI precision-probe run — read-only observation
+
+[GitHub Actions run 39097654775](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097654775) at initial PR head `12aebde4961b24ca035e5d697723b19abe8f0eb3`: **31/31 tests passed**, original SCIP/SA/paired validation green, `n20-precision-probe` artifact successfully uploaded at [artifact 12125560523](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097654775/artifacts/12125560523). This run belongs to the previously observed **665-feasible / 1,024 row-sum** mode, with source-notebook scenario exact `instance_sha256=0718156034e83d46223fa3e4e086bc9997c16f7252e3c348ca8ac70cf19d5532`.
+
+Exact observations:
+- CPU: **AMD EPYC 9V74 80-Core Processor** (runner-reported).
+- NumPy **2.5.4**; OpenJij 0.12.2 from pinned install.
+- `precision_probe.model_raw_sha256=4742a3f129d18b64f9c2b1bdc20d484a5c99f223e5d415f55ad27898785ea9f2`
+- `precision_probe.qubo_raw_sha256.notebook-local-row-sum=2f0f635c5d662b4d6fad3bdc60ba5bd0a0bcf8f3bd055ce499c24b6ac311be5d`
+- `row_sum_penalty_float_hex=0x1.190ab5b15d1b3p+0`
+- **Two builds in the same process matched exactly**; this does not imply two independent hosted runner executions will match.
+
+The remainder of this file is a diagnostic plan. A second independent CI run must be compared before asserting a relationship between CPU/platform inputs and observed float drift.

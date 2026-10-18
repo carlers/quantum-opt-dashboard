@@ -1,11 +1,3 @@
-"""Pinned research adaptation of the independently validated N=20 lake model.
-
-Copied verbatim from ui-formulation-inspector/model.py at verified research PR
-#29, rather than altering its objective, pair-product constraints, candidate
-selection or fixed station handling. The duplication is temporary pending
-safe integration of independent unmerged PR stacks. Publication parity is
-UNRESOLVED (#16). One-hop != global path connectivity.
-"""
 """Small water-quality MIQP pilot adapted from the committed research notebook.
 
 Unvalidated against publication. SCIP solves an exact MILP linearization of

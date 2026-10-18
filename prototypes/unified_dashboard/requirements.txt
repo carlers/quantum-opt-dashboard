@@ -1,0 +1,4 @@
+# One environment for all preserved MVP and bounded research plugins.
+-r ../streamlit_water_quality/requirements.txt
+openjij==0.12.2
+PyYAML>=6,<7

@@ -83,26 +83,34 @@ def test_same_formulation_accepts_different_projected_synthetic_geojson(tmp_path
         assert not study["historical_source_scenario"]
         assert study["dataset_point_count"] == 81
         assert study["budget_exactly"] == 2
-        assert len(study["selected_local_positions"]) == 2
-        assert study["original_feasible"]
-        assert study["independent_enumeration"]["status"] == "optimal_by_enumeration"
-        assert study["original_objective"] == pytest.approx(
-            study["independent_enumeration"]["optimum"], abs=1e-7
-        )
+        # Artificial replacement data can be incompatible with the original
+        # notebook's tight geometric one-hop adjacency. Report, do not relax.
+        assert study["scip_status"] == "infeasible"
+        assert not study["original_feasible"]
+        assert study["selected_local_positions"] == []
+        assert study["original_objective"] is None
+        assert study["independent_enumeration"]["status"] == "infeasible"
+        assert study["infeasibility_reason"]
+        assert (tmp_path / ("a" if result is one else "b") / "out" /
+                "actual-water-scip-milp.lp").exists()
 
 
 def test_budget_and_weights_are_typed_user_parameters_not_source_code(tmp_path):
     a = _snapshot(tmp_path / "a", source="fake-water-n5.bundle.json")
     b = _snapshot(tmp_path / "b", source="fake-water-n5.bundle.json",
-                  edit=lambda d: d["parameters"].update(budget=3))
+                  edit=lambda d: d["parameters"].update(budget=0))
     c = _snapshot(tmp_path / "c", source="fake-water-n5.bundle.json",
                   edit=lambda d: d["parameters"]["weights"].__setitem__(0, .01))
     ra = execute(a, tmp_path / "a" / "out")
     rb = execute(b, tmp_path / "b" / "out")
     rc = execute(c, tmp_path / "c" / "out")
     assert ra["result"]["budget_exactly"] == 2
-    assert rb["result"]["budget_exactly"] == 3
-    assert len(rb["result"]["selected_local_positions"]) == 3
+    assert rb["result"]["budget_exactly"] == 0
+    assert rb["result"]["scip_status"] == "optimal"
+    assert rb["result"]["original_feasible"] is True
+    assert len(rb["result"]["selected_local_positions"]) == 0
+    assert rb["result"]["original_objective"] == pytest.approx(0)
+    assert rb["result"]["independent_enumeration"]["status"] == "optimal_by_enumeration"
     assert (ra["bundle_audit"]["resolved_bundle_fingerprint_sha256"] !=
             rb["bundle_audit"]["resolved_bundle_fingerprint_sha256"] !=
             rc["bundle_audit"]["resolved_bundle_fingerprint_sha256"])

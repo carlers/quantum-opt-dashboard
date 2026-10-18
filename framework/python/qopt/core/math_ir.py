@@ -17,7 +17,6 @@ import numpy as np
 from pyscipopt import Model, quicksum
 from scipy.optimize import linprog
 
-
 IDENT = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
 TOL = 1e-6
 

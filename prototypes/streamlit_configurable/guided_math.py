@@ -52,10 +52,13 @@ def apply_guided_edit(source: dict, parameters: dict, operation: str, **edit) ->
     elif operation == "objective_update":
         objective["sense"] = edit["sense"]
         objective["constant"] = edit["constant"]
-    elif operation == "linear_set":
+    elif operation in ("linear_set", "linear_remove"):
         if edit["name"] not in names:
             raise ValueError("Unknown objective variable")
-        objective["linear"][edit["name"]] = edit["coefficient"]
+        if operation == "linear_set":
+            objective["linear"][edit["name"]] = edit["coefficient"]
+        else:
+            objective["linear"].pop(edit["name"], None)
     elif operation in ("quadratic_set", "quadratic_remove"):
         a, b = edit["first"], edit["second"]
         if a == b or a not in names or b not in names:
@@ -82,13 +85,18 @@ def apply_guided_edit(source: dict, parameters: dict, operation: str, **edit) ->
         rows.append({"id": name, "sense": edit["sense"], "rhs": edit["rhs"], "linear": {}})
     elif operation == "constraint_update":
         row = _get(rows, edit["name"], "id")
+        if edit["name"] in parameters.get("rhs_overrides", {}):
+            raise ValueError("An RHS override is active for this row; remove or edit the override first")
         row["sense"] = edit["sense"]
         row["rhs"] = edit["rhs"]
-    elif operation == "constraint_coefficient":
+    elif operation in ("constraint_coefficient", "constraint_coefficient_remove"):
         row = _get(rows, edit["name"], "id")
         if edit["variable"] not in names:
             raise ValueError("Unknown constraint variable")
-        row["linear"][edit["variable"]] = edit["coefficient"]
+        if operation == "constraint_coefficient":
+            row["linear"][edit["variable"]] = edit["coefficient"]
+        else:
+            row["linear"].pop(edit["variable"], None)
     elif operation == "constraint_remove":
         name = edit["name"]
         _get(rows, name, "id")

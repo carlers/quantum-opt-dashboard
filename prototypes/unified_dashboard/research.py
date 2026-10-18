@@ -62,15 +62,58 @@ except (OSError, ValueError, RuntimeError) as exc:
     st.error("The committed reference dataset could not be verified: " + str(exc))
     st.stop()
 
-penalties = benchmark_penalties(instance)
-label = st.selectbox(
-    "QUBO penalty (equal budget and connectivity penalties)",
-    list(penalties),
-    help="Notebook row-sum is heuristic; global bound is sufficient for optimal"
-         " feasibility when a feasible original placement exists, but not"
-         " sufficient for the stochastic sampler to find one.",
+st.subheader("Experiment: can classical annealing find valid monitoring sites?")
+st.write(
+    "The exact SCIP result is our reference. Classical simulated annealing "
+    "tries to find good bitstrings, but some samples can violate the station "
+    "budget or local connection rule. You can compare how different constraint "
+    "penalties affect those samples."
 )
+st.caption("Start with the notebook heuristic. You do not need to tune the "
+           "penalty to run the example.")
+penalties = benchmark_penalties(instance)
+penalty_names = {
+    "notebook-local-row-sum": "Notebook heuristic (good starting point)",
+    "midpoint-exploratory": "Midpoint (exploratory comparison)",
+    "global-feasibility-bound": "Global feasibility bound (conservative)",
+}
+penalty_explanations = {
+    "notebook-local-row-sum": (
+        "Based on the notebook's local coefficient row-sum heuristic. "
+        "This is an experimental starting value, not a guarantee that every "
+        "returned sample obeys the original constraints."
+    ),
+    "midpoint-exploratory": (
+        "A middle value between the notebook heuristic and the global bound. "
+        "Useful for comparing how penalty strength changes sampled outcomes."
+    ),
+    "global-feasibility-bound": (
+        "Mathematically sufficient to favor feasible global optima when a "
+        "feasible original assignment exists. It does NOT guarantee the "
+        "classical stochastic sampler will find a feasible solution."
+    ),
+}
+with st.expander("Advanced: choose a QUBO constraint penalty", expanded=False):
+    st.caption(
+        "**What is a penalty?** The QUBO adds an extra energy cost when a "
+        "sample chooses the wrong number of sensors or breaks local adjacency. "
+        "Changing the penalty changes the sampling landscape, not the original "
+        "water-quality optimization problem."
+    )
+    label = st.selectbox(
+        "QUBO penalty (equal budget and connectivity penalties)",
+        list(penalties),
+        format_func=lambda choice: penalty_names[choice],
+        help="Larger penalties punish constraint violations more strongly, "
+             "but can also make the landscape harder to sample. "
+             "The notebook heuristic is an exploratory default; the global "
+             "bound does not guarantee a feasible sampled result.",
+    )
+    st.info(penalty_explanations[label])
 chosen_penalty = penalties[label]
+st.caption("Using: " + penalty_names[label] +
+           f" · numerical penalty {chosen_penalty:.6g}. "
+           "Open Advanced to compare other values.")
 settings = {
     "free_sites_n": 20, "new_sites_k": 5, "weight_profile": "notebook",
     "dataset_sha256": data_digest, "beta": 1.0, "delta": 1.0,

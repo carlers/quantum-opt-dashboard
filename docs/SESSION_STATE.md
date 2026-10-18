@@ -1,3 +1,9 @@
+# Current draft: pre-solve lake candidate overview (2026-10-18)
+
+Branch `ux-water-candidate-map-before-solve` is a review-only UX follow-up stacked on preview/PR #53. It shows the same source-pinned 20 candidate + 15 existing stations as a gray/red map before SCIP, and reuses the renderer to show blue selected new sites only after verified solve. Changing K or other fingerprinted inputs invalidates the old result and restores the unsolved map. Headless regression added; CI and Cloud/browser retest must be recorded in GitHub issue #54. No solver, source, reference notebook, main, production, or deployed preview updates.
+
+---
+
 # Owner-provided stable Streamlit preview link — 2026-10-18
 
 **Main (unchanged):** https://v3wzqpbn8w6nmdgkxh5kum.streamlit.app/ tracks `plugin-water-streamlit-pilot`. **Preview (owner supplied):** https://quantum-opt-dashboard-55zt76rpzbn2n3dltqfgis.streamlit.app/ tracks `preview` and uses `prototypes/unified_dashboard/app.py`. The real preview URL is now recorded in the README and deployment guide. Streamlit Community Cloud runtime/browser startup has **not** been independently verified yet; owner should open the page and report any build exception. Preview branch updates should be published only after scientific/UI CI checks. GitHub `main` and the deployed production branch remain unchanged; do not merge or redeploy production without explicit approval.

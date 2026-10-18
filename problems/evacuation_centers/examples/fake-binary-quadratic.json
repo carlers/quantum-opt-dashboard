@@ -1,0 +1,36 @@
+{
+  "classification": "SYNTHETIC_BINARY_QUADRATIC",
+  "variables": [
+    "alpha",
+    "beta",
+    "gamma"
+  ],
+  "objective": {
+    "sense": "minimize",
+    "constant": 0,
+    "linear": {
+      "alpha": -4,
+      "beta": -3,
+      "gamma": -1
+    },
+    "quadratic": [
+      {
+        "first": "alpha",
+        "second": "beta",
+        "coefficient": 2
+      }
+    ]
+  },
+  "constraints": [
+    {
+      "id": "budget",
+      "sense": "<=",
+      "rhs": 1,
+      "linear": {
+        "alpha": 1,
+        "beta": 1,
+        "gamma": 1
+      }
+    }
+  ]
+}

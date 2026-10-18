@@ -1,3 +1,14 @@
+# Current scoped milestone — preregistered paired-seed SA replication (2026-10-18)
+
+- Scope: [issue #22](https://github.com/carlers/quantum-opt-dashboard/issues/22) preregistered **before results**, on isolated `science-sa-paired-replication` stacked above unmerged PR #21. New draft PR targets `science-openjij-sa-benchmark`, not the live Streamlit branch.
+- Registered design: **32 NEW parent seeds `270010001..270010032`**, 32 independently child-seeded single reads per parent × 3 **unchanged** QUBO penalty configurations, **300 sweeps/read**, total **3,072 samples** from OpenJij 0.12.2 classical SA.
+- Primary outcome: *original-feasible AND exact SCIP-optimum hit* (1e-7), denominator all samples including infeasible. Secondary: original feasibility. Report two paired differences against row-sum penalty, each with descriptive **10,000-resample parent-seed-block percentile bootstrap** intervals, fixed bootstrap PRNG seed 734021; no significance or generalization claim.
+- Implementation: `sa_paired_replication.py`, `tests/test_sa_paired_replication.py`, `SA_PAIRED_REPLICATION.md` and scoped GitHub Actions artifact `n20-sa-paired-replication`.
+- Independent SCIP 20-choose-5 certification and historical source checksums retained. No original notebook, GeoJSON, deployed app, model, or paper modification. Unresolved paper provenance issue #16.
+- **Validation gate:** New branch CI compiles, passes existing tests plus synthetic paired bootstrap tests, executes the immutable 3,072-read protocol and uploads JSON/CSV/SHA manifest. Record exact run, sample counts, bootstrap results after actual verification. No live merge/deploy without user approval.
+
+---
+
 # Active scientific checkpoint — seeded OpenJij N20 benchmark (2026-10-18)
 
 - Scope: [issue #20](https://github.com/carlers/quantum-opt-dashboard/issues/20), draft PR #21 on non-live `science-openjij-sa-benchmark` stacked above PR #19 (exact QUBO).

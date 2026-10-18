@@ -1,6 +1,7 @@
 """Reproducibility contract for *classical* OpenJij SA versus proven SCIP."""
 from dataclasses import replace
 import hashlib
+from importlib.metadata import version as package_version
 import json
 from pathlib import Path
 import sys
@@ -92,7 +93,7 @@ def test_seed_config_and_heuristic_v_global_bound_distinction():
     }
     assert 0 < notebook_row_sum_bound(inst) == grid["notebook-local-row-sum"]
     assert grid["global-feasibility-bound"] > grid["midpoint-exploratory"] > grid["notebook-local-row-sum"]
-    with pytest.raises(ValueError, match="seeds"):
+    with pytest.raises(ValueError, match="seed"):
         run_benchmark(seeds=(4, 4), reads=2, sweeps=10)
     with pytest.raises(ValueError, match="Bounded"):
         run_benchmark(seeds=(1,), reads=10000, sweeps=10)
@@ -101,7 +102,7 @@ def test_seed_config_and_heuristic_v_global_bound_distinction():
 def test_real_openjij_n20_seeded_benchmark_and_export_contract(tmp_path):
     import openjij as oj
 
-    assert oj.__version__ == "0.12.2"
+    assert package_version("openjij") == "0.12.2"
     summary = write_bundle(tmp_path, seeds=(1970, 1971), reads=8, sweeps=50)
     assert summary["scip"]["proven_optimal"] is True
     assert summary["scip"]["energy"] == pytest.approx(-3.3012934918564643, abs=1e-7)

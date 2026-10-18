@@ -240,7 +240,7 @@ else:
 
 # Show the spatial choices before requiring a solver run. Only current,
 # fingerprint-matching results are allowed to display a selected-site map.
-if st.session_state.get("mvp_result") is None:
+if not run and st.session_state.get("mvp_result") is None:
     st.subheader("Candidate site overview (before solving)")
     st.pydeck_chart(
         _placement_deck(instance),

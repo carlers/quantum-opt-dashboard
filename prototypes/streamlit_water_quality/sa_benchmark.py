@@ -63,7 +63,8 @@ def independent_augmented_energy(instance, qubo, bits: list[int]) -> float:
     return float(raw + budget_pen + connection_pen)
 
 
-def decode_records(response, qubo, instance, *, seed: int, penalty_name: str,\n                   sample_seed: int | None = None, read_index: int | None = None) -> list[dict]:
+def decode_records(response, qubo, instance, *, seed: int, penalty_name: str,
+                   sample_seed: int | None = None, read_index: int | None = None) -> list[dict]:
     """Respect response variable labels, frequencies, and QUBO-offset conventions.
 
     Dimod/OpenJij energies do NOT include our manually retained QUBO offset.
@@ -108,7 +109,8 @@ def decode_records(response, qubo, instance, *, seed: int, penalty_name: str,\n 
         raw += sum(float(q) * x[i] * x[j] for i, j, q in instance.quadratic)
         budget_ok = len(selected) == instance.budget
         samples.append({
-            "penalty": penalty_name, "seed": seed, "record_row": row,\n            "sample_seed": sample_seed, "read_index": read_index,
+            "penalty": penalty_name, "seed": seed, "record_row": row,
+            "sample_seed": sample_seed, "read_index": read_index,
             "occurrences": count, "full_bits": "".join(map(str, bits)),
             "selected_local_indices": json.dumps(selected, separators=(",", ":")),
             "selected_count": len(selected),
@@ -249,7 +251,9 @@ def run_benchmark(*, seeds: tuple[int, ...], reads: int, sweeps: int) -> tuple[d
         "schema_version": 1, "experiment": "water_quality_n20_classical_sa_benchmark",
         "scientific_warning": "Explicit slack QUBO is not the paper's historical JijModeling conversion; OpenJij SASampler is classical, stochastic, and not a quantum advantage test.",
         "scenario": "notebook", "N_free": N_FREE, "K_new": BUDGET,
-        "seeds": list(seeds), "reads_per_seed": reads, "sweeps_per_read": sweeps,\n        "read_seed_derivation": "numpy.random.SeedSequence(parent_seed).spawn(reads); child.generate_state(1, uint32)[0]",\n        "individual_one_read_sampler_calls": True,
+        "seeds": list(seeds), "reads_per_seed": reads, "sweeps_per_read": sweeps,
+        "read_seed_derivation": "numpy.random.SeedSequence(parent_seed).spawn(reads); child.generate_state(1, uint32)[0]",
+        "individual_one_read_sampler_calls": True,
         "penalty_definition": "same positive P for both squared budget and squared local-connectivity residuals",
         "notebook_local_row_sum_is_only_a_heuristic": True,
         "global_sufficient_penalty_if_feasible": safe_penalty(instance),

@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+from importlib.metadata import version as package_version
 import json
 import math
 import os
@@ -245,7 +246,7 @@ def run_benchmark(*, seeds: tuple[int, ...], reads: int, sweeps: int) -> tuple[d
                     "numpy": np.__version__, "scipy": __import__("scipy").__version__,
                     "shapely": __import__("shapely").__version__,
                     "pyscipopt": __import__("pyscipopt").__version__,
-                    "openjij": oj.__version__,
+                    "openjij": package_version("openjij"),
                     "git_commit": os.environ.get("GITHUB_HEAD_SHA") or os.environ.get("GITHUB_SHA")},
         "manuscript_comparison_is_not_input_parity": {"paper_n20_scip_energy": PAPER_REPORTED_SCIP_ENERGY},
     }

@@ -52,3 +52,35 @@ The trace **strongly localizes observed last-bit behavior** to the original sour
 **Explicitly exploratory follow-up decided after reading the above results:** freeze the exact float64 input bytes of two changing displacement vectors and two exponential arguments *from this source-verified run*, then evaluate `np.linalg.norm(np.array([x,y], dtype=np.float64))` and `np.exp(np.float64(argument))` under pinned direct NumPy/Python versions across separate newly provisioned hosts and processes **without executing the lake model**. This tests whether the low-bit modes arise from those operations on byte-identical inputs alone. It is not a newly preregistered independent replication and must be reported even if all observed CPUs happen to produce the same numbers. The original source objective equations and past benchmark results remain unchanged.
 
 **Not established:** published manuscript Table V parity, universal bitwise numerical stability, exact underlying C-level mechanism, different hardware causal attribution, or any quantum advantage. The older controlled [PR #27](https://github.com/carlers/quantum-opt-dashboard/pull/27) and frozen [PR #59](https://github.com/carlers/quantum-opt-dashboard/pull/59) experiments already separately quantify one-ULP QUBO-penalty sensitivity and fixed-input classical sampler repeatability; nothing in this trace requires changing their frozen seeds, results or penalty.
+
+## Architecture-diverse frozen-operand microprobe — explicitly exploratory, 2026-10-18 UTC
+
+After recording the all-AMD-7763 negative microprobe sample, we deliberately changed **only the tiny microbenchmark's host-allocation matrix**, not the frozen operand bytes or `numpy==2.5.4`: two separately provisioned x86 Ubuntu 24.04 runner jobs and one `ubuntu-24.04-arm` ARM64 job, each executing two fresh Python processes. The host matrix change was committed **before inspecting this rerun's results**.
+
+[Actions run #39178474623](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39178474623), microbenchmark SHA `75db73a6fb8cc517b4eb62955e297faa00ad7e89`, **SUCCESS**: 3 jobs, 6 independent process results, **6/6 adversarial tests**, checksum-verified frozen binary64 input operand manifest, complete output comparison. [Raw comparison artifact #12155068131](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39178474623/artifacts/12155068131). The observed CPU/architecture split was:
+
+- **r1 (x86)**: AMD EPYC **9V74**, both processes produced one exact output mode.
+- **r2 (x86)**: AMD EPYC **7763**, both processes produced a *different* exact output mode.
+- **r3 (ARM64)**: Linux `aarch64`, both processes matched the **r2 EPYC-7763** output mode (not r1).
+
+Every one of the **six frozen mathematical test operations** now showed **two exact IEEE754 result modes across machines**, and perfect within-host replication. All byte-identical input operands were sourced from the independently source-hash-verified N20 trace run #39177889565:
+
+| Frozen original pair / operation | Exact modes | Maximum absolute difference |
+| --- | ---: | ---: |
+| Free 0 / fixed 32, `np.linalg.norm` of fixed 2-component displacement | 2 | `3.637978807091713e-12` metres |
+| Free 9 / fixed 26, `np.linalg.norm` | 2 | `9.094947017729282e-13` metres |
+| Free 10 / fixed 30, `np.linalg.norm` | 2 | `9.094947017729282e-13` metres |
+| Free 17 / fixed 25, `np.linalg.norm` | 2 | `9.094947017729282e-13` metres |
+| Free 3 / fixed 28, `np.exp` at identical binary64 exponent | 2 | `1.6940658945086007e-21` |
+| Free 19 / fixed 22, `np.exp` at identical binary64 exponent | 2 | `2.710505431213761e-20` |
+
+**Strongest supported conclusion:** The original N20 last-bit source-model differences can arise **inside those NumPy public numerical operations when their exact float64 operands are held fixed**. In this observed controlled microexperiment, upstream geospatial data preparation, source weights, QUBO penalty generation, SCIP, and classical OpenJij were not executed. This helps independently reproduce two proximate arithmetic-stage changes that appeared in the longer N20 model trace.
+
+**Not established:** These binary differences do *not* uniquely identify a NumPy dispatch strategy, linked libm or BLAS routine, compiler flags, CPU instruction set, or cause by ARM-versus-x86 architecture. **Two different x86 AMD EPYC models already produced different modes**, and the ARM64 runtime shared an output mode with one x86 machine. Although the direct NumPy version was pinned, NumPy wheel binaries, CPU-specific dispatch and other runtime/hardware conditions were **not bit-for-bit binary-locked across systems**. The study deliberately used a tiny finite set of mathematical operands, not a broad statistical sample or a new population-level inference.
+
+### Latest exact-head scientific code evidence
+
+At `75db73a6fb8cc517b4eb62955e297faa00ad7e89`, in addition to frozen mathematical microprobe [#39178474623](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39178474623), both **full source-derived N20 controls** passed: [clean notebook independent SCIP/exhaustive replay #39178474612](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39178474612) (5/5 manifest falsification tests) and [six-source-kernel pair-stage/precision audit #39178474597](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39178474597) (8/8 original numeric comparator + 7/7 pair trace adversarial tests). The latter again observed two original scientific-core SHA modes and 20/300 exact-bit differing free–fixed pair records; the numerical model interpretation, N20 optimum and original constraint selection stayed within prior gates.
+
+Any later documentation-only commit requires observing *its own* exact-head CI before updating these success claims. All workflows remain on an isolated stacked **draft PR #61** and do not alter `main`, original historical source data or a deployed app.
+

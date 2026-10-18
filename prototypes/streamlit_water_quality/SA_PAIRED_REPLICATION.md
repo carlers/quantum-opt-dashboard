@@ -26,3 +26,36 @@
 CI must compile Python, pass synthetic-statistics tests and upstream solver/encoder/sampler tests, generate this artifact without exceeding its fixed computational ceiling, and explicitly verify its output. A successful result is **an experiment result on one fixed instance**, not proof that the chosen penalties or classical SA generalize to N≥50, evacuation-center siting, other lake geographies, JijModeling's unknown old encoding, or any quantum method.
 
 The live Streamlit branch and original notebook/dataset are frozen pending explicit user approval for a deployment-changing merge.
+
+
+## Executed results — appended after CI, not part of the frozen plan
+
+**Source:** [successful GitHub Actions run 39096889778](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778), initial implementation head `684c4931bfec5360c0611fa7196a3853d6d82b88`. **30/30 tests passed**, all four eight-parent batches completed, and both upstream evidence archive uploads plus the new paired replication artifact succeeded.
+
+- [Download exact paired-study evidence ZIP](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778/artifacts/12124762924) (`protocol.json`, `summary.json`, `trials.csv`, `samples.csv`, `manifest.json`). GitHub Actions artifacts are retained for **14 days**, currently through **2026-11-01 04:23 UTC**.
+- [Download SCIP-source reference ZIP](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778/artifacts/12124693239). The certified same-input SCIP optimum is **−3.3012934918564643**, selected local positions **[0,1,3,6,7]**; the full `C(20,5)` exhaustive reference still agrees.
+
+### Observed samples (all 1,024 draws per penalty in denominator)
+
+| Penalty | P (rounded) | Feasible / total | Feasible rate | Exact-optimum hits / total | Best feasible *raw* energy |
+|---|---:|---:|---:|---:|---:|
+| Notebook row-sum | 1.097820 | 698 / 1,024 | **68.164%** | **13 / 1,024 (1.270%)** | **−3.301293492** |
+| Exploratory midpoint | 12.926462 | 790 / 1,024 | **77.148%** | **0 / 1,024 (0%)** | −2.894016855 |
+| Sufficient global | 24.755104 | 790 / 1,024 | **77.148%** | **1 / 1,024 (0.098%)** | **−3.301293492** |
+
+**Pre-registered paired-block-bootstrap differences (positive = larger penalty has higher rate than row-sum):**
+
+| Endpoint | Midpoint − row sum | Global − row sum |
+|---|---:|---:|
+| Original-feasible rate | **+8.984 pp**, descriptive interval **[+5.469,+12.305] pp** | **+8.984 pp**, **[+5.273,+12.598] pp** |
+| Exact optimum hit rate | **−1.270 pp**, **[−1.855,−0.781] pp** | **−1.172 pp**, **[−1.758,−0.586] pp** |
+
+Every confidence-style interval above is a *descriptive* percentile bootstrap using 10,000 **paired parent-seed blocks** and one fixed N=20 objective instance. They are not multiplicity-adjusted hypothesis tests, and do not establish what happens across changed lake data, weight settings or candidate densities. **The observed midpoint optimum-hit rate was zero**, so its naive percentile bootstrap interval is exactly `[0,0]`: this is a *degenerate observed-sample bootstrap*, **not** evidence that its true chance of finding an optimum is exactly zero. Do not interpret it as a calibrated coverage statement for rare events.
+
+The larger experiment supports a trade-off in these settings: row-sum sampled exact optima more often but yielded more original-infeasible placements; both larger penalties increased original-feasible sampling. The globally sufficient penalty's theorem applies to a **global minimum of its encoded QUBO**, whereas these are finite-time, independently seeded local stochastic trajectories.
+
+### Outstanding scientific gates
+
+- The code's explicit auxiliary-slack QUBO is **not certified identical to the historical JijModeling/OMMX QUBO**, so historical notebook or manuscript simulated-annealing comparisons remain blocked under #16.
+- This is **one** N=20 instance and one fixed sampler schedule; repeated draws do not constitute independent geographic/problem instances. No quantum-advantage inference.
+- All 32 parent seeds and all results must remain archived alongside checksum manifests for review before any manuscript or thesis evaluation.

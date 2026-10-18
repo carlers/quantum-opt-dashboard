@@ -68,6 +68,39 @@ def converter():
     return Transformer.from_crs("EPSG:32651", "EPSG:4326", always_xy=True)
 
 
+def _placement_deck(instance, selected: np.ndarray | None = None) -> pdk.Deck:
+    """Render the same pinned candidate set before and after a SCIP run."""
+    flags = np.zeros(N_FREE, dtype=int) if selected is None else np.asarray(selected, dtype=int)
+    if flags.shape != (N_FREE,) or not np.isin(flags, [0, 1]).all():
+        raise ValueError("The map requires exactly 20 binary candidate flags")
+    coordinates = instance.coords
+    labels = np.array(
+        ["New sensor" if flags[i] else "Candidate" for i in range(N_FREE)] +
+        ["Existing" for _ in instance.fixed_indices]
+    )
+    longitude, latitude = converter().transform(coordinates[:, 0], coordinates[:, 1])
+    palette = {
+        "New sensor": [15, 121, 208, 235],
+        "Existing": [221, 68, 54, 220],
+        "Candidate": [140, 149, 159, 110],
+    }
+    frame = pd.DataFrame({
+        "lon": longitude, "lat": latitude, "type": labels,
+        "color": [palette[label] for label in labels],
+    })
+    return pdk.Deck(
+        layers=[pdk.Layer(
+            "ScatterplotLayer", data=frame, get_position="[lon, lat]",
+            get_fill_color="color", get_radius=1200, pickable=True,
+        )],
+        initial_view_state=pdk.ViewState(
+            latitude=float(np.mean(latitude)),
+            longitude=float(np.mean(longitude)), zoom=9,
+        ),
+        tooltip={"text": "{type}"},
+    )
+
+
 try:
     dataset_sha = source_sha(DATA_PATH)
     data = get_data()
@@ -205,6 +238,19 @@ else:
         "notebook default and must not be labeled a publication reproduction."
     )
 
+# Show the spatial choices before requiring a solver run. Only current,
+# fingerprint-matching results are allowed to display a selected-site map.
+if not run and st.session_state.get("mvp_result") is None:
+    st.subheader("Candidate site overview (before solving)")
+    st.pydeck_chart(
+        _placement_deck(instance),
+        alt="Laguna de Bay map: 20 gray candidate sites and 15 red existing stations. No new sensors selected.",
+    )
+    st.caption(
+        "Gray: candidate location · Red: existing station. No blue new-sensor "
+        "locations are selected yet. Run SCIP using the sidebar button to choose sites."
+    )
+
 with st.expander("Scientific equation and model constraints", expanded=False):
     st.latex(
         r"\min_{\mathbf{x}\in\{0,1\}^{20}}\ "
@@ -303,31 +349,10 @@ st.caption(
 )
 
 coordinates = instance.coords
-labels = np.array(
-    ["New sensor" if selected[i] else "Candidate" for i in range(N_FREE)] +
-    ["Existing" for _ in instance.fixed_indices]
+st.pydeck_chart(
+    _placement_deck(instance, selected),
+    alt="Laguna de Bay map: blue selected new sensors, red existing stations, gray unselected candidates.",
 )
-longitude, latitude = converter().transform(coordinates[:, 0], coordinates[:, 1])
-palette = {
-    "New sensor": [15, 121, 208, 235],
-    "Existing": [221, 68, 54, 220],
-    "Candidate": [140, 149, 159, 110],
-}
-frame = pd.DataFrame({
-    "lon": longitude, "lat": latitude, "type": labels,
-    "color": [palette[label] for label in labels],
-})
-st.pydeck_chart(pdk.Deck(
-    layers=[pdk.Layer(
-        "ScatterplotLayer", data=frame, get_position="[lon, lat]",
-        get_fill_color="color", get_radius=1200, pickable=True,
-    )],
-    initial_view_state=pdk.ViewState(
-        latitude=float(np.mean(latitude)),
-        longitude=float(np.mean(longitude)), zoom=9,
-    ),
-    tooltip={"text": "{type}"},
-))
 st.caption("Blue: new · Red: existing · Gray: unselected. Converted EPSG:32651 → WGS84 for display.")
 st.dataframe(pd.DataFrame({
     "master_feature_position": independent["selected_master_feature_positions"],

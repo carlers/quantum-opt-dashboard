@@ -7,13 +7,13 @@ Scientific adapters individually validate their own data model and parameters.
 from __future__ import annotations
 
 import csv
-from io import StringIO
-from math import isfinite
+import json
+import re
 from dataclasses import dataclass
 from hashlib import sha256
-import json
+from io import StringIO
+from math import isfinite
 from pathlib import Path
-import re
 from typing import Any
 
 
@@ -196,12 +196,12 @@ def load_bundle(manifest_path: Path) -> Bundle:
     ):
         raise ValueError("Dataset expected_sha256 mismatch")
     suffix = source.suffix
-    if manifest["classification"] == "RESEARCH_REFERENCE":
-        if (manifest["problem_id"] != "water_quality.reference" or
-            manifest["formulation_id"] != "notebook_one_hop_milp" or
-            suffix != ".geojson" or digest != PINNED_WATER_REFERENCE_SHA or
-            expected != PINNED_WATER_REFERENCE_SHA):
-            raise ValueError("Historical water-quality reference requires exact allowlisted source SHA and formulation")
+    if (manifest["classification"] == "RESEARCH_REFERENCE" and
+        (manifest["problem_id"] != "water_quality.reference" or
+         manifest["formulation_id"] != "notebook_one_hop_milp" or
+         suffix != ".geojson" or digest != PINNED_WATER_REFERENCE_SHA or
+         expected != PINNED_WATER_REFERENCE_SHA)):
+        raise ValueError("Historical water-quality reference requires exact allowlisted source SHA and formulation")
     if suffix == ".csv":
         if manifest["classification"] != "SYNTHETIC" or (
             manifest["problem_id"], manifest["formulation_id"]

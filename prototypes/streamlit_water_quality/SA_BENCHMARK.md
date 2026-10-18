@@ -1,6 +1,22 @@
 # N=20 classical OpenJij simulated-annealing benchmark
 
-**Status:** Isolated research experiment on draft PR #21, stacked on QUBO proof PR #19. Results must be read from the successful CI run; all numerical claims below are design targets until checked in the run log.
+**Status: VERIFIED** on [GitHub Actions run 39096176060](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096176060) for the independently seeded per-read version. The run passed **26 tests**, the standalone 288-read classical SA benchmark, prior three-scenario SCIP evidence export and both artifact upload steps. This draft PR #21 is stacked on QUBO proof PR #19; nothing is merged or deployed.
+
+### Verified CI observation (2026-10-18)
+
+Each configuration had 3 parent-seed trials × 32 individually seeded reads; samples with **infeasible** original budgets/connectivity are included in the denominator. SCIP's independently certified original MIQP optimum is **−3.3012934918564643**.
+
+| Penalty | P | Feasible / samples | Best feasible raw objective | Best feasible gap vs SCIP | Exact optimum hits |
+|---|---:|---:|---:|---:|---:|
+| Notebook local row-sum heuristic | 1.0978196676270329 | 67/96 (**69.79%**) | −3.3012934918564643 | **0** | **6** |
+| Midpoint exploratory | 12.92646186401367 | 80/96 (**83.33%**) | −3.1020113800145808 | +0.1992821118418835 | 0 |
+| Sufficient global penalty | 24.755104060400306 | 81/96 (**84.38%**) | −2.7834182199112294 | +0.5178752719452349 | 0 |
+
+This describes these **predeclared tiny-budget trials** only: the row-sum setting had fewer feasible samples but more exact-optimum hits, and the higher two penalty settings were more often feasible. It does not establish statistically stable solver rankings across larger workloads, other seeds, other source data, or other QUBO conversions.
+
+[Download the verified SA `summary.json`, `trials.csv`, `samples.csv`, and SHA manifest](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096176060/artifacts/12125230062). The archival evidence can expire after 14 days. The companion [SCIP N20 evidence artifact](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096176060/artifacts/12125260030) is also uploaded.
+
+
 
 ## Scientific question and sources
 

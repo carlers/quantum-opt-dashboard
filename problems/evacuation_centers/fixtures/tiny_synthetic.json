@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "classification": "SYNTHETIC TEST FIXTURE ONLY - not real population or evacuation guidance",
+  "units": {
+    "demands": "persons",
+    "capacity": "persons",
+    "travel_times": "minutes",
+    "budget": "maximum number of opened shelters"
+  },
+  "zone_ids": ["SYNTHETIC-ZONE-0", "SYNTHETIC-ZONE-1"],
+  "site_ids": ["SYNTHETIC-SITE-0", "SYNTHETIC-SITE-1"],
+  "demands": [4, 3],
+  "capacities": [5, 5],
+  "max_open": 1,
+  "eligible": [true, true],
+  "travel_minutes": [
+    [1, 9],
+    [2, 4]
+  ],
+  "predeclared_expected": {
+    "min_unserved_persons": 2,
+    "selected_site_index_zero_based": 0,
+    "served_zones_at_site_0_persons": [4, 1],
+    "min_travel_person_minutes": 6,
+    "maximal_covering_potential_persons": 7
+  }
+}

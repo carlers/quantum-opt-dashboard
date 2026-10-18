@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT / "problems" / "evacuation_centers"))
 
 from qopt.core.experiment_bundle import canonical, load_bundle
 from qopt.core.binary_quadratic import validate_binary_problem
+from qopt.core.math_ir import validate_ir, render_original
 from bundle_runner import _synthetic_evacuation, execute
 from water_bundle_adapter import _parameters as _water_parameters, _validate_geojson
 from notebook_reference_model import make_instance, load_data
@@ -37,6 +38,8 @@ PRESETS = {
     "Evacuation — maximum potential coverage": "evac-covering.json",
     "Evacuation — alternate artificial dataset": "evac-alternate-data.json",
     "Generic binary quadratic": "generic-binary-quadratic.json",
+    "Structured math — binary, integer and continuous": "synthetic-typed-mixed.bundle.json",
+    "Structured math — unconstrained binary QUBO": "synthetic-typed-binary-qubo.bundle.json",
     "Generic binary scores — synthetic CSV": "generic-csv-linear-bundle.json",
     "Water quality — synthetic GeoJSON": WATER_EXAMPLES / "fake-water-n5.bundle.json",
     "Water quality — alternate synthetic GeoJSON": WATER_EXAMPLES / "fake-water-alternate.bundle.json",
@@ -80,6 +83,10 @@ def _prepare(manifest: dict, data_bytes: bytes, directory: Path, extension: str 
         if b.formulation_id != "binary_quadratic":
             raise ValueError("Unsupported binary quadratic formulation")
         validate_binary_problem(b.data, b.parameters)
+    elif b.problem_id == "structured.synthetic":
+        if b.formulation_id != "typed_milp" or extension != ".json":
+            raise ValueError("Typed structured editor requires its bounded typed_milp JSON formulation")
+        validate_ir(b.data, b.parameters)
     elif b.problem_id == "water_quality.reference":
         if b.formulation_id != "notebook_one_hop_milp" or extension != ".geojson":
             raise ValueError("Water-quality reference requires its original one-hop formulation and projected GeoJSON")
@@ -98,6 +105,16 @@ def _prepare(manifest: dict, data_bytes: bytes, directory: Path, extension: str 
 
 
 def _model_text(b) -> str:
+    if b.problem_id == "structured.synthetic":
+        ir = validate_ir(b.data, b.parameters)
+        exact_qubo = not ir["constraints"] and all(
+            v["domain"] == "binary" for v in ir["variables"]
+        )
+        return (render_original(ir) + "\n" +
+                ("Direct unconstrained QUBO: exact, with maximization negated for minimizer"
+                 if exact_qubo else
+                 "Direct QUBO: REFUSED (constraints or non-binary variables need separately proven encoding)") +
+                "\nSCIP: exact MILP pair-product compiler; verified against discrete enumeration + continuous HiGHS LP.")
     if b.problem_id == "water_quality.reference":
         settings = _water_parameters(b.parameters)
         source = load_data(b.dataset_path)
@@ -186,6 +203,7 @@ def main() -> None:
     choices = (["maximal_coverage", "capacitated_lexicographic"]
                if domain == "evacuation.synthetic"
                else ["notebook_one_hop_milp"] if domain == "water_quality.reference"
+               else ["typed_milp"] if domain == "structured.synthetic"
                else ["binary_quadratic"])
     formulation = st.selectbox(
         "Mathematical formulation", choices,
@@ -200,11 +218,33 @@ def main() -> None:
          " | Columns: variable,linear_coefficient; at most 16 binary variables"
          if extension == ".csv" else " | Schema and units checked by the selected model adapter")
     )
-    editable = st.text_area(
-        "Dataset " + suffix_label + " — editable", value=sample_text,
-        height=210, key="input-data-" + preset,
-        help="Modify artificial values or upload a replacement with the SAME supported format.",
-    )
+    structured = domain == "structured.synthetic"
+    if structured:
+        sample_object = json.loads(sample_text)
+        st.caption("Structured term editor: edit variable types/bounds, coefficient terms, "
+                   "and named constraints independently. LaTeX is never executed.")
+        vars_text = st.text_area(
+            "Variables — JSON list of names, domains and bounds",
+            value=json.dumps(sample_object["variables"], indent=2),
+            height=175, key="typed-vars-" + preset,
+        )
+        obj_text = st.text_area(
+            "Objective — JSON sense, constant, linear and binary-pair terms",
+            value=json.dumps(sample_object["objective"], indent=2),
+            height=175, key="typed-objective-" + preset,
+        )
+        cons_text = st.text_area(
+            "Constraints — JSON linear rows with named RHS",
+            value=json.dumps(sample_object["constraints"], indent=2),
+            height=175, key="typed-constraints-" + preset,
+        )
+        editable = None
+    else:
+        editable = st.text_area(
+            "Dataset " + suffix_label + " — editable", value=sample_text,
+            height=210, key="input-data-" + preset,
+            help="Modify artificial values or upload a replacement with the SAME supported format.",
+        )
     uploaded = st.file_uploader(
         "Replace dataset with " + suffix_label + " (takes precedence over editor)",
         type=[extension.lstrip(".")], key="dataset-upload-" + preset,
@@ -220,7 +260,17 @@ def main() -> None:
     validation_error = ""
     try:
         parameters = json.loads(params)
-        source_bytes = uploaded.getvalue() if uploaded is not None else editable.encode("utf-8")
+        if uploaded is not None:
+            source_bytes = uploaded.getvalue()
+        elif structured:
+            source_bytes = canonical({
+                "classification": "SYNTHETIC_TYPED_OPTIMIZATION",
+                "variables": json.loads(vars_text),
+                "objective": json.loads(obj_text),
+                "constraints": json.loads(cons_text),
+            })
+        else:
+            source_bytes = editable.encode("utf-8")
         with TemporaryDirectory(prefix="qopt-synthetic-preview-") as folder:
             manifest = dict(suggested)
             manifest["formulation_id"] = formulation

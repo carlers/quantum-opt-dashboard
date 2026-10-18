@@ -1,3 +1,9 @@
+# Owner-provided stable Streamlit preview link — 2026-10-18
+
+**Main (unchanged):** https://v3wzqpbn8w6nmdgkxh5kum.streamlit.app/ tracks `plugin-water-streamlit-pilot`. **Preview (owner supplied):** https://quantum-opt-dashboard-55zt76rpzbn2n3dltqfgis.streamlit.app/ tracks `preview` and uses `prototypes/unified_dashboard/app.py`. The real preview URL is now recorded in the README and deployment guide. Streamlit Community Cloud runtime/browser startup has **not** been independently verified yet; owner should open the page and report any build exception. Preview branch updates should be published only after scientific/UI CI checks. GitHub `main` and the deployed production branch remain unchanged; do not merge or redeploy production without explicit approval.
+
+---
+
 # Canonical integration handoff — 2026-10-18
 
 **Current review-only PR [#51](https://github.com/carlers/quantum-opt-dashboard/pull/51)**: `integration/unified-scientific-mvp` → `main`. The branch combines three diverged Git histories through a real multi-parent commit: [guided and typed optimization workbench #47](https://github.com/carlers/quantum-opt-dashboard/pull/47), [narrow lake MVP #49](https://github.com/carlers/quantum-opt-dashboard/pull/49), and [bounded scientific QUBO/SA/inspector #35](https://github.com/carlers/quantum-opt-dashboard/pull/35) (which includes the original research stack #13–#29). Existing source notebook/GeoJSON and manuscript have not been rewritten. Prior state entries below are retained as dated history, **not the current scope**.

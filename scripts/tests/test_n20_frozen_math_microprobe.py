@@ -18,7 +18,7 @@ def six():
                 "replica": f"r{host}-{proc}",
                 "runtime": {"numpy": "2.5.4", "cpu_model": f"test CPU {host}"},
                 "cases": [
-                    dict(c, result_float64_hex="0x1.0p+0") for c in FROZEN_CASES
+                    dict(deepcopy(c), result_float64_hex="0x1.0p+0") for c in FROZEN_CASES
                 ],
             })
     return result

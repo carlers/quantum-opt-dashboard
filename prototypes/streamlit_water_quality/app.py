@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+from tempfile import TemporaryDirectory
 
 from formulation_audit import (
     build_audit, canonical_json, configuration_key, verify_selected,
@@ -149,7 +150,7 @@ if st.session_state.get("show_formulation", False):
         f"existing fixed sites** · **{len(original['quadratic_terms'])} original pair terms** · "
         f"**{compiled_qubo.n_variables} QUBO bits (including slack)**"
     )
-    tabs = st.tabs(["Original MIQP", "Actual SCIP MILP", "Encoded QUBO", "Inspect / export"])
+    tabs = st.tabs(["Original MIQP", "SCIP MILP (solver code)", "Encoded QUBO", "Inspect / export"])
 
     with tabs[0]:
         st.latex(
@@ -195,14 +196,14 @@ if st.session_state.get("show_formulation", False):
             "quadratic objective; it does not submit a native MIQP and does not run a QUBO."
         )
         st.latex(
-            r"\min_{\mathbf{x},\mathbf{z}}\ "
-            r"\sum_i a_i x_i+\sum_{i<j} q_{ij} z_{ij}"
+            r"\min_{\mathbf{x},\mathbf{p}}\ "
+            r"\sum_i a_i x_i+\sum_{i<j} q_{ij} p_{ij}"
         )
         st.latex(
-            r"z_{ij}\ge x_i+x_j-1,\quad z_{ij}\le x_i,\quad "
-            r"z_{ij}\le x_j,\quad x_i,z_{ij}\in\{0,1\}"
+            r"p_{ij}\ge x_i+x_j-1,\quad p_{ij}\le x_i,\quad "
+            r"p_{ij}\le x_j,\quad x_i,p_{ij}\in\{0,1\}"
         )
-        st.caption("SCIP additionally enforces the same budget and one-hop constraints above.")
+        st.caption("This equation is reconstructed from the exact SCIP solver implementation. After a run, download the actual .lp file exported from the same PySCIPOpt model to verify the solver input. SCIP additionally enforces the same budget and one-hop constraints.")
         st.dataframe([
             {"variable": t["name"], "x_i": t["i"], "x_j": t["j"],
              "coefficient": t["coefficient"]["value"],
@@ -285,14 +286,22 @@ if run:
         try:
             if current_instance is None:
                 raise RuntimeError("Cannot run without a successfully compiled model")
-            solution, result = solve_scip(
-                current_instance, time_limit=float(max_seconds)
-            )
+            # Export the exact original MILP from the SAME SCIP model object
+            # that is optimized, rather than exporting a separate mock model.
+            with TemporaryDirectory(prefix="water-scip-audit-") as directory:
+                lp_file = Path(directory) / "water-quality-scip-model.lp"
+                solution, result = solve_scip(
+                    current_instance, time_limit=float(max_seconds),
+                    export_lp_path=lp_file,
+                )
+                lp_export_bytes = lp_file.read_bytes()
+            st.session_state["scip_lp_export"] = lp_export_bytes
             st.session_state["result"] = (current_instance, solution, result)
             st.session_state["settings"] = settings
             st.session_state["result_input_key"] = input_key
         except Exception as exc:
             st.session_state.pop("result", None)
+            st.session_state.pop("scip_lp_export", None)
             st.session_state.pop("result_input_key", None)
             st.error(f"Experiment did not complete: {type(exc).__name__}: {exc}")
 
@@ -310,6 +319,15 @@ if st.session_state.get("result_input_key") != input_key:
 
 instance, solution, result = st.session_state["result"]
 st.subheader("Last completed experiment")
+if st.session_state.get("scip_lp_export"):
+    st.download_button(
+        "Download the actual SCIP model submitted for this run (.lp)",
+        data=st.session_state["scip_lp_export"],
+        file_name="water-quality-scip-model.lp",
+        mime="text/plain",
+        use_container_width=True,
+        help="Exported by PySCIPOpt from the same solver model just before optimize().",
+    )
 st.caption(f"Configuration used: {st.session_state['settings']}")
 if not result["optimal"]:
     st.warning("SCIP returned a feasible incumbent without proving optimality.")

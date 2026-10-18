@@ -13,7 +13,10 @@ import json
 import math
 from pathlib import Path
 
-from scripts.compare_n20_replays import canonical
+def canonical(obj: object) -> bytes:
+    return (json.dumps(obj, sort_keys=True, separators=(",", ":"),
+                       ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+
 
 N_FREE = 20
 N_FIXED = 15

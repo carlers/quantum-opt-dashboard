@@ -42,3 +42,31 @@ Each read is checked for original budget and local adjacency feasibility; origin
 Compare `B/B` to archived B **665/1024** and `A/A` to archived A **698/1024**. If both match and only changing linear coefficients causes the 33-draw swing, the controlled replay supports a causal influence of last-bit input changes *within this pinned sampler/code/run setup*. If the penalty-only change causes a different result, document it. If neither matches, do not dismiss cross-host/sampler nondeterminism.
 
 **Do not claim a globally consistent root cause from one controlled experiment.** A fully conclusive coefficient-origin explanation still needs tracing the original linear-increment calculation (`model.make_instance`) and cross-run bytewise fidelity of generated QUBO inputs. Statistical intervals from reused seeds are not a fresh inferential test. No live Streamlit branch, source notebook/GeoJSON, paper or original model is edited. Parent #24, #22, #16.
+
+
+## Results appended after pre-registered four-arm CI experiment (2026-10-18)
+
+**GitHub Actions run [39101669013](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39101669013) passed 33/33 tests**, original SCIP/288-read/3072-read/precision pipelines passed, four-arm **4096-read** experiment finished, and all evidence artifacts uploaded.
+
+[Download the controlled replay's complete 4096 states, parent trials, exact QUBO digests and SHA-256 manifest](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39101669013/artifacts/12126374351) (14-day GitHub retention).
+
+| Arm | Exactly preserved archived linear terms | Exactly preserved P | Original-feasible / 1024 | SCIP optimum hits / 1024 | QUBO SHA-256 prefix |
+|---|---|---|---:|---:|---|
+| B-linear/B-penalty | B | B | **665** | **13** | `2402d0a1...` |
+| A-linear/B-penalty | A | B | **665** | **13** | `abb0be00...` |
+| B-linear/A-penalty | B | A | **698** | **13** | `2bef4467...` |
+| A-linear/A-penalty | A | A | **698** | **13** | `fed3756b...` |
+
+**Controlled conclusion for this N20 instance and pinned OpenJij binary:** changing **only the four archived linear coefficients** did not change feasibility, selected original placements or any of the 1,024 complete 46-bit returned sample states for a fixed penalty. Changing **only the penalty by one binary64 ULP** (`0x1.190ab5b15d1b3p+0` to `0x1.190ab5b15d1b4p+0`) changed the final full bitstrings for **882 of 1,024** identically seeded reads; **363** read-level feasibility flags flipped, yielding a **net +33 feasible draws** (+3.22265625 percentage points). It **exactly recreated the prior 665 and 698 modes and their 13 optimum hits**.
+
+The notebook's row-sum formula has its **unique maximum at local candidate 17** in both archives. That candidate's original linear coefficient differs by 2.22×10⁻¹⁶; this shifts the calculated global row-sum heuristic by exactly one ULP. The three other last-bit linear differences are documented as real but are not necessary to produce the observed feasibility swing in this particular controlled replay.
+
+### Stronger independent post-run artifact verification
+
+After the controlled CI run, we independently downloaded **all three original GitHub Actions ZIPs** (historical [A](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778/artifacts/12124762924), historical [B](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097840149/artifacts/12125610599), and new [four-arm controlled](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39101669013/artifacts/12126374351)). Their archived SHA-256 manifests were retained in each ZIP.
+
+**All 1,024 A/A replay results matched the original historical A result at the exact bitstring level. All 1,024 B/B results matched the original historical B result at the same level.** For each paired child seed/read index, original vs controlled output matched in all inspected fields: child seed, entire 46-bit state, selected local positions, original-feasible flag, budget/connectivity flags, occurrence count, raw objective, QUBO augmented energy and sampler-reported QUBO energy.
+
+The audit also found that changing only the four linear coefficients gave **0/1024 full-bitstring changes** in either penalty setting. Penalty-only changes gave **882/1024 full-bitstring changes**, **882/1024 selected-position changes** and **363/1024 feasibility-flag changes**, with 13 optimum hits under both penalties. The separate `compare_archived_sa.py` CLI documents and automates this zipped archive comparison for future review.
+
+**What remains unresolved:** The controlled experiment identifies the *numerical-parameter mechanism*: original candidate-17 linear rounding → derived row-sum penalty ULP difference → dramatically different sampled trajectories. It does **not yet identify which exact underlying operations, compiler/library architecture, or reduction ordering caused the original candidate-17 linear coefficient to vary across CI processes.** Future work should isolate contributions in `model.make_instance` (e.g. free/fixed interaction/wake terms) and fully version float64 transformations, rather than rounding original research data or claiming any quantum advantage. Replayed fixed seeds are **not independent validation samples**.

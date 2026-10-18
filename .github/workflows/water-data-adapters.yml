@@ -1,0 +1,56 @@
+# Independent interoperability gate; never targets the deployed Streamlit pilot.
+name: Water-quality and replaceable data source adapters
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/**"
+      - "problems/evacuation_centers/bundle_runner.py"
+      - "problems/evacuation_centers/tests/test_csv_sources.py"
+      - "problems/evacuation_centers/examples/*.csv"
+      - "framework/python/qopt/core/experiment_bundle.py"
+      - "contracts/optimization_bundle.schema.json"
+      - ".github/workflows/water-data-adapters.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  water-and-data-interoperability:
+    name: Pinned N20 SCIP, synthetic GeoJSON and CSV metamorphic tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install numerical/GIS/SCIP and fast regression dependencies
+        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8"
+      - name: Check Python syntax for adapters
+        run: python -m compileall -q problems/water_quality framework/python/qopt/core problems/evacuation_centers
+      - name: Verify original pinned source and synthetic dataset/formula swapping
+        run: python -m pytest problems/water_quality/tests problems/evacuation_centers/tests -q -s
+      - name: Re-run exact immutable N20 reference through versioned bundle
+        run: |
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/water_quality/reference-n20.bundle.json \
+            --output-dir "${{ runner.temp }}/data-source-evidence/n20-immutable"
+      - name: Execute alternate synthetic GeoJSON, CSV user inputs
+        run: |
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/water_quality/examples/fake-water-n5.bundle.json \
+            --output-dir "${{ runner.temp }}/data-source-evidence/synthetic-water-1"
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/water_quality/examples/fake-water-alternate.bundle.json \
+            --output-dir "${{ runner.temp }}/data-source-evidence/synthetic-water-2"
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/evacuation_centers/examples/generic-csv-linear-bundle.json \
+            --output-dir "${{ runner.temp }}/data-source-evidence/synthetic-csv"
+      - name: Upload solver LP and source-fingerprint evidence (never copy original GeoJSON)
+        uses: actions/upload-artifact@v4
+        with:
+          name: water-csv-geojson-bundle-parity
+          path: ${{ runner.temp }}/data-source-evidence
+          if-no-files-found: error
+          retention-days: 14

@@ -138,16 +138,27 @@ def run_water_bundle(bundle, output_dir: Path) -> dict:
     )
     if simulated:
         raise ValueError("No real existing fixed stations were supplied; the source model would simulate sites")
-    solution, metrics = solve_scip(
-        instance, time_limit=p["time_limit"],
-        export_lp_path=output_dir / "actual-water-scip-milp.lp"
-    )
     independent = _exact_reference(instance)
+    # A general user-supplied dataset can legitimately have NO feasible
+    # placements. Preserve the exact SCIP model and report infeasibility,
+    # not a fabricated placement or an unexpected application crash.
+    try:
+        solution, metrics = solve_scip(
+            instance, time_limit=p["time_limit"],
+            export_lp_path=output_dir / "actual-water-scip-milp.lp"
+        )
+    except RuntimeError as exc:
+        if independent["status"] != "infeasible" or "status: infeasible" not in str(exc):
+            raise  # no unverified no-solution or time-limited status labels
+        solution = np.zeros(len(instance.free_indices), dtype=int)
+        metrics = {"status": "infeasible", "feasible": False, "energy": None}
     if independent["status"] == "optimal_by_enumeration":
         if metrics["status"] != "optimal" or abs(
             metrics["energy"] - independent["optimum"]
         ) > 1e-7:
             raise AssertionError("Water SCIP differs from independent original binary subset enumeration")
+    elif independent["status"] == "infeasible" and metrics["status"] != "infeasible":
+        raise AssertionError("SCIP claimed placement for independently infeasible water instance")
     settings_match_frozen = (
         bundle.source_manifest["classification"] == "RESEARCH_REFERENCE"
         and p["n_free"] == 20 and p["budget"] == 5
@@ -187,8 +198,9 @@ def run_water_bundle(bundle, output_dir: Path) -> dict:
         "fixed_neighbor_indicators": instance.fixed_neighbors.astype(int).tolist(),
         "selected_local_positions": np.flatnonzero(solution).astype(int).tolist(),
         "selected_master_positions": instance.free_indices[solution.astype(bool)].astype(int).tolist(),
-        "original_objective": float(metrics["energy"]),
+        "original_objective": float(metrics["energy"]) if metrics["energy"] is not None else None,
         "original_feasible": bool(metrics["feasible"]),
+        "infeasibility_reason": "No selected set satisfies exact K and one-hop adjacency" if metrics["status"] == "infeasible" else None,
         "scip_status": metrics["status"],
         "independent_enumeration": independent,
         "notes": "Historical model is from pinned separate research PR; never reinterpret selected feature positions as external property IDs.",

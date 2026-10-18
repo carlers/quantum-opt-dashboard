@@ -1,3 +1,15 @@
+# Issue #58 — frozen historical B-mode QUBO cross-host study (2026-10-18 UTC)
+
+**Current task:** Create **one immutable byte-for-byte B/B historical QUBO fixture**, pin exact SHA and original 32×32 read-seed protocol, then evaluate **classical** OpenJij on identical 46-variable inputs across separate fresh processes/hosts. This is complementary to but distinct from review-only modern N20 notebook PR #56 and source precision PR #57, and is based on the existing historical actual encoder/seed controls on PR #27 (`science-sa-ulp-causal-replay`). **No historical sources, model math, Streamlit app, main/preview/production are changed.**
+
+- New branch `science-frozen-qubo-crosshost-sa` from PR #27 `c716367a`; issue #58.
+- `docs/FROZEN_QUBO_CROSSHOST_PROTOCOL.md` fixes the scientific design before sampler results: historical B/B source archive SHA `07181560...`, B penalty exact `0x1.190ab5b15d1b3p+0`, 46 QUBO binary variables/323 terms, 32 parent×32 child seeds, 300 sweeps each, 3 fresh hosts×2 processes each = 6144 read-level results.
+- `freeze_legacy_qubo.py` generates source-grounded exact model/QUBO/seed candidate JSON from upstream `sa_ulp_replay.build_arms()`; CI candidate artifact **must be inspected and committed** before the six host jobs run. No sampler in the candidate generation step. Do not recompute/retune the QUBO in each host job.
+- The issue #26 controlled result already showed **one ULP change in B versus A row-sum penalty, not the four direct linear changes at fixed P, reproduced the 33-count feasibility difference**. This study only tests whether the same exact frozen QUBO + seeds produce bitwise-identical sampled full vectors on independent hosted processes.
+- **Next gates**: review frozen JSON and exact hash; commit read-only artifact fixture; implement runtime QUBO+source evaluation and malformed-input tests; matrix-run on separate GitHub hosts; retain full state lists/artifact digests and report outcomes/limitations. Old QUBO modes are not replaced or normalized. Keep PR unmerged.
+
+---
+
 # Final scientific checkpoint — controlled A/B penalty-ULP mechanism (2026-10-18)
 
 - **Verified draft PR #27:** https://github.com/carlers/quantum-opt-dashboard/pull/27, branch `science-sa-ulp-causal-replay`, stacked on other **unmerged non-live** research PRs. [CI 39102059377](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39102059377) at SHA `7764e7ddbcbc9be1e34ee96c6a091f34bda0fcb9`: **35/35 tests passed** (including replay, SHA archive integrity and synthetic tamper tests), all five scientific artifact uploads succeeded. [Controlled archive](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39102059377/artifacts/12126469611) contains 4096 samples; expiry ~2026-11-01 05:53 UTC.

@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from streamlit.testing.v1 import AppTest
 
 APP = Path(__file__).resolve().parents[1] / "app.py"
@@ -29,7 +31,7 @@ def test_first_time_default_synthetic_scenario_has_visible_guided_control_and_su
     button(at, "Validate and preview formulation")
     button(at, "Run this validated synthetic model with SCIP")
     report = at.session_state["completed_run"]["report"]
-    assert report["result"]["capacitated_scip"]["unserved_persons"] == 2.0
+    assert report["result"]["capacitated_scip"]["unserved_persons"] == pytest.approx(2.0, abs=1e-6)
     assert any(m.label == "People not served" for m in at.metric)
     assert any("Your optimization result" in s.value for s in at.subheader)
 
@@ -52,7 +54,7 @@ def test_no_json_edited_open_budget_is_in_validated_solver_config_and_result():
     button(at, "Run this validated synthetic model with SCIP")
     r = at.session_state["completed_run"]
     assert r["fingerprint"] != original
-    assert r["report"]["result"]["capacitated_scip"]["unserved_persons"] == 0.0
+    assert r["report"]["result"]["capacitated_scip"]["unserved_persons"] == pytest.approx(0.0, abs=1e-6)
     assert any(m.label == "People served (fictional)" and m.value == "7" for m in at.metric)
 
 
@@ -71,7 +73,7 @@ def test_no_json_edited_synthetic_demand_changes_real_input_fingerprint():
     button(at, "Validate and preview formulation")
     button(at, "Run this validated synthetic model with SCIP")
     result = at.session_state["completed_run"]["report"]["result"]["capacitated_scip"]
-    assert result["unserved_persons"] == 3.0
+    assert result["unserved_persons"] == pytest.approx(3.0, abs=1e-6)
 
 
 def test_structured_editor_is_visible_without_touching_json():

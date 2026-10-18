@@ -2,6 +2,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+import hashlib
+
+from formulation_audit import (
+    build_audit, canonical_json, configuration_key, verify_selected,
+)
+from qubo import objective_bound, safe_penalty
 
 import numpy as np
 import pandas as pd
@@ -56,6 +62,8 @@ with st.sidebar:
     beta = st.number_input("Redundancy multiplier (β)", min_value=0.0, value=1.0, step=.25)
     delta = st.number_input("Wake multiplier (δ)", min_value=0.0, value=1.0, step=.25)
     max_seconds = st.slider("SCIP time limit (seconds)", 5, 120, 30)
+    inspect = st.button("Inspect mathematical formulation", use_container_width=True,
+                        help="Preview original MIQP, SCIP MILP and encoded QUBO without running a solver.")
     run = st.button("Run SCIP experiment", type="primary", use_container_width=True)
 
 st.write(f"**Dataset:** {len(data.ids):,} geospatial candidate points · EPSG:32651 projected inputs")
@@ -70,27 +78,239 @@ st.info(
     "). This is not necessarily the paper's 15-station case."
 )
 
-if run:
-    with st.spinner("Building notebook-style candidate model and solving with SCIP…"):
+# A rendered formula is a VIEW of these exact coefficient objects, never
+# a second implementation of the mathematical model.
+dataset_sha = hashlib.sha256(DATA_PATH.read_bytes()).hexdigest()
+settings = {
+    "N": int(n_free), "K": int(budget), "weight_source": source,
+    "weights": weights.tolist(), "beta": float(beta), "delta": float(delta),
+    "scip_time_limit_seconds": int(max_seconds),
+}
+input_key = configuration_key(settings, dataset_sha)
+
+if inspect or run:
+    st.session_state["show_formulation"] = True
+
+current_instance = None
+audit = None
+compiled_qubo = None
+if st.session_state.get("show_formulation", False):
+    with st.spinner("Compiling formulation from the selected inputs (no solver run)…"):
         try:
-            instance, _ = make_instance(data, weights, int(n_free), int(budget),
-                                        beta=float(beta), delta=float(delta))
-            solution, result = solve_scip(instance, time_limit=float(max_seconds))
-            st.session_state["result"] = (instance, solution, result)
-            st.session_state["settings"] = {"N": int(n_free), "K": int(budget),
-                                             "weight_source": source, "weights": weights.tolist(),
-                                             "beta": float(beta), "delta": float(delta)}
+            # Run and inspect on this rerun both use exactly this SAME Instance.
+            current_instance, _ = make_instance(
+                data, weights, int(n_free), int(budget),
+                beta=float(beta), delta=float(delta),
+            )
+        except Exception as exc:
+            st.error(f"Could not construct the mathematical instance: {type(exc).__name__}: {exc}")
+            st.stop()
+
+    st.subheader("Mathematical formulation inspector")
+    st.caption(
+        "Read-only scientific audit. Changing the sidebar settings recompiles this preview; "
+        "it never starts SCIP or OpenJij. The numeric coefficient tables and export "
+        "are built from the same model.Instance used for SCIP."
+    )
+    custom_penalty = st.checkbox(
+        "Customize QUBO penalties for inspection only",
+        value=False, help="Does not change what the Run SCIP button solves.",
+    )
+    conservative = safe_penalty(current_instance)
+    if custom_penalty:
+        p_budget = st.number_input(
+            "QUBO budget squared penalty", min_value=1e-9,
+            value=float(conservative), format="%.12f",
+        )
+        p_local = st.number_input(
+            "QUBO local connectivity squared penalty", min_value=1e-9,
+            value=float(conservative), format="%.12f",
+        )
+    else:
+        p_budget = p_local = None
+
+    try:
+        audit, compiled_qubo = build_audit(
+            current_instance, dataset_sha256=dataset_sha, settings=settings,
+            budget_penalty=p_budget, connectivity_penalty=p_local,
+        )
+    except Exception as exc:
+        st.error(f"Cannot compile the QUBO audit: {type(exc).__name__}: {exc}")
+        st.stop()
+
+    original = audit["original_miqp"]
+    milp = audit["scip_solver_milp"]
+    qspec = audit["encoded_qubo"]
+    st.caption(
+        f"Model fingerprint (SHA-256): \`{audit['model_fingerprint_sha256']}\`"
+    )
+    st.write(
+        f"**{int(n_free)} binary free-site decisions** · **{len(current_instance.fixed_indices)} "
+        f"existing fixed sites** · **{len(original['quadratic_terms'])} original pair terms** · "
+        f"**{compiled_qubo.n_variables} QUBO bits (including slack)**"
+    )
+    tabs = st.tabs(["Original MIQP", "Actual SCIP MILP", "Encoded QUBO", "Inspect / export"])
+
+    with tabs[0]:
+        st.latex(
+            r"\min_{\mathbf{x}\in\{0,1\}^{N}}\ "
+            r"\sum_{i=0}^{N-1}a_ix_i+\sum_{i<j}q_{ij}x_ix_j"
+        )
+        st.latex(r"\sum_{i=0}^{N-1}x_i = " + str(int(budget)))
+        st.latex(
+            r"x_i \le f_i+\sum_{j\in\mathcal{N}(i)} x_j"
+            r"\quad\forall i\in\{0,\ldots,N-1\}"
+        )
+        st.warning(
+            "Connectivity means local one-hop adjacency to another selected station or an "
+            "existing station. It does NOT guarantee a route/path to an existing station."
+        )
+        st.caption(
+            "All fixed-station interactions have already been folded into the linear "
+            "coefficients a_i. This is the actual original binary quadratic objective."
+        )
+        st.dataframe([
+            {"local_i": t["i"],
+             "master_site": int(current_instance.free_indices[t["i"]]),
+             "linear_a_i": t["a"]["value"],
+             "exact_float64": t["a"]["float64_hex"]}
+            for t in original["linear_terms"]
+        ], hide_index=True, use_container_width=True)
+        with st.expander("All free-free objective interactions"):
+            st.dataframe([
+                {"i": t["i"], "j": t["j"], "q_ij": t["q"]["value"],
+                 "exact_float64": t["q"]["float64_hex"]}
+                for t in original["quadratic_terms"]
+            ], hide_index=True, use_container_width=True)
+        with st.expander("Exact local constraint coefficients for every site"):
+            st.dataframe([
+                {"i": t["i"], "f_i": t["fixed_neighbor_indicator"],
+                 "neighbor_local_indices": str(t["free_neighbor_indices"])}
+                for t in original["local_one_hop_connectivity"]
+            ], hide_index=True, use_container_width=True)
+
+    with tabs[1]:
+        st.info(
+            "The SCIP button solves an **exact MILP linearization** of the binary "
+            "quadratic objective; it does not submit a native MIQP and does not run a QUBO."
+        )
+        st.latex(
+            r"\min_{\mathbf{x},\mathbf{z}}\ "
+            r"\sum_i a_i x_i+\sum_{i<j} q_{ij} z_{ij}"
+        )
+        st.latex(
+            r"z_{ij}\ge x_i+x_j-1,\quad z_{ij}\le x_i,\quad "
+            r"z_{ij}\le x_j,\quad x_i,z_{ij}\in\{0,1\}"
+        )
+        st.caption("SCIP additionally enforces the same budget and one-hop constraints above.")
+        st.dataframe([
+            {"variable": t["name"], "x_i": t["i"], "x_j": t["j"],
+             "coefficient": t["coefficient"]["value"],
+             "pair_product_constraints": " ; ".join(t["constraints"])}
+            for t in milp["product_variables"]
+        ], hide_index=True, use_container_width=True)
+
+    with tabs[2]:
+        st.info(
+            "This QUBO is compiled from the **exact binary-slack encoder** for research "
+            "inspection. The live SCIP button does NOT run OpenJij. "
+            "It is not the historical notebook's JijModeling-to-QUBO conversion."
+        )
+        st.latex(
+            r"E_Q(\mathbf{b})=c+\sum_{i\le j}Q_{ij}b_ib_j"
+        )
+        st.latex(
+            r"E_Q=E(\mathbf{x}) + P_b(\sum_i x_i-K)^2"
+            r"+P_c\sum_i(f_i+\sum_{j\in\mathcal N(i)}x_j-x_i-s_i)^2"
+        )
+        st.write(
+            f"**Penalty budget:** {compiled_qubo.budget_penalty:.12g} · "
+            f"**Penalty connectivity:** {compiled_qubo.connectivity_penalty:.12g} · "
+            f"**QUBO offset:** {compiled_qubo.offset:.12g}"
+        )
+        st.caption(
+            f"{len(compiled_qubo.coefficients)} nonzero upper-triangular QUBO entries; "
+            f"{compiled_qubo.n_variables - int(n_free)} auxiliary slack bits. "
+            "The full exact values are downloadable."
+        )
+        bound = 2.0 * objective_bound(current_instance)
+        if compiled_qubo.budget_penalty <= bound or compiled_qubo.connectivity_penalty <= bound:
+            st.warning(
+                "At least one penalty is not above the sufficient global-feasibility bound "
+                "2B. This setting is exploratory and does not have that sufficient guarantee."
+            )
+        else:
+            st.success(
+                "Both penalties exceed 2B, a sufficient bound for the QUBO's global "
+                "minimum to be originally feasible **if an original feasible solution exists**. "
+                "This does not guarantee finite-time annealing success."
+            )
+        with st.expander("Exact nonzero QUBO coefficients"):
+            st.dataframe([
+                {"bit_i": t["i"], "bit_j": t["j"],
+                 "Q_ij": t["coefficient"]["value"],
+                 "exact_float64": t["coefficient"]["float64_hex"]}
+                for t in qspec["nonzero_upper_triangular_terms"]
+            ], hide_index=True, use_container_width=True)
+        with st.expander("Binary slack variable mapping"):
+            st.dataframe([
+                {"site_i": t["site_i"], "bit_indices": str(t["bit_indices"]),
+                 "bit_weights": str(t["bit_weights"])}
+                for t in qspec["auxiliary_binary_slacks"]
+            ], hide_index=True, use_container_width=True)
+
+    with tabs[3]:
+        st.write("Full model definition, input provenance, exact IEEE-754 coefficients, "
+                 "SCIP linearization, QUBO matrix and auxiliary mappings.")
+        st.code(
+            "Dataset SHA-256: " + dataset_sha + "\n" +
+            "Model SHA-256: " + audit["model_fingerprint_sha256"],
+            language="text",
+        )
+        st.download_button(
+            "Download mathematical audit (JSON)",
+            data=canonical_json(audit).encode("utf-8"),
+            file_name=f"water-formulation-{audit['model_fingerprint_sha256'][:12]}.json",
+            mime="application/json",
+            use_container_width=True,
+        )
+        st.caption(
+            "A model fingerprint reflects the data/config/numeric coefficients in this "
+            "preview. Different floating-point builds can yield different exact hashes; "
+            "the hash is not proof of historical-paper equivalence."
+        )
+
+if run:
+    with st.spinner("Solving the SAME inspected model instance with SCIP…"):
+        try:
+            if current_instance is None:
+                raise RuntimeError("Cannot run without a successfully compiled model")
+            solution, result = solve_scip(
+                current_instance, time_limit=float(max_seconds)
+            )
+            st.session_state["result"] = (current_instance, solution, result)
+            st.session_state["settings"] = settings
+            st.session_state["result_input_key"] = input_key
         except Exception as exc:
             st.session_state.pop("result", None)
+            st.session_state.pop("result_input_key", None)
             st.error(f"Experiment did not complete: {type(exc).__name__}: {exc}")
 
 if "result" not in st.session_state:
-    st.caption("Press **Run SCIP experiment**. No solver runs just from opening the app.")
+    st.caption("Inspect the equations first, or press **Run SCIP experiment**.")
+    st.stop()
+
+if st.session_state.get("result_input_key") != input_key:
+    st.warning(
+        "Your experiment settings changed since the last SCIP run. "
+        "The previous result is hidden to prevent a misleading equation/solution match. "
+        "Press Run SCIP experiment again."
+    )
     st.stop()
 
 instance, solution, result = st.session_state["result"]
 st.subheader("Last completed experiment")
-st.caption(f"Configuration: {st.session_state['settings']}")
+st.caption(f"Configuration used: {st.session_state['settings']}")
 if not result["optimal"]:
     st.warning("SCIP returned a feasible incumbent without proving optimality.")
 col1, col2, col3 = st.columns(3)
@@ -101,6 +321,35 @@ st.write(
     f"Feasible: **{result['feasible']}** · Budget OK: **{result['budget_ok']}** · "
     f"Connectivity OK: **{result['connectivity_ok']}** · D_max: **{instance.d_max:.1f} m**"
 )
+
+# Independent check: decode the SCIP selection AGAINST the exported MIQP
+# and the exact compiled QUBO, not just the solver-returned energy.
+if audit is not None and compiled_qubo is not None:
+    solution_audit = verify_selected(instance, compiled_qubo, audit, solution)
+    if not np.isclose(solution_audit["original_objective"], result["energy"],
+                      rtol=0, atol=1e-7) or not solution_audit["original_feasible"]:
+        st.error("Independent mathematical audit disagrees with SCIP; inspect this run.")
+        st.stop()
+    with st.expander("Verify the returned solution against the equations", expanded=True):
+        st.write(
+            f"Original objective: **{solution_audit['original_objective']:.9f}** "
+            f"(linear {solution_audit['linear_objective']:.9f} + "
+            f"quadratic {solution_audit['quadratic_objective']:.9f})"
+        )
+        st.write(
+            f"Budget residual: **{solution_audit['budget_residual']}** · "
+            f"Local constraint violations: "
+            f"**{len(solution_audit['violated_one_hop_sites'])}** · "
+            f"Minimized-slack QUBO witness: "
+            f"**{solution_audit['qubo_energy_with_minimized_slacks']:.9f}**"
+        )
+        st.caption("The original SCIP result is checked against the exact displayed model.")
+        st.download_button(
+            "Download selected-solution mathematical verification (JSON)",
+            data=canonical_json(solution_audit).encode("utf-8"),
+            file_name=f"water-solution-audit-{audit['model_fingerprint_sha256'][:12]}.json",
+            mime="application/json",
+        )
 
 coord = instance.coords
 k = len(instance.free_indices)

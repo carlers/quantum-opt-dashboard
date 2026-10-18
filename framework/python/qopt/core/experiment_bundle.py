@@ -16,7 +16,6 @@ from math import isfinite
 from pathlib import Path
 from typing import Any
 
-
 MAX_JSON_BYTES = 1_000_000
 MAX_PINNED_GEOJSON_BYTES = 5_000_000
 # Exactly the unchanged archived lake GeoJSON, NOT a blanket real-data upload permit.

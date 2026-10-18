@@ -1,12 +1,14 @@
-# Observational issue #24 experiment. Does NOT run SA or change source coefficients.
-# EXPLORATORY SECOND SAMPLING after controlled Studies A and B: same computation and
-# direct dependency pins, no algorithm changes; never claim CPU causation.
+# Issue #60 source-model follow-up: observational per-edge original N20 precision trace.
+# Distinct from earlier #24 controlled studies and #58 OpenJij exact QUBO replay.
+# All original model calculations and direct dependency pins remain unchanged.
 name: N20 exact-model cross-run precision
 
 on:
   pull_request:
     paths:
       - "scripts/compare_n20_replays.py"
+      - "scripts/compare_n20_pair_trace.py"
+      - "scripts/tests/test_n20_pair_trace.py"
       - "scripts/tests/test_compare_n20_replays.py"
       - ".github/workflows/n20-cross-run-precision.yml"
       - "problems/water_quality/notebooks/water_quality_n20_reproducible.ipynb"
@@ -79,6 +81,8 @@ jobs:
           python-version: "3.12"
       - name: Run adversarial comparator tests (no solver dependency)
         run: python -m unittest discover -s scripts/tests -p "test_compare_n20_replays.py" -v
+      - name: Challenge recorded pair-stage trace and exact-addition validator
+        run: python -m unittest discover -s scripts/tests -p "test_n20_pair_trace.py" -v
       - name: Retrieve unmodified results from three independent runner jobs
         uses: actions/download-artifact@v4
         with:
@@ -91,10 +95,17 @@ jobs:
           --inputs-root _n20-precision-results
           --report _n20-precision-comparison.json
           --min-results 6
+      - name: Identify first observed free/fixed stage divergence
+        run: >
+          python scripts/compare_n20_pair_trace.py
+          --inputs-root _n20-precision-results
+          --report _n20-free-fixed-stage-trace.json
       - name: Archive observed cross-run comparison
         uses: actions/upload-artifact@v4
         with:
           name: n20-cross-host-comparison
-          path: _n20-precision-comparison.json
+          path: |
+            _n20-precision-comparison.json
+            _n20-free-fixed-stage-trace.json
           retention-days: 14
           if-no-files-found: error

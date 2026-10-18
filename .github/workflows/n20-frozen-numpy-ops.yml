@@ -1,0 +1,87 @@
+# Issue #60: explicitly exploratory experiment designed AFTER the source trace result.
+# Exact committed 64-bit operands, not a new lake model or stochastic sampler.
+name: N20 frozen NumPy operation repeatability
+on:
+  pull_request:
+    paths:
+      - "scripts/n20_frozen_math_microprobe.py"
+      - "scripts/tests/test_n20_frozen_math_microprobe.py"
+      - ".github/workflows/n20-frozen-numpy-ops.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-numpy:
+    name: Frozen math / ${{ matrix.replica }}
+    # Exploratory architecture stress AFTER observing six homogeneous EPYC 7763 runs.
+    # Exact same committed NumPy-operand fixture; same Linux OS generation.
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - replica: r1
+            os: ubuntu-24.04
+          - replica: r2
+            os: ubuntu-24.04
+          - replica: r3
+            os: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pin NumPy direct version from the original N20 scientific CI
+        run: python -m pip install numpy==2.5.4
+      - name: Run frozen operations from independent process A
+        run: >
+          python scripts/n20_frozen_math_microprobe.py
+          --replica ${{ matrix.replica }}-a
+          --output "$RUNNER_TEMP/math-micro-${{ matrix.replica }}-a.json"
+      - name: Run identical frozen operations from independent process B
+        run: >
+          python scripts/n20_frozen_math_microprobe.py
+          --replica ${{ matrix.replica }}-b
+          --output "$RUNNER_TEMP/math-micro-${{ matrix.replica }}-b.json"
+      - name: Retain untouched frozen mathematical input/output hex
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-frozen-math-${{ matrix.replica }}
+          path: ${{ runner.temp }}/math-micro-*.json
+          retention-days: 14
+          if-no-files-found: error
+
+  six-process-comparison:
+    needs: independent-numpy
+    name: Compare exact norm and exp modes from three hosts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned NumPy and run falsification tests
+        run: |
+          python -m pip install numpy==2.5.4
+          python -m compileall -q scripts/n20_frozen_math_microprobe.py
+          python -m unittest discover -s scripts/tests -p "test_n20_frozen_math_microprobe.py" -v
+      - name: Download all six untouched process results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: n20-frozen-math-*
+          path: _n20-frozen-math-results
+          merge-multiple: false
+      - name: Compare exact same input operands across six processes
+        run: >
+          python scripts/n20_frozen_math_microprobe.py
+          --inputs-root _n20-frozen-math-results
+          --report _n20-frozen-math-compare.json
+      - name: Archive independent operation audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-frozen-numpy-operations-comparison
+          path: _n20-frozen-math-compare.json
+          retention-days: 14
+          if-no-files-found: error

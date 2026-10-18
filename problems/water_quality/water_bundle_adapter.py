@@ -48,6 +48,8 @@ def _validate_geojson(bundle) -> None:
             type(coords) is not list or len(coords) < 2 or
             any(type(v) not in (int, float) or not isfinite(v) for v in coords[:2])):
             raise ValueError(f"Feature {index} must be a projected finite Point")
+        if abs(float(coords[0])) <= 180 and abs(float(coords[1])) <= 90:
+            raise ValueError("GeoJSON includes a lon/lat coordinate; expected projected EPSG:32651 meters")
         props = feature.get("properties")
         if type(props) is not dict or "id" not in props or type(props["id"]) is not int:
             raise ValueError(f"Feature {index} needs a stable integer property id")

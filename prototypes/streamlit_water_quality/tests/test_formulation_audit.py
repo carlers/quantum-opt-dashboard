@@ -46,6 +46,15 @@ def test_every_small_binary_decision_matches_exported_objective_and_constraints(
     digest = raw_copy.pop("model_fingerprint_sha256")
     assert hashlib.sha256(canonical_json(raw_copy).encode()).hexdigest() == digest
 
+    assert [row["name"] for row in audit["scip_solver_milp"]["product_variables"]] == [
+        "p0_1", "p1_2",
+    ]
+    assert audit["scip_solver_milp"]["product_variables"][0]["constraints"] == [
+        "p0_1 >= x_0 + x_1 - 1",
+        "p0_1 <= x_0",
+        "p0_1 <= x_1",
+    ]
+
     for x in product((0, 1), repeat=3):
         arr = np.asarray(x)
         exported = verify_selected(inst, qubo, audit, arr)
@@ -137,3 +146,20 @@ def test_real_n20_miqp_qubo_and_scip_solution_match_exported_audit():
     )
     assert checks["selected_local_indices"] == [0, 1, 3, 6, 7]
     assert checks["model_fingerprint_sha256"] == audit["model_fingerprint_sha256"]
+
+
+def test_exported_scip_lp_is_the_exact_model_given_to_scip(tmp_path):
+    instance = small_case()
+    lp_path = tmp_path / "model.lp"
+    solution, result = solve_scip(
+        instance, time_limit=30., export_lp_path=lp_path,
+    )
+    assert result["status"] == "optimal"
+    assert result["feasible"]
+    assert lp_path.is_file()
+    contents = lp_path.read_text(encoding="utf-8")
+    # Names originate in the *actual* PySCIPOpt model, not the inspector.
+    for token in ("p0_1", "p1_2", "x0", "x1", "x2", "budget", "connect_0"):
+        assert token in contents
+    assert "Binary" in contents or "Binaries" in contents
+    assert result["energy"] == pytest.approx(evaluate(instance, solution)["energy"])

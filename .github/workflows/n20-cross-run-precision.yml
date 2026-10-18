@@ -1,4 +1,6 @@
 # Observational issue #24 experiment. Does NOT run SA or change source coefficients.
+# EXPLORATORY SECOND SAMPLING after controlled Studies A and B: same computation and
+# direct dependency pins, no algorithm changes; never claim CPU causation.
 name: N20 exact-model cross-run precision
 
 on:

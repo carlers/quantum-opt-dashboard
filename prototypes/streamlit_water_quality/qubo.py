@@ -72,7 +72,7 @@ def _validate(instance: Instance) -> int:
         raise ValueError("Fixed-neighbor mask must match n_free")
     if any(not isfinite(float(v)) for v in instance.linear):
         raise ValueError("Nonfinite linear coefficient")
-    if any(int(v) not in (0, 1) for v in instance.fixed_neighbors):
+    if any(float(v) not in (0.0, 1.0) for v in instance.fixed_neighbors):
         raise ValueError("Fixed-neighbor indicators must be binary")
     for i, ns in enumerate(instance.neighbors):
         if len(set(ns)) != len(ns) or any(j == i or j < 0 or j >= n for j in ns):
@@ -149,7 +149,7 @@ def make_qubo(
 
     # Keep all original and slack variable indices explicit; the QUBO
     # dictionary may omit zero-weight diagonal entries.
-    coeff = {pair: value for pair, value in sorted(coeff.items()) if abs(value) > 1e-14}
+    # Never silently drop small nonzero model terms in an exact encoding.\n    coeff = {pair: value for pair, value in sorted(coeff.items()) if value != 0.0}
     return Qubo(n, next_var, coeff, offset, pb, pc, tuple(groups), tuple(weights))
 
 

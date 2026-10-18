@@ -59,3 +59,10 @@ QUBO penalty grid search, OpenJij SA, live long-running background jobs, persist
 - [ ] Decide whether Streamlit alone is sufficient or whether an external worker is needed.
 
 No deployment, merge, or claims of replicated publication findings are authorized by this prototype.
+
+## CI lanes (prototype research branches only)
+
+- **Fast regression** (`.github/workflows/streamlit-pilot.yml`): every in-scope Python/SCIP/QUBO test and Streamlit AppTest, without rerunning full classical SA studies. This lane is intended to check ordinary dashboard/UI changes.
+- **Full scientific evidence** (`.github/workflows/streamlit-research-evidence.yml`): bounded SCIP reference and frozen OpenJij protocols with separate short-lived artifacts, automatically checked when research model/solver/experiment inputs change. It is intentionally *not* an independent new sample merely because GitHub Actions reruns it.
+
+This section is also an intentionally **documentation-only PR-trigger verification** for [issue #34](https://github.com/carlers/quantum-opt-dashboard/issues/34). Verify a PR changing only this README triggers the fast regression lane **without** launching the full science-evidence lane. This does not change the live application or its math and does not approve deployment.

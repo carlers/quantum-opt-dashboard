@@ -1,3 +1,11 @@
+# Cross-run scientific reproducibility warning (2026-10-18; issue #24)
+
+**Do not treat the first 3,072-draw paired-SA report as byte-for-byte replayable.** In GitHub Actions [39096889778](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778), row-sum feasibility was **698/1024**, whereas successful documentation-only reruns [39097001668](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097001668) and [39097023374](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097023374) each yielded **665/1024** with identical registered seeds. Row-sum optimum hits remained **13**, midpoint/global feasibility remained **790** each, and their optimum hits stayed **0/1**. The **raw input instance SHA differed** (`22c6bdf...` vs `07181560...`), though the **12-decimal numerical fingerprint and certified SCIP optimum matched**. The notebook row-sum penalty differed in its last binary rounding digit. Root cause is **unverified**; this correlation does not prove that the float drift alone caused the changed SA trajectories.
+
+First-run feasibility differences of **+8.984 pp** for each higher penalty vs row sum became **+12.207 pp** in the reruns. Preserve BOTH and the separate paired-block intervals. Do not select a favorable number, average repeated CI runs as new independent experiment blocks, claim guaranteed OpenJij cross-run seed determinism, or infer general performance across different research instances. Dedicated blocker: [issue #24](https://github.com/carlers/quantum-opt-dashboard/issues/24). Original preregistration issue #22, draft PR #23 and historical provenance issue #16 remain open. No live merger/deployment.
+
+---
+
 # Current scoped milestone — preregistered paired-seed SA replication (2026-10-18)
 
 - Scope: [issue #22](https://github.com/carlers/quantum-opt-dashboard/issues/22) preregistered **before results**, on isolated `science-sa-paired-replication` stacked above unmerged PR #21. New draft PR targets `science-openjij-sa-benchmark`, not the live Streamlit branch.

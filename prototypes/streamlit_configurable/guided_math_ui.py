@@ -129,6 +129,8 @@ def show_guided_controls(preset: str, variables_text: str,
             )
             _button("Set linear coefficient", preset, "linear_set",
                     name=target, coefficient=coefficient)
+            _button("Remove linear coefficient term", preset, "linear_remove",
+                    name=target)
             binary_vars = [v["name"] for v in variables if v["domain"] == "binary"]
             if len(binary_vars) >= 2:
                 a = st.selectbox("First interacting binary variable", binary_vars,
@@ -165,6 +167,11 @@ def show_guided_controls(preset: str, variables_text: str,
                     "Constraint right-hand side", value=float(row["rhs"]),
                     key=f"guide-rhs-{preset}-{rid}",
                 )
+                if rid in parameters.get("rhs_overrides", {}):
+                    st.warning(
+                        "A named RHS override is active: remove or edit it in the parameter "
+                        "field before changing this row's base RHS."
+                    )
                 _button("Apply constraint relation and RHS", preset, "constraint_update",
                         name=rid, sense=relation, rhs=rhs)
                 rv = st.selectbox("Constraint variable", names,
@@ -176,6 +183,8 @@ def show_guided_controls(preset: str, variables_text: str,
                 )
                 _button("Set constraint coefficient", preset, "constraint_coefficient",
                         name=rid, variable=rv, coefficient=cv)
+                _button("Remove constraint coefficient term", preset,
+                        "constraint_coefficient_remove", name=rid, variable=rv)
                 _button("Remove selected constraint", preset, "constraint_remove", name=rid)
             else:
                 st.info("No linear constraints: direct QUBO may be eligible if all variables are binary.")

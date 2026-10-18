@@ -1,0 +1,37 @@
+# Separate prototype UI; neither deployed Streamlit nor main is affected.
+name: Configurable synthetic workbench UI
+
+on:
+  pull_request:
+    paths:
+      - "prototypes/streamlit_configurable/**"
+      - "framework/python/qopt/core/experiment_bundle.py"
+      - "framework/python/qopt/core/binary_quadratic.py"
+      - "problems/evacuation_centers/bundle_runner.py"
+      - "framework/python/qopt/core/math_ir.py"
+      - "contracts/typed_math_ir.schema.json"
+      - "problems/water_quality/water_bundle_adapter.py"
+      - "problems/water_quality/notebook_reference_model.py"
+      - "problems/water_quality/examples/**"
+      - ".github/workflows/configurable-ui.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ui-synthetic-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install small SCIP solver, synthetic runner, Streamlit AppTest
+        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8" "streamlit>=1.43,<2"
+      - name: Syntax check
+        run: python -m compileall -q prototypes/streamlit_configurable framework/python/qopt/core problems/evacuation_centers problems/water_quality/water_bundle_adapter.py problems/water_quality/notebook_reference_model.py
+      - name: Run real headless UI interactions
+        run: python -m pytest prototypes/streamlit_configurable/tests -q -s
+      - name: Check backend interchangeable model proofs
+        run: python -m pytest problems/evacuation_centers/tests problems/water_quality/tests -q -s

@@ -1,0 +1,38 @@
+# Test the ONE integrated Streamlit app, not just its standalone prototypes.
+name: Unified scientific dashboard integration
+
+on:
+  pull_request:
+    paths:
+      - "prototypes/unified_dashboard/**"
+      - "prototypes/streamlit_configurable/**"
+      - "prototypes/streamlit_water_quality/**"
+      - "problems/water_quality/**"
+      - "problems/evacuation_centers/**"
+      - "framework/python/qopt/core/**"
+      - "contracts/**"
+      - "requirements.txt"
+      - ".github/workflows/unified-mvp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  integrated-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install one supported integrated environment
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install "pytest>=8,<10"
+      - name: Validate the Python entrypoints compile
+        run: python -m compileall -q prototypes/unified_dashboard prototypes/streamlit_configurable prototypes/streamlit_water_quality framework/python/qopt/core problems/evacuation_centers problems/water_quality
+      - name: Test shared navigation and three user journeys
+        run: python -m pytest prototypes/unified_dashboard/tests -q -s
+      - name: Test configurable/synthetic mathematical editor and domain solver proofs
+        run: python -m pytest prototypes/streamlit_configurable/tests problems/evacuation_centers/tests problems/water_quality/tests -q -s

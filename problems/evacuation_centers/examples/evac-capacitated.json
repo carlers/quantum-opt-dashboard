@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "classification": "SYNTHETIC",
+  "problem_id": "evacuation.synthetic",
+  "formulation_id": "capacitated_lexicographic",
+  "dataset": {
+    "path": "fake-evacuation.json"
+  },
+  "parameters": {
+    "max_open": 1
+  },
+  "description": "Typed capacity-aware two-stage location/allocation on fake populations"
+}

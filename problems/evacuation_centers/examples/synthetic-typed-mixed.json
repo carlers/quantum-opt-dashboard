@@ -1,0 +1,62 @@
+{
+  "classification": "SYNTHETIC_TYPED_OPTIMIZATION",
+  "variables": [
+    {
+      "name": "open",
+      "domain": "binary",
+      "lower": 0,
+      "upper": 1
+    },
+    {
+      "name": "staff",
+      "domain": "integer",
+      "lower": 0,
+      "upper": 2
+    },
+    {
+      "name": "people",
+      "domain": "continuous",
+      "lower": 0,
+      "upper": 5
+    }
+  ],
+  "objective": {
+    "sense": "maximize",
+    "constant": 0,
+    "linear": {
+      "open": -2,
+      "staff": -1,
+      "people": 5
+    },
+    "quadratic": []
+  },
+  "constraints": [
+    {
+      "id": "access",
+      "sense": "<=",
+      "rhs": 0,
+      "linear": {
+        "people": 1,
+        "open": -3,
+        "staff": -1
+      }
+    },
+    {
+      "id": "staff_requires_open",
+      "sense": "<=",
+      "rhs": 0,
+      "linear": {
+        "staff": 1,
+        "open": -2
+      }
+    },
+    {
+      "id": "limit_served",
+      "sense": "<=",
+      "rhs": 4,
+      "linear": {
+        "people": 1
+      }
+    }
+  ]
+}

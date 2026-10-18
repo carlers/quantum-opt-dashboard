@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "classification": "RESEARCH_REFERENCE",
+  "problem_id": "water_quality.reference",
+  "formulation_id": "notebook_one_hop_milp",
+  "dataset": {
+    "path": "data/LDB_centroids_clean.geojson",
+    "expected_sha256": "e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7"
+  },
+  "parameters": {
+    "n_free": 20,
+    "budget": 5,
+    "weights": [
+      0.3671,
+      0.1224,
+      0.2508,
+      0.0502,
+      0.1278,
+      0.0183,
+      0.0476,
+      0.0159
+    ],
+    "beta": 1,
+    "delta": 1,
+    "time_limit": 120
+  },
+  "description": "Immutable committed Laguna de Bay N20 notebook-derived reference; not manuscript parity."
+}

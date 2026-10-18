@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/carlers/quantum-opt-dashboard/blob/main/contracts/optimization_bundle.schema.json",
+  "title": "Optimization experiment bundle v1 (research prototype)",
+  "description": "Versioned allowlisted JSON/CSV/GeoJSON data and scientific formula selections. Historical lake GeoJSON allowed only by exact pinned SHA and water one-hop reference ID; arbitrary external real data is forbidden.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "problem_id",
+    "formulation_id",
+    "dataset",
+    "parameters",
+    "classification"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "problem_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]{2,63}$"
+    },
+    "formulation_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$"
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 5,
+          "description": "Relative local .json, .geojson, or .csv path inside the bundle directory; traversal, absolute and symlink paths rejected by loader"
+        },
+        "expected_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Typed, adapter-validated overrides. Unknown parameters are errors, not quietly ignored.",
+      "additionalProperties": true
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "classification": {
+      "enum": [
+        "SYNTHETIC",
+        "RESEARCH_REFERENCE"
+      ],
+      "description": "RESEARCH_REFERENCE is only permitted for the exact committed lake GeoJSON SHA, never arbitrary imported real-world data."
+    }
+  }
+}

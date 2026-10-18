@@ -1,0 +1,66 @@
+# New domain validation, intentionally unrelated to water-quality CI and live Streamlit.
+name: Evacuation synthetic formulation proof
+
+on:
+  pull_request:
+    paths:
+      - "problems/evacuation_centers/**"
+      - "framework/python/qopt/core/math_ir.py"
+      - "contracts/typed_math_ir.schema.json"
+      - "framework/python/qopt/core/experiment_bundle.py"
+      - "framework/python/qopt/core/binary_quadratic.py"
+      - "contracts/optimization_bundle.schema.json"
+      - ".github/workflows/evacuation-synthetic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-reference:
+    name: Independently verify toy SCIP shelter model vs enumerated HiGHS
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python/SciPy/SCIP and test dependencies
+        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "pyscipopt>=5,<7" "pytest>=8"
+      - name: Check synthetic-only source syntax
+        run: python -m compileall -q problems/evacuation_centers framework/python/qopt/core
+      - name: Execute independent toy-model science checks
+        run: python -m pytest problems/evacuation_centers/tests -q -s
+      - name: Build small reference dataset, solver LPs and checked evidence
+        run: |
+          python problems/evacuation_centers/synthetic_reference.py \
+            --output-dir "${{ runner.temp }}/evacuation-synthetic-evidence"
+      - name: Upload synthetic evidence only - not real shelter data
+        uses: actions/upload-artifact@v4
+        with:
+          name: evacuation-tiny-synthetic-reference
+          path: ${{ runner.temp }}/evacuation-synthetic-evidence
+          if-no-files-found: error
+          retention-days: 14
+      - name: Verify configurable bundle CLI with unrelated binary and evacuation inputs
+        run: |
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/evacuation_centers/examples/evac-capacitated.json \
+            --output-dir "${{ runner.temp }}/configurable-synthetic/evac-capacitated"
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/evacuation_centers/examples/evac-covering.json \
+            --output-dir "${{ runner.temp }}/configurable-synthetic/evac-covering"
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/evacuation_centers/examples/evac-alternate-data.json \
+            --output-dir "${{ runner.temp }}/configurable-synthetic/evac-alternate-data"
+          python problems/evacuation_centers/bundle_runner.py \
+            --bundle problems/evacuation_centers/examples/generic-binary-quadratic.json \
+            --output-dir "${{ runner.temp }}/configurable-synthetic/binary-quadratic"
+      - name: Upload alternative synthetic inputs, real SCIP LPs and audit fingerprints
+        uses: actions/upload-artifact@v4
+        with:
+          name: replaceable-synthetic-problem-bundles
+          path: ${{ runner.temp }}/configurable-synthetic
+          if-no-files-found: error
+          retention-days: 14

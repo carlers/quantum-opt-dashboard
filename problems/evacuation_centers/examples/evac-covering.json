@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "classification": "SYNTHETIC",
+  "problem_id": "evacuation.synthetic",
+  "formulation_id": "maximal_coverage",
+  "dataset": {
+    "path": "fake-evacuation.json"
+  },
+  "parameters": {
+    "max_open": 1
+  },
+  "description": "Same exact data, alternate mathematical formulation ignoring shelter capacity"
+}

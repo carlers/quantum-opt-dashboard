@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install model and SCIP validation dependencies
-        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8"
+        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8" "openjij==0.12.2"
       - name: Check Python syntax
         run: python -m compileall -q prototypes/streamlit_water_quality
       - name: Run model invariants
@@ -39,5 +39,19 @@ jobs:
         with:
           name: n20-scip-evidence
           path: ${{ runner.temp }}/n20-scip-evidence
+          if-no-files-found: error
+          retention-days: 14
+      - name: Run bounded seeded classical OpenJij SA benchmark
+        env:
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python prototypes/streamlit_water_quality/sa_benchmark.py \
+            --output-dir "${{ runner.temp }}/n20-sa-benchmark" \
+            --seeds "20261018,20261019,20261020" --reads 32 --sweeps 300
+      - name: Upload SA repeat-level results and all sampled states
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-openjij-sa-benchmark
+          path: ${{ runner.temp }}/n20-sa-benchmark
           if-no-files-found: error
           retention-days: 14

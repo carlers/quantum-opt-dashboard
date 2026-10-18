@@ -70,3 +70,26 @@ After the controlled CI run, we independently downloaded **all three original Gi
 The audit also found that changing only the four linear coefficients gave **0/1024 full-bitstring changes** in either penalty setting. Penalty-only changes gave **882/1024 full-bitstring changes**, **882/1024 selected-position changes** and **363/1024 feasibility-flag changes**, with 13 optimum hits under both penalties. The separate `compare_archived_sa.py` CLI documents and automates this zipped archive comparison for future review.
 
 **What remains unresolved:** The controlled experiment identifies the *numerical-parameter mechanism*: original candidate-17 linear rounding → derived row-sum penalty ULP difference → dramatically different sampled trajectories. It does **not yet identify which exact underlying operations, compiler/library architecture, or reduction ordering caused the original candidate-17 linear coefficient to vary across CI processes.** Future work should isolate contributions in `model.make_instance` (e.g. free/fixed interaction/wake terms) and fully version float64 transformations, rather than rounding original research data or claiming any quantum advantage. Replayed fixed seeds are **not independent validation samples**.
+
+
+### Reproduce the independent archived-bitstring comparison
+
+Download these three unmodified GitHub Actions ZIP files, saving them as `original-A.zip`, `original-B.zip` and `controlled.zip`:
+
+- [Original A SA paired-run archive](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096889778/artifacts/12124762924)
+- [Original B SA paired-run archive](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097840149/artifacts/12125610599)
+- [Four-arm controlled replay archive](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39101669013/artifacts/12126374351)
+
+From the repository root, run:
+
+```sh
+python prototypes/streamlit_water_quality/compare_archived_sa.py \
+  --archived-a original-A.zip \
+  --archived-b original-B.zip \
+  --controlled controlled.zip \
+  --output archive-comparison.json
+```
+
+This separate helper validates the individual ZIPs' SHA-256 file manifests, verifies exactly one uniquely seeded read for each expected parent/read key, and demands **exact string/bitstring equality** for ten independently archived output fields between old A ↔ A/A and old B ↔ B/B. It then reports number of changed original states and feasibility flags for each paired arm. Tamper-detection and synthetic archive/replay validation are exercised by `tests/test_compare_archived_sa.py`.
+
+**Bitwise comparisons mean equality within these recorded artifacts; they do not imply all future processors or software releases must produce identical outputs.**

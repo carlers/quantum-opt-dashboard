@@ -50,6 +50,15 @@ python prototypes/streamlit_water_quality/compare_frozen_archived_b.py \
 
 The helper validates original archived per-file SHA-256 manifest, the scientific seed/penalty scope, all 1,024 unique read keys and all twelve independently reported fields, then retains any differences instead of erasing mismatches. Matching samples under these six host/process configurations are **not a universal theorem** of seeded sampler reproducibility.
 
+## Exact-head regression after independent historical archive comparator was added
+
+At PR #59 review head `100c3d2a4c710bc45e687e8e02e04b5c10f7710b`:
+
+- [Frozen cross-host workflow #39176442679](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39176442679) **SUCCESS** on the exact head. Three independently provisioned hosts, six independently launched sampler processes, all 6,144 original 46-bit responses and feasibility/energy audits passed; `all_equal=true`, one exact ordered state digest. This run sampled **Intel Xeon Platinum 8370C** (r1) and **AMD EPYC 7763** (r2/r3), adding a different reported CPU family to the observed parity sample. **12/12** dedicated frozen fixture/replay/archive adversarial tests passed.
+- [Legacy Streamlit scientific workflow #39176442608](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39176442608) **SUCCESS: 47/47 total model/science tests**, including the older four-arm controlled 4,096-read replay: original B/B 665, A/B 665, B/A 698, A/A 698, with 13 source SCIP-optimum hits per arm. No historical result was replaced.
+- [Independent one-time source fixture generation #39176442675](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39176442675) **SUCCESS**, yielding the exact same pinned raw file digest `51d47e9a6ad320784019f02110e6543abee60da92453bc26e5c39b91e52398cb`.
+- [Final full six-process comparison artifact #12154677033](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39176442679/artifacts/12154677033) (expiry approximately November 1, 2026 UTC). No new CPU/hardware causation claim follows from agreement across the few tested machines.
+
 ## Scientific conclusion and remaining limits
 
 1. **This fixed exact B/B QUBO is reproducible bitwise in the observed six fresh processes across the observed AMD EPYC 7763/9V45 hosts**, with fixed software/thread controls. The historical original B archive also agrees exactly for all audited fields.

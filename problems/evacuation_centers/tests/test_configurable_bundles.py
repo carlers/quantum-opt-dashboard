@@ -138,7 +138,7 @@ def test_archive_records_exact_inputs_scientific_digests_and_actual_lp(tmp_path)
 
 
 @pytest.mark.parametrize("mutator,error", [
-    (lambda m: m.update(formulation_id="not_a_registered_formula"), "Unsupported"),
+    (lambda m: m.update(formulation_id="not_a_registered_formula"), "Unknown evacuation formulation"),
     (lambda m: m.update(problem_id="untrusted.python"), "Unknown problem"),
     (lambda m: m["parameters"].update(unknown=123), "Unsupported"),
     (lambda m: m.update(classification="OFFICIAL"), "Only SYNTHETIC"),
@@ -149,7 +149,12 @@ def test_archive_records_exact_inputs_scientific_digests_and_actual_lp(tmp_path)
     (lambda m: m["dataset"].update(path="/tmp/elsewhere.json"), "traversal"),
 ])
 def test_strict_manifest_preflight_fails_closed(tmp_path, mutator, error):
-    manifest = make_bundle(tmp_path, "evac-capacitated.json", update=mutator)
+    manifest = make_bundle(tmp_path, "evac-capacitated.json")
+    raw = json.loads(manifest.read_text())
+    # Change the manifest AFTER the test helper copies its legal source
+    # dataset; otherwise path-traversal cases would be overwritten silently.
+    mutator(raw)
+    manifest.write_bytes(canonical(raw))
     with pytest.raises(ValueError, match=error):
         execute(manifest, tmp_path / "out")
 

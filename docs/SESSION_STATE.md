@@ -1,3 +1,22 @@
+# Active scientific checkpoint — seeded OpenJij N20 benchmark (2026-10-18)
+
+- Scope: [issue #20](https://github.com/carlers/quantum-opt-dashboard/issues/20), draft PR #21 on non-live `science-openjij-sa-benchmark` stacked above PR #19 (exact QUBO).
+- **Verified first fully independent-read CI:** [run 39096176060](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096176060), SHA `c173d34e0afd814b0e9f568ee40d12dca1de06ee`. All **26** Python tests passed, 3×3×32-read OpenJij SA CLI completed, prior SCIP evidence workflow completed, and both evidence archives uploaded.
+- Packages: OpenJij classical SASampler pinned to **0.12.2**; other runtime versions in benchmark `summary.json`.
+- Crucial methodological fix: a prior `num_reads=32` call reusing one seed appeared to repeat original placement patterns; superseded this with **32 separate num_reads=1 calls with 32 distinct logged child seeds** derived via NumPy SeedSequence from each parent seed. All final reported benchmark counts use the corrected scheme.
+- N20=20 free, K5, 15 real fixed stations, notebook weights. SCIP proven energy −3.3012934918564643 and selected local indices [0,1,3,6,7]; independent enumeration agrees. All 3 penalty settings report 96 classical SA draws each:
+  - Notebook row-sum P=1.0978196676270329: **67/96 feasible**, best feasible −3.3012934918564643 (6 exact hits).
+  - Midpoint P=12.92646186401367: **80/96 feasible**, best feasible −3.1020113800145808 (0 exact hits).
+  - Sufficient global P=24.755104060400306: **81/96 feasible**, best feasible −2.7834182199112294 (0 exact hits).
+- Verified machine-readable [SA artifact](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096176060/artifacts/12125230062) contains summary/trial/sample detail and checksum manifest; [SCIP artifact](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39096176060/artifacts/12125260030) retains reference provenance.
+- Results are **exploratory** due to 3 parent seeds and 96 draws per point. QUBO is our explicit slack encoder, not the paper's unverified JijModeling converter. No quantum advantage, no publication parity or rigorous stochastic superiority claim.
+- Historical AHP and paper-input provenance remain under #16; next research step is preplanned larger/more diversified stochastic trials, solver formulation review, or conceptual evacuation-center model work, after appropriate scoped issue.
+- **Deployment safety:** live `plugin-water-streamlit-pilot` branch and default `main` remain untouched. No merges/deployment without explicit user permission.
+
+---
+
+## Earlier scoped scientific checkpoints
+
 # Active scientific-validation checkpoint (2026-10-18)
 
 - **Current task:** issue #18 — exact auxiliary-slack QUBO encoding, after headless N=20 SCIP evidence PR #17. Branch `science-qubo-exact-encoding`, stacked on `science-headless-evidence-export` (draft PR #17; non-live).

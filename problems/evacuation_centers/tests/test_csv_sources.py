@@ -50,7 +50,7 @@ def test_csv_is_replaceable_executed_linear_binary_optimization(tmp_path):
 @pytest.mark.parametrize("text,error", [
     ("variable,linear_coefficient\na,NaN\n", "nonfinite"),
     ("variable,linear_coefficient\na,-2\na,-4\n", "Duplicate"),
-    ("variable,linear_coefficient\n=cmd,-3\n", "Invalid"),
+    ("variable,linear_coefficient\n=cmd,-3\n", "invalid"),
     ("var,linear_coefficient\na,-1\n", "header"),
     ("variable,linear_coefficient\na,-1,malformed\n", "extra"),
     ("variable,linear_coefficient\na,-1\nb,\n", "Invalid"),

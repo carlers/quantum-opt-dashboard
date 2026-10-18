@@ -39,3 +39,24 @@ Exact observations:
 - **Two builds in the same process matched exactly**; this does not imply two independent hosted runner executions will match.
 
 The remainder of this file is a diagnostic plan. A second independent CI run must be compared before asserting a relationship between CPU/platform inputs and observed float drift.
+
+
+## Independent second GitHub runner — comparison completed
+
+[Successful CI run 39097735166](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097735166) at doc-only head `bb29843df0165fc6fc844940fc8a79b2948719b8`, **31/31 tests passed**, and archived its [second exact float/QUBO probe](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39097735166/artifacts/12125267884).
+
+| Property | First probe, run 39097654775 | Second probe, run 39097735166 |
+|---|---|---|
+| Runner CPU (reported) | AMD EPYC **9V74 80-Core** | AMD EPYC **9V45 96-Core** |
+| Same-process double build | Exact match | Exact match |
+| Raw model input SHA-256 | `4742a3f129d18b64f9c2b1bdc20d484a5c99f223e5d415f55ad27898785ea9f2` | **Same** |
+| Row-sum QUBO SHA-256 | `2f0f635c5d662b4d6fad3bdc60ba5bd0a0bcf8f3bd055ce499c24b6ac311be5d` | **Same** |
+| Midpoint / global QUBO SHA-256 | `e05a14ff...` / `8629d1fd...` | **Same** |
+| Row-sum P (exact `float.hex`) | `0x1.190ab5b15d1b3p+0` | **Same** |
+| SCIP original instance SHA-256 | `0718156034e83d46223fa3e4e086bc9997c16f7252e3e348ca8ac70cf19d5532` | **Same** |
+| SA row-sum original-feasible | **665 / 1024** | **665 / 1024** |
+| SA row-sum exact-optimum hits | **13 / 1024** | **13 / 1024** |
+
+**Caution:** The exact instance SHA in the above row should be read from the emitted `N20_EVIDENCE` log and artifact, not reconstructed from model-probe SHA; these represent **different serialized payload formats**. The correct SCIP `instance.json` SHA for both second-mode runs is `0718156034e83d46223fa3e4e086bc9997c16f7252e3e348ca8ac70cf19d5532`.
+
+These two runs establish **cross-host reproducibility for this one raw coefficient/QUBO mode**, despite two different reported AMD EPYC CPU models. They **do not resolve** why earlier runs sometimes emitted the alternative exact SCIP `instance.json` SHA `22c6bdf...` and 698 row-sum-feasible samples. Capturing the probe's float64 payload under that alternative mode (or running a controlled fixed-QUBO numerical-perturbation experiment) remains the #24 acceptance gate. CPU model differences alone are **not supported as the explanation** by these two runs.

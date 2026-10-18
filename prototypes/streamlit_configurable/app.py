@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import json
+from math import comb
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
@@ -19,12 +20,16 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = ROOT / "problems" / "evacuation_centers" / "examples"
+WATER_EXAMPLES = ROOT / "problems" / "water_quality" / "examples"
+sys.path.insert(0, str(ROOT / "problems" / "water_quality"))
 sys.path.insert(0, str(ROOT / "framework" / "python"))
 sys.path.insert(0, str(ROOT / "problems" / "evacuation_centers"))
 
 from qopt.core.experiment_bundle import canonical, load_bundle
 from qopt.core.binary_quadratic import validate_binary_problem
 from bundle_runner import _synthetic_evacuation, execute
+from water_bundle_adapter import _parameters as _water_parameters, _validate_geojson
+from notebook_reference_model import make_instance, load_data
 
 
 PRESETS = {
@@ -32,21 +37,38 @@ PRESETS = {
     "Evacuation — maximum potential coverage": "evac-covering.json",
     "Evacuation — alternate artificial dataset": "evac-alternate-data.json",
     "Generic binary quadratic": "generic-binary-quadratic.json",
+    "Generic binary scores — synthetic CSV": "generic-csv-linear-bundle.json",
+    "Water quality — synthetic GeoJSON": WATER_EXAMPLES / "fake-water-n5.bundle.json",
+    "Water quality — alternate synthetic GeoJSON": WATER_EXAMPLES / "fake-water-alternate.bundle.json",
 }
 
 
-def _bundle_spec(preset: str) -> tuple[dict, dict]:
-    manifest = json.loads((EXAMPLES / PRESETS[preset]).read_text(encoding="utf-8"))
-    data = json.loads((EXAMPLES / manifest["dataset"]["path"]).read_text(encoding="utf-8"))
-    return manifest, data
+def _bundle_spec(preset: str) -> tuple[dict, str, str]:
+    bundle_path = PRESETS[preset]
+    if not isinstance(bundle_path, Path):
+        bundle_path = EXAMPLES / bundle_path
+    manifest = json.loads(bundle_path.read_text(encoding="utf-8"))
+    file_path = bundle_path.parent / manifest["dataset"]["path"]
+    extension = file_path.suffix
+    if extension not in (".json", ".geojson", ".csv"):
+        raise ValueError("Unsupported sample input format")
+    source = file_path.read_text(encoding="utf-8")
+    if extension != ".csv":
+        source = json.dumps(json.loads(source), indent=2)
+    return manifest, source, extension
 
 
-def _prepare(manifest: dict, data_bytes: bytes, directory: Path):
+def _prepare(manifest: dict, data_bytes: bytes, directory: Path, extension: str = ".json"):
+    if manifest.get("classification") != "SYNTHETIC":
+        raise ValueError("This experimental UI accepts synthetic data only, not historical or real-site uploads")
+    if extension not in (".json", ".geojson", ".csv"):
+        raise ValueError("Unsupported dataset extension")
     if len(data_bytes) > 1_000_000:
-        raise ValueError("Prototype only supports at most 1 MB of synthetic JSON data")
-    (directory / "source.json").write_bytes(data_bytes)
+        raise ValueError("Prototype only supports at most 1 MB of synthetic data")
+    source_name = "source" + extension
+    (directory / source_name).write_bytes(data_bytes)
     config = dict(manifest)
-    config["dataset"] = {"path": "source.json"}
+    config["dataset"] = {"path": source_name}
     (directory / "bundle.json").write_bytes(canonical(config))
     b = load_bundle(directory / "bundle.json")
     # A preview is a validated data/model configuration, not a SCIP run.
@@ -58,12 +80,50 @@ def _prepare(manifest: dict, data_bytes: bytes, directory: Path):
         if b.formulation_id != "binary_quadratic":
             raise ValueError("Unsupported binary quadratic formulation")
         validate_binary_problem(b.data, b.parameters)
+    elif b.problem_id == "water_quality.reference":
+        if b.formulation_id != "notebook_one_hop_milp" or extension != ".geojson":
+            raise ValueError("Water-quality reference requires its original one-hop formulation and projected GeoJSON")
+        _validate_geojson(b)
+        settings = _water_parameters(b.parameters)
+        # Keep interactive preview and exact subset proof bounded on shared UI.
+        if settings["n_free"] > 12 or settings["time_limit"] > 30:
+            raise ValueError("UI water-quality experiment is capped at N=12 and time_limit=30 seconds")
+        if len(b.data["features"]) > 200:
+            raise ValueError("UI synthetic water GeoJSON is capped at 200 features")
+        if comb(settings["n_free"], settings["budget"]) > 200000:
+            raise ValueError("UI experiment exceeds the exhaustive verification budget")
     else:
         raise ValueError("Unsupported scientific problem adapter")
     return b
 
 
 def _model_text(b) -> str:
+    if b.problem_id == "water_quality.reference":
+        settings = _water_parameters(b.parameters)
+        source = load_data(b.dataset_path)
+        instance, simulated = make_instance(
+            source, settings["weights"], settings["n_free"], settings["budget"],
+            beta=settings["beta"], delta=settings["delta"]
+        )
+        if simulated:
+            raise ValueError("Synthetic lake scenario must supply explicit fixed station markers")
+        terms = [
+            "minimize E(x) = sum_i a_i*x_i + sum_(i<j) q_ij*x_i*x_j",
+            "x_i binary; exact budget: sum_i x_i = " + str(instance.budget),
+            "local one-hop: x_i <= fixed_neighbor_i + sum_(j neighbor of i) x_j",
+            "IMPORTANT: local one-hop is NOT global backbone connectivity",
+            "N=" + str(len(instance.free_indices)) + "; fixed sites=" + str(len(instance.fixed_indices)),
+            "factor weights: " + str(settings["weights"].tolist()),
+            "selected candidate positions (zero-based source feature indices): " +
+            str(instance.free_indices.astype(int).tolist()),
+            "a_i linear coefficients: " + str(instance.linear.astype(float).tolist()),
+            "q_ij upper quadratic terms: " + str([[int(i),int(j),float(q)] for i,j,q in instance.quadratic]),
+            "fixed_neighbor_i: " + str(instance.fixed_neighbors.astype(int).tolist()),
+            "neighbors_i: " + str([list(group) for group in instance.neighbors]),
+            "Actual SCIP MILP (including pair-product constraints) exported only after Run.",
+            "Original manuscript replication is UNRESOLVED, these are fake GeoJSON sites.",
+        ]
+        return "\n".join(terms)
     if b.problem_id == "evacuation.synthetic":
         p = _synthetic_evacuation(b.data, b.parameters)
         first = ("maximize sum(d_i * covered_i); z_i <= sum(reachable open_j)"
@@ -115,28 +175,39 @@ def main() -> None:
         "or a quantum-computing benchmark."
     )
     st.caption(
-        "Upload or edit a JSON dataset, choose a compatible formulation, "
-        "review its actual numeric terms, run SCIP, and export the full model audit."
+        "Upload or edit a supported synthetic JSON, CSV, or projected GeoJSON dataset, "
+        "choose a compatible formulation, review exact numeric terms, "
+        "run SCIP, and export the audit."
     )
 
     preset = st.selectbox("Example problem", list(PRESETS))
-    suggested, sample = _bundle_spec(preset)
+    suggested, sample_text, extension = _bundle_spec(preset)
     domain = suggested["problem_id"]
     choices = (["maximal_coverage", "capacitated_lexicographic"]
-               if domain == "evacuation.synthetic" else ["binary_quadratic"])
+               if domain == "evacuation.synthetic"
+               else ["notebook_one_hop_milp"] if domain == "water_quality.reference"
+               else ["binary_quadratic"])
     formulation = st.selectbox(
         "Mathematical formulation", choices,
         index=choices.index(suggested["formulation_id"]),
         key="formula-" + preset,
     )
+    suffix_label = {".json": "JSON", ".geojson": "GeoJSON", ".csv": "CSV"}[extension]
+    st.caption(
+        "Input format: " + suffix_label +
+        (" | Explicit EPSG:32651 projected meters, eight named factor columns and fixed-station flags"
+         if extension == ".geojson" else
+         " | Columns: variable,linear_coefficient; at most 16 binary variables"
+         if extension == ".csv" else " | Schema and units checked by the selected model adapter")
+    )
     editable = st.text_area(
-        "Dataset JSON — editable", value=json.dumps(sample, indent=2),
+        "Dataset " + suffix_label + " — editable", value=sample_text,
         height=210, key="input-data-" + preset,
-        help="Edit the synthetic numbers in place, or upload a replacement JSON file below.",
+        help="Modify artificial values or upload a replacement with the SAME supported format.",
     )
     uploaded = st.file_uploader(
-        "Replace dataset with JSON (takes precedence over editor)",
-        type=["json"], key="dataset-upload-" + preset,
+        "Replace dataset with " + suffix_label + " (takes precedence over editor)",
+        type=[extension.lstrip(".")], key="dataset-upload-" + preset,
     )
     params = st.text_area(
         "Formulation parameters JSON — editable",
@@ -154,7 +225,7 @@ def main() -> None:
             manifest = dict(suggested)
             manifest["formulation_id"] = formulation
             manifest["parameters"] = parameters
-            bundle = _prepare(manifest, source_bytes, Path(folder))
+            bundle = _prepare(manifest, source_bytes, Path(folder), extension)
             fingerprint = bundle.fingerprint
             desc = _model_text(bundle)
             validated_input = bundle.audit()
@@ -187,7 +258,7 @@ def main() -> None:
                 manifest["formulation_id"] = formulation
                 manifest["parameters"] = parameters
                 root = Path(folder)
-                checked = _prepare(manifest, source_bytes, root)
+                checked = _prepare(manifest, source_bytes, root, extension)
                 output = root / "evidence"
                 result = execute(root / "bundle.json", output)
                 if checked.fingerprint != fingerprint:
@@ -200,14 +271,14 @@ def main() -> None:
                     with ZipFile(src_zip, "r") as original:
                         for item in original.infolist():
                             dest.writestr(item, original.read(item.filename))
-                    dest.writestr("input-source.json", source_bytes)
+                    dest.writestr("input-source" + extension, source_bytes)
                     dest.writestr("input-bundle.json", (root / "bundle.json").read_bytes())
                 st.session_state["completed_run"] = {
                     "fingerprint": fingerprint,
                     "report": result["result"],
                     "archive": final_zip.getvalue(),
                 }
-        except (ValueError, KeyError, TypeError, AssertionError, OSError) as exc:
+        except (ValueError, KeyError, TypeError, AssertionError, OSError, RuntimeError) as exc:
             st.error("Solver or post-solve audit failed: " + str(exc))
             st.session_state.pop("completed_run", None)
 

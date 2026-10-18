@@ -69,3 +69,17 @@ jobs:
           path: ${{ runner.temp }}/n20-sa-paired-replication
           if-no-files-found: error
           retention-days: 14
+
+      - name: Export N20 exact float64 coefficient provenance
+        env:
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python prototypes/streamlit_water_quality/precision_probe.py \
+            --output-dir "${{ runner.temp }}/n20-precision-probe"
+      - name: Upload exact N20 model and QUBO float precision probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-precision-probe
+          path: ${{ runner.temp }}/n20-precision-probe
+          if-no-files-found: error
+          retention-days: 14

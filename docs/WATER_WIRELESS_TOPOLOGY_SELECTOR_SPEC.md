@@ -1,3 +1,21 @@
+# Final owner-selected wireless topology definition (2026-10-19)
+
+**Supersedes the preliminary three-mode proposals below.** The owner explicitly collapsed "global chain" and "global connectivity" into **one option**: **every station, NEW OR EXISTING, must be able to reach every other station through one or more straight-line, land-unobstructed, distance-qualified wireless hops. No disconnected clusters at all**. The original source notebook remains the **Local clusters** default without correction.
+
+**Exactly TWO modes:**
+- `source_local` — **Local clusters (original)**: original source one-hop, disconnected clusters allowed, and the original notebook/SCIP behavior must remain unchanged.
+- `all_stations_connected` — **Global connectivity (all stations)**: all original 15 fixed stations AND all K newly selected stations must be in **one** connected component of the graph induced by those 15+K positions. Every graph edge, including **fixed-to-fixed**, must be **explicitly derived** using the **same original** source-pinned concave-hull strict line-containment and Dmax rule. No assumption of universal fixed-site backhaul, no arbitrary virtual edges, no silent relaxation if no globally connected placement exists.
+
+This all-stations rule is **not** prior S1 or S2: S1 requires only each new component anchored, and S2 requires only the chosen new nodes and at least one fixed node to be in one component, permitting other fixed sites to be disconnected. Previous S2 counts **110** are **NOT** the new owner's full-global result. They must not be displayed as such. Until the new exact all-15-existing-sites study/solver executes, global feasibility and optimum are **unknown**.
+
+**Necessary science caveat:** original archived study did not include fixed-fixed edges in its constraint calculations. The user now authorizes a **new exploratory graph scenario**, so derive actual fixed-fixed **model-proxy** line-of-sight links from the same original 5,417 original points rather than assuming fixed network connectivity. These derived links are new scenario data, *not* historical notebook outputs nor measured radio propagation. Reject/describe infeasible global configurations with counts, without automatically changing the original N20/K5 budget, Dmax or source positions.
+
+**Implementation and tests:** new dedicated DRAFT PR stacked on the UX spec #77; source app default untouched local SCIP. For global, construct true explicit full 35-node graph (free-free, free-fixed, fixed-fixed), evaluate all original K combinations exhaustively (N20 max `C(20,10)=184,756`; bound runtime and label any incomplete enumeration). Independently recompute the original source energy and selected-graph connectivity; report **infeasible** if no assignment satisfies all-station global connectivity, instead of inventing a SCIP optimum. UI mode changes invalidate cached results and are recorded in exports. Distinguish exact enumeration from SCIP, including truthful method/status labels. Tests must expose physical shoreline approximation and all original source SHA guards. The actual new mode **must not be labeled S2** or treated as equivalent to the past 110-region counterfactual.
+
+**Next steps:** implement separately on a draft branch; run actual source pinned N20 global check and UI; publish evidence about observed feasibility and disconnected baseline components, then ask owner before any preview/main/production change.
+
+---
+
 # Draft design — wireless topology selector for the water-quality dashboard
 
 **Date:** 2026-10-19. **Design-only DRAFT**; user clarification [#76](https://github.com/carlers/quantum-opt-dashboard/issues/76). Historical notebook connectivity is intentional **local one-hop**, not a source bug. The established research changes to connectivity were **preregistered counterfactual tests**, not a new default or physical validation.

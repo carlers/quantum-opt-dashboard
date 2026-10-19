@@ -24,7 +24,7 @@ from scripts.n20_frozen_math_microprobe import (
     safe_cpu_model,
 )
 
-MODE_ENV = {"baseline": None, "no-avx2-fma3": "AVX2,FMA3"}
+MODE_ENV = {"baseline": None, "no-x86-v3-v4": "X86_V3,X86_V4"}
 EXPERIMENT = "issue62_numpy_254_fixed_operands_dispatch_intervention"
 CASE_NAMES = tuple(x["id"] for x in FROZEN_CASES)
 
@@ -169,16 +169,16 @@ def measure(replica: str, mode: str) -> dict:
     runtime = runtime_details()
     if runtime["numpy"] != EXPECTED_NUMPY:
         raise ValueError("Pinned NumPy direct package version changed")
-    if mode == "no-avx2-fma3":
-        for feature in ("AVX2", "FMA3"):
+    if mode == "no-x86-v3-v4":
+        for feature in ("X86_V3", "X86_V4"):
             if runtime["cpu_features_enabled"].get(feature) is not False:
                 raise ValueError(
                     f"Intended CPU feature was not disabled: {feature}; "
                     f"numpy={runtime['numpy']}; "
                     f"baseline={runtime['cpu_baseline']}; "
                     f"dispatch={runtime['cpu_dispatch']}; "
-                    f"AVX2={runtime['cpu_features_enabled'].get('AVX2')}; "
-                    f"FMA3={runtime['cpu_features_enabled'].get('FMA3')}; "
+                    f"X86_V3={runtime['cpu_features_enabled'].get('X86_V3')}; "
+                    f"X86_V4={runtime['cpu_features_enabled'].get('X86_V4')}; "
                     f"mask={envval}"
                 )
     return {
@@ -208,8 +208,8 @@ def validate_observation(rec: dict) -> None:
     if rt.get("numpy") != EXPECTED_NUMPY:
         raise ValueError("Core direct NumPy dependency changed")
     features = rt["cpu_features_enabled"]
-    if mode == "no-avx2-fma3" and any(
-        features.get(k) is not False for k in ("AVX2", "FMA3")
+    if mode == "no-x86-v3-v4" and any(
+        features.get(k) is not False for k in ("X86_V3", "X86_V4")
     ):
         raise ValueError("Requested SIMD mask was not actually active")
     if len(rec["case_results"]) != len(FROZEN_CASES):
@@ -258,7 +258,7 @@ def compare(records: list[dict]) -> dict:
     for host in range(1, 4):
         prefix = f"r{host}"
         baseline = [by_name[f"{prefix}-baseline-{p}"] for p in ("a", "b")]
-        masked = [by_name[f"{prefix}-no-avx2-fma3-{p}"] for p in ("a", "b")]
+        masked = [by_name[f"{prefix}-no-x86-v3-v4-{p}"] for p in ("a", "b")]
         allrec = baseline + masked
         hashes = [
             tuple((f["basename"], f["sha256"]) for f in r["runtime"]["extensions_sha256"])

@@ -1,3 +1,15 @@
+# Issue #91 bounded independently checked mathematical result — DRAFT research (2026-10-19)
+
+**Branch:** `science-bounded-solver-result-attestation` stacked on [DRAFT #89](https://github.com/carlers/quantum-opt-dashboard/pull/89) (source-gate #86 → original source S4 #84/#83 → source #68). Separate unmerged UX #78 is NOT imported. Read [bounded attestation protocol](docs/BOUNDED_RESULT_ATTESTATION_PROTOCOL.md).
+
+**Code:** `scripts/bounded_result_attestation.py` independently fully enumerates up to 20 candidates / 200000 combinations, validates exact source-model local one-hop or explicit complete **synthetic/global mathematical graph**, checks selected-site feasibility, SHA-bound source scenario, original/changed Dmax, malformed/forged solver status, raw objective and exact binary64 coefficient optimality via integer-scaled rational values. Reports mathematical optimum only for the provided model, not SCIP log authentication, historical paper or physical sensor-network validation. Tests are synthetic plus a separate genuine fresh N20 SCI P cold source/geometry/S4 gate.
+
+**Scope restrictions:** no Streamlit, current dashboard solver-runtime proof, source all-15-fixed global original graph integration, original notebook/GeoJSON/paper edits, new data, physical/scientific validation, new ranges, merge or deployment. Current branch CI needs exact-HEAD verification; no pass claimed before workflow completes.
+
+**Next steps:** create review-only draft PR for #91, inspect exact-head CI, fix defects, report bounded result separately from UI acceptance; future trusted result-verification+UI integration follows source-vs-UX dependency review and author-owned #87 physical/AHP/GIS evidence.
+
+---
+
 # Review-only scientific evidence adapter for future Streamlit — 2026-10-19
 
 **Current draft:** child of source-only scientific claim gate DRAFT #86 on a new branch `science-dashboard-evidence-readonly-adapter`. Issue #85 scientific objective/claim gate is independently verified on #86 at `d8a39099761a`; Issue #88 remains **open** for later real dashboard implementation. Separate UX chain #55 → #77 → #78 is not on this branch and has not been integrated.

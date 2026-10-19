@@ -60,7 +60,7 @@ class PrintedAhpArithmeticTests(unittest.TestCase):
             sum(r["printed_table_iv_pillar_sums"]),
             1.0, delta=1e-12,
         )
-        self.assertEqual(r["status"][:31], "printed-value arithmetic compari")
+        self.assertTrue(r["status"].startswith("printed-value arithmetic comparison"))
 
 
 if __name__ == "__main__":

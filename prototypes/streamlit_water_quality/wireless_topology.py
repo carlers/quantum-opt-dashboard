@@ -179,7 +179,12 @@ def exact_global_search(instance: "Instance", graph: WirelessGraph,
         raise ValueError("Timeout must be a positive finite number")
     total = math.comb(n, k)
     full_components = components(graph, tuple(range(n)))
-    if len(full_components) > 1:
+    # A disconnected OPTIONAL free candidate does NOT prove global infeasibility.
+    # Only distinct components containing MANDATORY original fixed stations do.
+    fixed_components = [
+        group for group in full_components if any(node >= n for node in group)
+    ]
+    if len(fixed_components) > 1:
         return None, {
             "status": "infeasible_certified_full_graph_disconnected",
             "optimal": False,
@@ -189,6 +194,7 @@ def exact_global_search(instance: "Instance", graph: WirelessGraph,
             "combinations_examined": 0,
             "feasible_combinations": 0,
             "all_35_site_graph_components": [list(g) for g in full_components],
+            "mandatory_fixed_site_components": [list(g) for g in fixed_components],
             "reason": (
                 "Even all 20 possible new sensors together cannot connect "
                 "all 15 existing stations under the source water-only link rule."

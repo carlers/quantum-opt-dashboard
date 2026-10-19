@@ -103,6 +103,8 @@ jobs:
           --source-reference "$RUNNER_TEMP/source-N20-reference.json"
           --science-global "$RUNNER_TEMP/science-source-full-global.json"
           --ux-global "$RUNNER_TEMP/ux-original-full-global.json"
+          --original-local-zip "$RUNNER_TEMP/ux-actual-local-SCIP-AppTest.zip"
+          --exploratory-global-zip "$RUNNER_TEMP/ux-actual-global-exact-AppTest.zip"
           --output "$RUNNER_TEMP/ux-current-session-AppTest-export-integrity.json"
       - name: Independently cross-check entire source and UX exported graph, objective and status
         run: >
@@ -121,6 +123,8 @@ jobs:
             ${{ runner.temp }}/science-source-full-global.json
             ${{ runner.temp }}/ux-original-full-global.json
             ${{ runner.temp }}/ux-current-session-AppTest-export-integrity.json
+            ${{ runner.temp }}/ux-actual-local-SCIP-AppTest.zip
+            ${{ runner.temp }}/ux-actual-global-exact-AppTest.zip
             ${{ runner.temp }}/two-stack-review-only-evidence-contract.json
           retention-days: 14
           if-no-files-found: error

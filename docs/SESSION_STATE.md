@@ -1,3 +1,15 @@
+# Review-only objective coefficient cross-run forensic study — 2026-10-19
+
+**Research issue #24:** Earlier source-only PR #89/#92 cold tests returned two distinct bit-exact **scored-objective** SHA values while original N20/K5 source optimum remained equal; those short artifacts did not retain the complete per-run original model payload. Prior full cross-host studies already localized some historical low-bit variation to four free/fixed original linear terms, but equivalence of the latest two SHA variants to those historical variants remains unverified.
+
+**Current isolated branch:** `science-n20-objective-fingerprint-replication` based on source-only result-attestor DRAFT #92 HEAD `1ae1a44e3bae17afd02981217da84ef9f7c59723`. New study code `scripts/studies/n20_objective_crossrun.py`, adversarial tests `scripts/tests/test_n20_objective_crossrun.py`, separate 3-host×2-original cold replay workflow `.github/workflows/n20-objective-fingerprint-forensics.yml`, and preregistered [methodology](docs/research_protocols/N20_OBJECTIVE_FINGERPRINT_REPLICATION_2026_10_19.md). Direct dependencies pinned as in former #24 precision experiments. Original notebook/GeoJSON/coefficients untouched; source AHP road D2 and manuscript/physical blockers preserved. Six full raw original model manifests to be retained as 14-day CI artifacts if successfully run; no earlier raw model bytes can be reconstructed from their SHA alone.
+
+**Current state:** New draft exact-head CI not yet observed. No claim yet of variants, coefficient paths, CPU correlations or scientifically validated replacement model under this new study.
+
+**Next steps:** create draft child PR, observe six source+independent GIS runs and compare exact scored-objective fingerprints, inspect artifacts/test failures, report either null single-mode or changed coefficients without retuning. Keep source/UX stacks unmerged, no preview/main/production changes and no publication/field validation.
+
+---
+
 # Exact original N20 bounded mathematical attestation — successful draft evidence (2026-10-19)
 
 **DRAFT PR #92** https://github.com/carlers/quantum-opt-dashboard/pull/92, downstream of **source-only adapter DRAFT #89**, no shared ancestry with unmerged UX global-topology PR #78. Original **implementation HEAD `baab8504bc6a087e13b2e2262ad7d69c0874253c`** [cold CI #39287590948](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948) **SUCCESS:** 12 source claim +14 adapter +16 new bounded exact-result tests passed (42), real original notebook SCIP, source raw geometry, S4, manuscript/physical BLOCKED claims, independent exact-rational N20 local 1,077-feasible K5 mathematical optimum `[0,1,3,6,7]`, `-3.3012934918564643`. [Proof artifact #12203347942](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948/artifacts/12203347942) 14-day expiry 2026-11-02 16:42:26 UTC. Future source-only review artifact must be saved externally before expiration if needed.

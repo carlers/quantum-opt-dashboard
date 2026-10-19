@@ -27,8 +27,8 @@ def records() -> list[dict]:
                         "cpu_model": f"synthetic-cpu-{h}",
                         "machine": "x86_64", "libc": ["glibc", "2.39"],
                         "cpu_features_enabled": {
-                            "AVX2": mode == "baseline",
-                            "FMA3": mode == "baseline",
+                            "X86_V3": mode == "baseline",
+                            "X86_V4": mode == "baseline",
                         },
                         "env": {
                             "NPY_DISABLE_CPU_FEATURES": MODE_ENV[mode]
@@ -75,7 +75,7 @@ class DispatchAuditTests(unittest.TestCase):
     def test_mask_changes_one_case_without_pretending_others_changed(self):
         data = records()
         for r in data:
-            if r["replica"].startswith("r2-no-avx2-fma3"):
+            if r["replica"].startswith("r2-no-x86-v3-v4"):
                 r["case_results"][3]["result_float64_hex"] = math.nextafter(
                     1.0, math.inf
                 ).hex()
@@ -93,7 +93,7 @@ class DispatchAuditTests(unittest.TestCase):
 
     def test_mask_must_be_verified_as_active(self):
         data = records()
-        data[3]["runtime"]["cpu_features_enabled"]["AVX2"] = True
+        data[3]["runtime"]["cpu_features_enabled"]["X86_V3"] = True
         with self.assertRaisesRegex(ValueError, "not actually active"):
             validate_observation(data[3])
 

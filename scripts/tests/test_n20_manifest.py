@@ -12,6 +12,8 @@ from scripts.run_n20_reference_notebook import (
     EXPECTED_FREE_MASTER,
     EXPECTED_NOTEBOOK_SHA,
     verify_exact_model,
+    verify_feasible_space,
+    feasible_space_certificate,
 )
 
 
@@ -46,8 +48,11 @@ def tiny_contract() -> dict:
         "redundancy_beta_float64_hex": float(1).hex(),
         "wake_delta_float64_hex": float(1).hex(),
     }
+    feasible_n, feasible_sha = feasible_space_certificate(model)
     record = {
         "model_input": model,
+        "feasible_combinations": feasible_n,
+        "feasible_site_sets_sha256": feasible_sha,
         "model_input_sha256": digest(model),
         "model_input_hash_scope":
             "IEEE754 exact model; compare tolerance-based parity separately",
@@ -60,6 +65,44 @@ def tiny_contract() -> dict:
 class N20ModelManifestTests(unittest.TestCase):
     def test_valid_artificial_contract_is_self_consistent(self):
         verify_exact_model(tiny_contract())
+
+    def test_tiny_feasible_region_has_one_valid_combination(self):
+        record = tiny_contract()
+        self.assertEqual(record["feasible_combinations"], 1)
+        self.assertEqual(
+            record["feasible_site_sets_sha256"],
+            hashlib.sha256(b"0,1,3,6,7\\n").hexdigest(),
+        )
+        verify_exact_model(record)
+        verify_feasible_space(record)
+
+    def test_edited_feasible_count_fails_even_if_winner_is_unchanged(self):
+        record = tiny_contract()
+        record["feasible_combinations"] += 1
+        with self.assertRaisesRegex(AssertionError, "Feasible K5 subset count"):
+            verify_feasible_space(record)
+
+    def test_tampered_feasible_set_hash_fails(self):
+        record = tiny_contract()
+        record["feasible_site_sets_sha256"] = "0" * 64
+        with self.assertRaisesRegex(AssertionError, "Feasible K5 subset SHA-256"):
+            verify_feasible_space(record)
+
+    def test_modified_unselected_adjacency_expands_feasible_space(self):
+        record = tiny_contract()
+        # Site 2 isn't selected; the original optimum survives unchanged, but
+        # the combinatorial feasible region grows from 1 to 6 choices.
+        record["model_input"]["fixed_neighbor_flags"][2] = 1
+        record["model_input_sha256"] = digest(record["model_input"])
+        verify_exact_model(record)
+        with self.assertRaisesRegex(AssertionError, "Feasible K5 subset"):
+            verify_feasible_space(record)
+
+    def test_duplicate_chosen_position_rejected_before_energy_decode(self):
+        record = tiny_contract()
+        record["selected_local_positions"] = [0, 1, 3, 6, 6]
+        with self.assertRaisesRegex(AssertionError, "five distinct"):
+            verify_exact_model(record)
 
     def test_a_one_ulp_coefficient_change_is_exposed_by_digest(self):
         record = tiny_contract()

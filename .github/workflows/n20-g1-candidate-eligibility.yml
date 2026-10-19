@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/studies/n20_g1_candidate_eligibility.py"
+      - "scripts/studies/n20_g1_independent_certificate.py"
       - "scripts/tests/test_n20_g1_candidate_eligibility.py"
       - "docs/research_protocols/N20_G1_CANDIDATE_ELIGIBILITY_PREREG_2026_10_19.md"
       - ".github/workflows/n20-g1-candidate-eligibility.yml"
@@ -24,7 +25,7 @@ jobs:
         run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
       - name: Validate actual source generator code syntax and frozen earlier protocol
         run: |
-          python -m compileall -q scripts/studies/n20_g1_candidate_eligibility.py scripts/tests/test_n20_g1_candidate_eligibility.py
+          python -m compileall -q scripts/studies/n20_g1_candidate_eligibility.py scripts/studies/n20_g1_independent_certificate.py scripts/tests/test_n20_g1_candidate_eligibility.py
           test -f docs/research_protocols/N20_G1_CANDIDATE_ELIGIBILITY_PREREG_2026_10_19.md
       - name: Run adversarial source and geometry candidate filter tests
         run: python -m unittest discover -s scripts/tests -p "test_n20_g1_candidate_eligibility.py" -v
@@ -40,6 +41,11 @@ jobs:
           python -m scripts.studies.n20_g1_candidate_eligibility
           --reference "$RUNNER_TEMP/n20-fresh-original-G0.json"
           --output "$RUNNER_TEMP/n20-prereg-G0-G1-pool-comparison.json"
+      - name: Independently certify G0/G1 GeoJSON links, all K5, SCIP and real-site coverage
+        run: >
+          python -m scripts.studies.n20_g1_independent_certificate
+          --study "$RUNNER_TEMP/n20-prereg-G0-G1-pool-comparison.json"
+          --output "$RUNNER_TEMP/n20-prereg-G0-G1-independent-SCIP-certificate.json"
       - name: Preserve original source and G0/G1 separate numerical evidence
         uses: actions/upload-artifact@v4
         with:
@@ -48,6 +54,7 @@ jobs:
             ${{ runner.temp }}/n20-fresh-original-G0.json
             ${{ runner.temp }}/n20-G0-independent-geometry.json
             ${{ runner.temp }}/n20-prereg-G0-G1-pool-comparison.json
+            ${{ runner.temp }}/n20-prereg-G0-G1-independent-SCIP-certificate.json
           if-no-files-found: error
           retention-days: 14
       - name: Note scientific claims and rights boundary

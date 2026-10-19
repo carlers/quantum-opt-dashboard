@@ -1,0 +1,75 @@
+# New source-only proof of the distinct exploratory all-15-fixed original geometric graph.
+name: N20 independent full global original-source geometry proof
+on:
+  pull_request:
+    paths:
+      - "scripts/n20_full_global_source_geometry.py"
+      - "scripts/tests/test_n20_full_global_source_geometry.py"
+      - "docs/N20_INDEPENDENT_GLOBAL_SOURCE_INTEGRATION_PLAN.md"
+      - ".github/workflows/n20-full-global-original-science.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prove-original-35-node-global-mathematical-graph:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install fixed direct original source-research dependencies
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          matplotlib==3.11.2 nbclient==0.11.0 nbformat==5.11.1
+          ipykernel==6.31.0
+      - name: Independently test full-global fixed-node and strict water-segment geometry
+        run: |
+          python -m compileall -q scripts/n20_full_global_source_geometry.py scripts/tests/test_n20_full_global_source_geometry.py
+          python -m unittest discover -s scripts/tests -p "test_n20_full_global_source_geometry.py" -v
+          python -m unittest discover -s scripts/tests -p "test_bounded_result_attestation.py" -v
+          python -m unittest discover -s scripts/tests -p "test_science_claim_gate.py" -v
+          python -m unittest discover -s scripts/tests -p "test_scientific_dashboard_adapter.py" -v
+      - name: Fresh original N20 notebook/real SCIP and feasible subset verification
+        run: >
+          python scripts/run_n20_reference_notebook.py
+          --result "$RUNNER_TEMP/n20-real-original-source.json"
+      - name: Independently reconstruct original raw GeoJSON one-hop graph
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/n20-real-original-source.json"
+          --output "$RUNNER_TEMP/n20-original-local-geometry.json"
+      - name: Independently verify original source eight factors and AHP provenance
+        run: >
+          python -m scripts.studies.n20_s4_parameter_provenance
+          --reference "$RUNNER_TEMP/n20-real-original-source.json"
+          --output "$RUNNER_TEMP/n20-original-S4.json"
+      - name: Recheck source-only computational claim, manuscript and physical blocked
+        run: >
+          python -m scripts.science_claim_gate
+          --reference "$RUNNER_TEMP/n20-real-original-source.json"
+          --provenance "$RUNNER_TEMP/n20-original-S4.json"
+          --output "$RUNNER_TEMP/n20-three-gate-source-only.json"
+      - name: New independent 35-node all-original fixed-plus-selected global graph mathematical proof
+        run: >
+          python -m scripts.n20_full_global_source_geometry
+          --reference "$RUNNER_TEMP/n20-real-original-source.json"
+          --output "$RUNNER_TEMP/n20-source-full-global-independently-proved.json"
+      - name: Preserve separate original-local and exploratory-global mathematical certificates
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-independent-35-node-full-global-proxy-source-only
+          path: |
+            ${{ runner.temp }}/n20-original-local-geometry.json
+            ${{ runner.temp }}/n20-three-gate-source-only.json
+            ${{ runner.temp }}/n20-source-full-global-independently-proved.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: State research-only confidence boundary
+        run: |
+          echo "Independent original 35-node source hull/proxy geometric graph, union-find and bounded BFS mathematical verification." >> "$GITHUB_STEP_SUMMARY"
+          echo "Historical N20 source local one-hop SCIP and new full-global exact enumeration are DISTINCT MODELS." >> "$GITHUB_STEP_SUMMARY"
+          echo "Shared GEOS concave hull is not a surveyed shoreline or measured RF/backhaul calibration." >> "$GITHUB_STEP_SUMMARY"
+          echo "Manuscript AHP/D2 parity and physically validated water-quality monitoring remain blocked; no Streamlit or production changes." >> "$GITHUB_STEP_SUMMARY"

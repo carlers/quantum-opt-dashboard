@@ -86,6 +86,13 @@ class DashboardAdapterTests(unittest.TestCase):
         s["model_input"]["factor_column_names"][-1] = "d2_worldpop_population"
         self.assertFalse(self.view(s)["active_scenario_is_frozen_source_profile"])
 
+    def test_hidden_dmax_change_is_not_the_frozen_source_profile(self):
+        s = scenario()
+        s["model_input"]["d_max_m_float64_hex"] = float(1000).hex()
+        out = self.view(s)
+        self.assertTrue(out["same_exact_objective"])
+        self.assertFalse(out["active_scenario_is_frozen_source_profile"])
+
     def test_same_objective_global_topology_still_exploratory(self):
         s = scenario()
         s.update(topology_mode=bridge.GLOBAL_TOPOLOGY, solver_backend="exact_enumeration")

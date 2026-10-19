@@ -243,3 +243,42 @@ def exact_global_search(instance: "Instance", graph: WirelessGraph,
         "all_station_components": [list(g) for g in components(graph, best_ids)],
         "graph_fingerprint_sha256": graph.fingerprint,
     }
+
+
+def global_evidence_zip(model: dict, graph: WirelessGraph, solver: dict,
+                        selected_sites_csv: bytes) -> bytes:
+    """Export truthful exact-search/graph evidence; NOT a fictitious SCIP LP."""
+    import io
+    from zipfile import ZIP_DEFLATED, ZipFile
+
+    files = {
+        "model.json": _canonical(model),
+        "wireless_graph.json": _canonical(graph.as_record()),
+        "result.json": _canonical({
+            "schema_version": RESULT_SCHEMA,
+            "connectivity_mode": GLOBAL_MODE,
+            "algorithm": solver["solver"],
+            "status": solver["status"],
+            "optimal_proven": bool(solver["optimal"]),
+            "search": solver,
+            "source_dataset_sha256": model["dataset_sha256"],
+            "model_fingerprint_sha256": model["model_fingerprint_sha256"],
+            "graph_fingerprint_sha256": graph.fingerprint,
+            "note": (
+                "Exploratory all-stations wireless graph using a lake hull proxy; "
+                "this is exact enumeration/precheck, NOT SCIP or radio validation."
+            ),
+        }),
+        "selected_sites.csv": selected_sites_csv,
+    }
+    files["SHA256SUMS.json"] = _canonical({
+        "files_sha256": {
+            name: hashlib.sha256(blob).hexdigest() for name, blob in files.items()
+        },
+        "source_data_sha256": model["dataset_sha256"],
+    })
+    output = io.BytesIO()
+    with ZipFile(output, "w", ZIP_DEFLATED) as zipped:
+        for name in sorted(files):
+            zipped.writestr(name, files[name])
+    return output.getvalue()

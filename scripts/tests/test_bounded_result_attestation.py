@@ -93,6 +93,16 @@ class BoundedAttestationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "objective"):
             proof.attest_bounded_result(s, report(s, [0], -100, "optimal"))
 
+    def test_subnanorange_exact_coefficient_difference_still_not_optimal(self):
+        s = local()
+        s["model_input"]["linear_float64_hex"][2] = float(-3 + 2 ** -40).hex()
+        recorded = -3 + 2 ** -40
+        with self.assertRaisesRegex(ValueError, "Claimed optimal"):
+            proof.attest_bounded_result(s, report(s, [2], recorded, "optimal"))
+        out = proof.attest_bounded_result(s, report(s, [2], recorded, "time_limit"))
+        self.assertFalse(out["reported_selection_is_independently_optimal"])
+        self.assertEqual(out["independent_optimal_set"], [0])
+
     def test_time_limited_feasible_incumbent_not_relabelled_optimal(self):
         s = local()
         out = proof.attest_bounded_result(s, report(s, [2], -1, "time_limit"))

@@ -15,7 +15,7 @@ permissions:
   contents: read
 jobs:
   paired-modes:
-    name: Paired AVX2-FMA3 intervention / ${{ matrix.host }}
+    name: Paired X86-V3-V4 intervention / ${{ matrix.host }}
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     strategy:
@@ -45,18 +45,18 @@ jobs:
           --output "$RUNNER_TEMP/dispatch-${{ matrix.host }}-baseline-b.json"
       - name: Run masked process A (fresh interpreter)
         env:
-          NPY_DISABLE_CPU_FEATURES: "AVX2,FMA3"
+          NPY_DISABLE_CPU_FEATURES: "X86_V3,X86_V4"
         run: >
           python -m scripts.n20_numpy_dispatch_audit
-          --mode no-avx2-fma3 --replica ${{ matrix.host }}-no-avx2-fma3-a
-          --output "$RUNNER_TEMP/dispatch-${{ matrix.host }}-no-avx2-fma3-a.json"
+          --mode no-x86-v3-v4 --replica ${{ matrix.host }}-no-x86-v3-v4-a
+          --output "$RUNNER_TEMP/dispatch-${{ matrix.host }}-no-x86-v3-v4-a.json"
       - name: Run masked process B (new interpreter, same mask)
         env:
-          NPY_DISABLE_CPU_FEATURES: "AVX2,FMA3"
+          NPY_DISABLE_CPU_FEATURES: "X86_V3,X86_V4"
         run: >
           python -m scripts.n20_numpy_dispatch_audit
-          --mode no-avx2-fma3 --replica ${{ matrix.host }}-no-avx2-fma3-b
-          --output "$RUNNER_TEMP/dispatch-${{ matrix.host }}-no-avx2-fma3-b.json"
+          --mode no-x86-v3-v4 --replica ${{ matrix.host }}-no-x86-v3-v4-b
+          --output "$RUNNER_TEMP/dispatch-${{ matrix.host }}-no-x86-v3-v4-b.json"
       - name: Archive all four unaltered mode/process JSON records
         uses: actions/upload-artifact@v4
         with:

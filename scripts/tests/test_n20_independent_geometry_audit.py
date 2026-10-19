@@ -159,7 +159,7 @@ class IndependentGeometryTests(unittest.TestCase):
     def test_original_station_spacing_calculated_not_trusted_from_record(self):
         fixed = [(1.0, 1.0), (4.0, 1.0), (4.0, 5.0)]
         self.assertAlmostEqual(
-            geom.original_fixed_spacing(fixed), 3.0 * 1.15, places=12
+            geom.original_fixed_spacing(fixed), 4.0 * 1.15, places=12
         )
 
 

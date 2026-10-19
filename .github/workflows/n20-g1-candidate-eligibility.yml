@@ -1,0 +1,57 @@
+# Historical source unchanged; prereg protocol in earlier DRAFT PR #79.
+name: Preregistered N20 candidate eligibility G0 vs G1
+on:
+  pull_request:
+    paths:
+      - "scripts/studies/n20_g1_candidate_eligibility.py"
+      - "scripts/tests/test_n20_g1_candidate_eligibility.py"
+      - "docs/research_protocols/N20_G1_CANDIDATE_ELIGIBILITY_PREREG_2026_10_19.md"
+      - ".github/workflows/n20-g1-candidate-eligibility.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-kernel-and-eligible-pool:
+    name: Reproduce original N20 SCIP then independently evaluate G0 and prereg G1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install same bounded scientific notebook dependencies
+        run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
+      - name: Validate actual source generator code syntax and frozen earlier protocol
+        run: |
+          python -m compileall -q scripts/studies/n20_g1_candidate_eligibility.py scripts/tests/test_n20_g1_candidate_eligibility.py
+          test -f docs/research_protocols/N20_G1_CANDIDATE_ELIGIBILITY_PREREG_2026_10_19.md
+      - name: Run adversarial source and geometry candidate filter tests
+        run: python -m unittest discover -s scripts/tests -p "test_n20_g1_candidate_eligibility.py" -v
+      - name: Rerun unmodified original lake notebook and SCIP in fresh kernel
+        run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-fresh-original-G0.json"
+      - name: Audit real original-source geometry as independent control
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/n20-fresh-original-G0.json"
+          --output "$RUNNER_TEMP/n20-G0-independent-geometry.json"
+      - name: Enumerate G0 and separately preregistered direct-fixed G1
+        run: >
+          python -m scripts.studies.n20_g1_candidate_eligibility
+          --reference "$RUNNER_TEMP/n20-fresh-original-G0.json"
+          --output "$RUNNER_TEMP/n20-prereg-G0-G1-pool-comparison.json"
+      - name: Preserve original source and G0/G1 separate numerical evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-preregistered-g0-g1-eligibility-source-evidence
+          path: |
+            ${{ runner.temp }}/n20-fresh-original-G0.json
+            ${{ runner.temp }}/n20-G0-independent-geometry.json
+            ${{ runner.temp }}/n20-prereg-G0-G1-pool-comparison.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Note scientific claims and rights boundary
+        run: |
+          echo "Historical G0 is the reference; G1 direct-to-fixed eligibility is counterfactual." >> "$GITHUB_STEP_SUMMARY"
+          echo "Neither candidate generator nor the source hull certifies radio links, real monitoring performance or published-paper parity." >> "$GITHUB_STEP_SUMMARY"
+          echo "No merge/deploy, original source rewrite or raw third-party data publication." >> "$GITHUB_STEP_SUMMARY"

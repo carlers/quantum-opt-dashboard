@@ -1,3 +1,15 @@
+# S4 original N20 parameter and manuscript AHP provenance (2026-10-19)
+
+**Owner scope:** review-only scientific-model audit and preregistered studies. For S4 [issue #73](https://github.com/carlers/quantum-opt-dashboard/issues/73), all *new parameter values and experimental ranges are deliberately BLOCKED* until source/domain rationale and owner research decision. This is a no-sweep *forensic provenance audit*, NOT a randomized or adaptive sensitivity experiment.
+
+Protocol-only first [DRAFT #83](https://github.com/carlers/quantum-opt-dashboard/pull/83) pinned to scientific source [DRAFT #68](https://github.com/carlers/quantum-opt-dashboard/pull/68), describing original **0.05 hull**, fixed-station-buffer **1.15**, Lc=7.5km, Lw=1km, source 8 original criteria/weights, AHP printed Table III/IV and source D2 road vs manuscript WorldPop. The owner-provided manuscript DOCX was inspected locally; exact manuscript SHA recorded in protocol, DOCX not committed to GitHub or fed into CI. No original source, GeoJSON, manuscript or dashboard modified.
+
+Child branch `science-n20-s4-source-provenance-audit` adds only `scripts/studies/n20_s4_parameter_provenance.py`, 11 synthetic AHP/schema/missing-data tests and a focused cold original N20 notebook+SCIP/GeoJSON CI workflow. It records source factor missingness across all 5,417 and 20 original candidates, original available-weight normalization (source sum 1.0001), original graph threshold margins and source AHP/manuscript documentary mismatches. **It does not apply different weights or vary hull/Dmax/Lc/Lw.**
+
+**Next steps:** open child DRAFT; run exact-head cold original scientific CI and inspect machine-readable provenance, publish findings including nulls/errors; discuss missing source expert AHP records, original WorldPop/road processing, validated shoreline and physical wireless measurements with research owner. A future actual parameter sweep needs its own dated preregistration with **exact justified numeric values**, not guessed ±10%. No merges or deploys.
+
+---
+
 # Combined scientific N20 reference integration validated — 2026-10-19 UTC
 
 **Owner must see “Next steps” in all updates.** Review-only [DRAFT PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) merges existing experimental *logic* from sibling source science branches, not GitHub pull requests into main. Base is unchanged draft #63 (source precision #61→#57→#56); source independent spatial fork #66→#67 unchanged. **No deployment, archived paper, GeoJSON, original notebook or base-pr branch updates.**

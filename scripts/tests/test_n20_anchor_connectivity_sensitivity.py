@@ -172,8 +172,21 @@ class PreregisteredAnchorReachabilityTests(unittest.TestCase):
 
     def test_invalid_full_model_must_not_fake_an_S0_result(self):
         record, geo = synthetic_source()
-        # The fake graph has no feasible 5-site subset, but metadata incorrectly
-        # claims the source canary. analyze() MUST independently reject it.
+        # Construct a connected artificial ring among exactly the 13
+        # non-isolated candidate IDs, preserving the historical seven
+        # zero-neighbor IDs, so the independently computed feasible set
+        # (and not the prior structural canary) is what MUST fail.
+        active = [i for i in range(20) if i not in EXPECTED_EMPTY_CANDIDATES]
+        new_graph = [[] for _ in range(20)]
+        for a, b in zip(active, active[1:] + active[:1]):
+            new_graph[a].append(b)
+            new_graph[b].append(a)
+        new_graph = [sorted(x) for x in new_graph]
+        record["model_input"]["free_neighbor_indices"] = new_graph
+        geo["spatial_graph"]["free_neighbor_indices_from_geojson"] = deepcopy(new_graph)
+        record["model_input_sha256"] = sha(record["model_input"])
+        geo["model_input_sha256"] = record["model_input_sha256"]
+        geo["spatial_graph_sha256"] = sha(geo["spatial_graph"])
         with self.assertRaisesRegex(ValueError, "Source control S0"):
             analyze(record, geo)
 

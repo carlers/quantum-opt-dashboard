@@ -1,3 +1,27 @@
+# Combined scientific N20 reference integration validated — 2026-10-19 UTC
+
+**Owner must see “Next steps” in all updates.** Review-only [DRAFT PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) merges existing experimental *logic* from sibling source science branches, not GitHub pull requests into main. Base is unchanged draft #63 (source precision #61→#57→#56); source independent spatial fork #66→#67 unchanged. **No deployment, archived paper, GeoJSON, original notebook or base-pr branch updates.**
+
+At scientific code SHA **`8d3af1a7a2eb4f5303bcc857692ef42d33b30326`** original two scientific CI workflows SUCCESS: [clean SCIP geometry #39191911068](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39191911068) **21/21 anti-tampering tests**, 1 real notebook/SCIP, original 1,077 feasible/11 free-free/34 free-fixed and same complete feasible SHA; [six independent full numeric source kernels #39191911072](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39191911072) **8+7+10 unit tests**, all six actual source kernels, **two last-bit numeric model SHA modes and 20/300 pair traces differing**, but **same exact structural graph SHA `148d4d276b61305cd969d426afacd3c81634486818deca816014d67cef7908ae` and all 1,077 feasible-set identities**. New `scripts/verify_n20_joint_integrity.py` tests that a changed off-winner one-hop link fails even when model hex checksum was rehashed and the reported optimum remains equivalent. All evidence in `docs/N20_INTEGRATED_SCIENCE_VALIDATION.md` and short-retention Actions artifacts (expire approximately Nov 2). Existing scientific model input scope and equations are unchanged.
+
+**Next steps:** update PR #68 results + #2/#5/#6/#24 issue checkpoints; request adviser validation of original hull, D2 and AHP/paper Table V (#16) and numerical policy (#64); plan explicitly authorized base-first integration of sibling research branches (avoid force-pushing/rebasings existing scientific experiments). Obtain owner-approved durable archival store (#34). No merge/preview/prod/main changes.
+
+---
+
+# Integrated N20 scientific certificate replay checkpoint — 2026-10-19
+
+**Owner standing preference:** every response must include explicit **Next steps**. No merge/deployment authorization.
+
+**Current isolated DRAFT work branch:** `science-n20-integrated-certificate-replay` on top of unmerged runtime/precision #63→#61→#57→#56. Parent science source #56 also has separately reviewed #66→#67 feasible-region and raw GeoJSON geometry certificates, both green. PR branches are kept unchanged to preserve scientific history.
+
+- In the combined original 23-cell notebook, **cell 12 and original `MODEL_INPUT` from #63** are retained (source read-only 300 free/fixed pair trace, IEEE754 hex numerical coefficients, input original trace SHA); separate original enumeration cell 14 and cell 13 explanation are drawn from #67; result cell 22 **appends** `feasible_combinations` and `feasible_site_sets_sha256` to the existing #63 precision-result record *outside* `MODEL_INPUT` so numerical manifest has not been silently changed.
+- Imported independent `scripts/n20_independent_geometry_audit.py`, its 11 geometry adversarial checks, and the original #67 fresh SCIP/geometry CI. Adopted the more stringent #66 `scripts/run_n20_reference_notebook.py` + 10 manifest/feasible tests. Source GIS and original archived notebook untouched.
+- `docs/N20_INTEGRATED_SCIENCE_VALIDATION.md` preregisters actual combined CI acceptance, caveats and no-retuning boundary.
+
+**Next steps:** open separate DRAFT integration PR on #63; obtain exact-head N20 clean SCIP/geometry and #57/#61 six-kernel numerical precision CI outcomes; fix only integration issues; update #2/#5/#6/#24 and handoff; coordinate owner/adviser scientific approval before any future merges.
+
+---
+
 # Issue #62 runtime cause narrowed — paired NumPy and OpenBLAS controls (2026-10-19 UTC)
 
 **Owner workflow preference:** Every response/handoff must state **next steps** explicitly. New independent [draft stacked PR #63](https://github.com/carlers/quantum-opt-dashboard/pull/63) on source-N20 operation trace PR #61. No merges/production/preview/main/history writes.

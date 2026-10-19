@@ -45,6 +45,22 @@ class ScientificStackGraphTests(unittest.TestCase):
         self.assertEqual(n13["parent_pr"], 11)
         self.assertEqual(n13["root_pr"], 12)
 
+    def test_branched_family_size_is_not_deepest_review_lineage(self):
+        data = graph() + [
+            pr(14, "science-parallel-experiment", "science-reference"),
+        ]
+        report = audit_open_prs(data)
+        self.assertEqual(report["total_open_prs"], 5)
+        self.assertEqual(report["largest_stack_family_members"], 4)
+        self.assertEqual(report["longest_stack_pr_count"], 3)
+        self.assertNotEqual(
+            report["largest_stack_family_members"],
+            report["longest_stack_pr_count"],
+        )
+        rendered = markdown_summary(report)
+        self.assertIn("deepest lineage: **3** PRs", rendered)
+        self.assertIn("largest family: **4** PRs", rendered)
+
     def test_draft_parent_and_ready_child_requires_review_not_merge(self):
         data = graph()
         data[0]["draft"] = False

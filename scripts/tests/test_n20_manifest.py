@@ -71,7 +71,7 @@ class N20ModelManifestTests(unittest.TestCase):
         self.assertEqual(record["feasible_combinations"], 1)
         self.assertEqual(
             record["feasible_site_sets_sha256"],
-            hashlib.sha256(b"0,1,3,6,7\\n").hexdigest(),
+            hashlib.sha256(b"0,1,3,6,7\n").hexdigest(),
         )
         verify_exact_model(record)
         verify_feasible_space(record)

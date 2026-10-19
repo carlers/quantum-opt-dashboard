@@ -1,3 +1,29 @@
+# S4 source-only spatial and AHP provenance results — 2026-10-19 UTC
+
+**Source and manuscript gate (no parameter sweeps):** protocol [DRAFT #83](https://github.com/carlers/quantum-opt-dashboard/pull/83), source-only audit [DRAFT #84](https://github.com/carlers/quantum-opt-dashboard/pull/84), all above unchanged original source scientific #68, data source SHA `e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7`. Source manuscript DOCX reviewed locally, **not committed/uploaded** to CI, SHA `f667995bc2bbf1bee191b5294fc26f366767bc72b78478e547419689b6eaf2be`. Manuscript Table III and IV documentary **transcriptions are not historical source solver inputs**.
+
+[Successful initial fixed-test CI #39235152085](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39235152085): **11 tests passed**, fresh original N20 source SCIP and independent raw source GeoJSON, 1,077 original K5 region SHA, source coefficient/geometry identity. **0 of 5,417 source features and 0 of original 20 candidates missing any eight criterion field**. All original 20 utility numerator/denominator values match actual source; sum of original eight weights **1.0001**. Exact Dmax **9873.27073466548m**, closest source interior candidate-relevant segment distance to original threshold **25.727322060418373m**, free/free **11** and free/fixed **34** original links. Original N20 solution [0,1,3,6,7] and objective unchanged. Original missing-data renormalization is coded but no source record in committed source exercises missing values.
+
+**AHP discrepancy:** notebook category totals A/B/C/D `[.4895,.3010,.1461,.0635]`; manuscript printed Table IV category totals `[.552191814,.268830225,.130782272,.048195690]`; Table III principal eigenvector `[.616975355,.228319383,.104610094,.050095168]`, λmax≈4.14712642, CR≈0.05449127, **different from reported manuscript** λmax≈4.2207/CR≈0.0817. Within-pillar ratios also differ source ~3:1/5:1/7:1/3:1 from published 1:1/2:1/2:1/1:1. Manuscript **D2 WorldPop/population** vs source **`d2_road_proximity`** remains unresolved, not repaired by completeness.
+
+[Full baseline research report](https://github.com/carlers/quantum-opt-dashboard/blob/science-n20-s4-source-provenance-audit/docs/research_results/N20_S4_PARAMETER_PROVENANCE_FINDINGS_2026_10_19.md). CI numerical evidence [artifact #12178666221](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39235152085/artifacts/12178666221) 14-day expiration 2026-11-02T10:07:52 UTC, private custody owner NOT confirmed. Initial synthetic test CI #39234991248 failed **before** original source execution due invalid D2=8 upper-clipping assumption; only synthetic test input corrected to 80, no original math/source changes. Final report-head CI must be checked separately.
+
+**Next steps:** rerun exact-head CI, update #73/#16/#69 and owner decisions; seek verified shoreline, RF range/fixed backhaul, spatial DO/current covariance, original AHP elicitation/WorldPop GIS provenance BEFORE specifying any hull/Dmax/Lc/Lw/AHP numerical sensitivity values. No original notebook/GeoJSON, `main`/`preview`/production edits, merges or releases.
+
+---
+
+# S4 original N20 parameter and manuscript AHP provenance (2026-10-19)
+
+**Owner scope:** review-only scientific-model audit and preregistered studies. For S4 [issue #73](https://github.com/carlers/quantum-opt-dashboard/issues/73), all *new parameter values and experimental ranges are deliberately BLOCKED* until source/domain rationale and owner research decision. This is a no-sweep *forensic provenance audit*, NOT a randomized or adaptive sensitivity experiment.
+
+Protocol-only first [DRAFT #83](https://github.com/carlers/quantum-opt-dashboard/pull/83) pinned to scientific source [DRAFT #68](https://github.com/carlers/quantum-opt-dashboard/pull/68), describing original **0.05 hull**, fixed-station-buffer **1.15**, Lc=7.5km, Lw=1km, source 8 original criteria/weights, AHP printed Table III/IV and source D2 road vs manuscript WorldPop. The owner-provided manuscript DOCX was inspected locally; exact manuscript SHA recorded in protocol, DOCX not committed to GitHub or fed into CI. No original source, GeoJSON, manuscript or dashboard modified.
+
+Child branch `science-n20-s4-source-provenance-audit` adds only `scripts/studies/n20_s4_parameter_provenance.py`, 11 synthetic AHP/schema/missing-data tests and a focused cold original N20 notebook+SCIP/GeoJSON CI workflow. It records source factor missingness across all 5,417 and 20 original candidates, original available-weight normalization (source sum 1.0001), original graph threshold margins and source AHP/manuscript documentary mismatches. **It does not apply different weights or vary hull/Dmax/Lc/Lw.**
+
+**Next steps:** open child DRAFT; run exact-head cold original scientific CI and inspect machine-readable provenance, publish findings including nulls/errors; discuss missing source expert AHP records, original WorldPop/road processing, validated shoreline and physical wireless measurements with research owner. A future actual parameter sweep needs its own dated preregistration with **exact justified numeric values**, not guessed ±10%. No merges or deploys.
+
+---
+
 # Combined scientific N20 reference integration validated — 2026-10-19 UTC
 
 **Owner must see “Next steps” in all updates.** Review-only [DRAFT PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) merges existing experimental *logic* from sibling source science branches, not GitHub pull requests into main. Base is unchanged draft #63 (source precision #61→#57→#56); source independent spatial fork #66→#67 unchanged. **No deployment, archived paper, GeoJSON, original notebook or base-pr branch updates.**

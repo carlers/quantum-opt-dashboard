@@ -140,10 +140,16 @@ class EvidenceBundleTests(unittest.TestCase):
             validate_bundle(make_bundle(self.root, change=bad_name))
 
     def test_missing_sha256s_is_rejected(self):
-        def bad(m, contents):
-            del contents["SHA256SUMS"]
+        source = make_bundle(self.root)
+        # Remove it from the ACTUAL final ZIP, not the helper's input dict:
+        # make_bundle deliberately regenerates the checksum as a final step.
+        bad_path = self.root / "missing-sha256s.zip"
+        with ZipFile(source) as original, ZipFile(bad_path, "w") as output:
+            for info in original.infolist():
+                if info.filename != "SHA256SUMS":
+                    output.writestr(info.filename, original.read(info.filename))
         with self.assertRaisesRegex(ValueError, "Missing original README"):
-            validate_bundle(make_bundle(self.root, change=bad))
+            validate_bundle(bad_path)
 
     def test_manifest_record_count_mismatch_fails(self):
         def bad(m, contents):

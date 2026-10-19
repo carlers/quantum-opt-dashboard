@@ -42,3 +42,14 @@ jobs:
         run: python -m compileall -q prototypes/streamlit_water_quality prototypes/unified_dashboard
       - name: Run all model, QUBO, SCIP, replay and Streamlit UI tests
         run: python -m pytest prototypes/streamlit_water_quality/tests prototypes/unified_dashboard/tests -q -s
+      - name: Independently archive K5 all-15-fixed wireless graph source certificate
+        run: >
+          python prototypes/streamlit_water_quality/export_global_reference.py
+          --output "$RUNNER_TEMP/n20-all-original-stations-global-network.json"
+      - name: Archive bounded all-stations network evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-original-source-all-15-fixed-global-network
+          path: ${{ runner.temp }}/n20-all-original-stations-global-network.json
+          if-no-files-found: error
+          retention-days: 14

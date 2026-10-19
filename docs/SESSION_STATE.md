@@ -1,3 +1,15 @@
+# All 15 existing + K selected wireless network source result verified (2026-10-19)
+
+**Owner's precise requirement:** two choices only, original local source one-hop (default) vs all-original+all-selected nodes in one wireless graph component. Both use source-pinned straight-water-link & Dmax geometric proxies. Not previous S1/S2; no physical radio link survey or fixed station backhaul evidence. [Implementation DRAFT PR #78](https://github.com/carlers/quantum-opt-dashboard/pull/78) stacks above docs-only #77, UX #55. No archived source edits, main/preview/prod merge/deploy.
+
+At original code `a2f87394`, [Streamlit fast CI #39225164320](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39225164320) SUCCESS **80/80 tests** and independent union-find global K5 reconstruction; [unified CI #39225164273](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39225164273) SUCCESS. The old local feasible count 1,077, **new fully all-15-existing-station globally connected count 860**, full global membership SHA `3ec652e943e26d7aa67ba71203dba6c5413a88a47dc4f24a2428a49c171bbc40`; direct links **11 free/free, 34 free/fixed, 17 newly derived fixed/fixed**. Original source local and new global both choose **[0,1,3,6,7]** with source objective `−3.3012934918564643`. The full 35-vertex graph has eight components because seven optional candidate sites are isolated; the **15 mandatory original existing stations are all in the same available graph component**. The global mode cannot infer radios/hydrological correctness from these modeled links.
+
+Integration hardening added exact-source global JSON audit `prototypes/streamlit_water_quality/export_global_reference.py`, CI artifact upload in Streamlit-pilot workflow (14-day retention), and report `docs/N20_ALL_STATIONS_WIRELESS_NETWORK_REPORT.md`. Important fix: don't call a global search **infeasible** if it only hit the 30-second limit. Important earlier fix: disconnected **unused candidate sites** cannot be used to prove required original fixed network infeasible.
+
+**Next steps:** verify newest exact-head Streamlit and unified CI after final doc/source evidence changes, record new graph artifact/custody, update PR #78/Issue #76 and source science #70/#69; obtain optional real RF/backhaul data for physical interpretation. No authorization to merge, preview, production, public release or rewrite original notebook.
+
+---
+
 # Owner-defined all-35-station global wireless mode — reviewed implementation candidate (2026-10-19)
 
 **Owner final definition:** only TWO water dashboard modes: `source_local` original intended local one-hop, AND `all_stations_connected` requiring **every original existing sensor and every newly selected sensor to have a multi-hop modeled wireless path to every other such station**, all in a single graph component. No disconnected existing clusters. Not prior preregistered S2 (which could leave fixed sensors disconnected), and **do not show prior S2=110 feasible as the new global result**. User gave authorization to implement draft and test, no merges/deployment/publication or archived notebook/data modification.

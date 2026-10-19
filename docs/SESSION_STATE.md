@@ -1,3 +1,15 @@
+# Review-only scientific evidence adapter for future Streamlit — 2026-10-19
+
+**Current draft:** child of source-only scientific claim gate DRAFT #86 on a new branch `science-dashboard-evidence-readonly-adapter`. Issue #85 scientific objective/claim gate is independently verified on #86 at `d8a39099761a`; Issue #88 remains **open** for later real dashboard implementation. Separate UX chain #55 → #77 → #78 is not on this branch and has not been integrated.
+
+**Scope:** new pure Python `scripts/scientific_dashboard_adapter.py` gates display classification on genuine cold source + S4 evidence and exact objective/site/graph/topology identity; `scenario_sha256` invalidates a stale result binding; cached results are **never** treated as independently solver verified. Shows original source road D2 vs manuscript WorldPop, AHP Table III/IV mismatch, explicit blocked manuscript/physical claims. New adversarial adapter tests, dedicated exact-head cold N20+SCIP/S4 CI and `docs/SCIENTIFIC_DASHBOARD_ADAPTER_PLAN.md` document the follow-up. No current Streamlit app changes, notebook/GeoJSON changes, scientific assumption correction, new sensitivity parameters, merge or deployment.
+
+**Current gate:** exact-head CI of this new draft is required; pending at branch preparation time. Passing this research adapter CI alone does not certify Streamlit, user-modified numerical scenarios or field water-quality/radio validity.
+
+**Next steps:** open this as a DRAFT PR targeting #86; verify its exact HEAD test and cold SCIP/GeoJSON/S4 research artifact; update #85/#88 with technical dependency plan; require separate owner-reviewed integration with UX #78 and real AppTest before preview/production. Obtain #87 original expert GIS/AHP, independent lake polygon, RF/backhaul and DO/current evidence before new physical model adoption.
+
+---
+
 # Scientific claim integrity gate for future water dashboard — review-only (2026-10-19)
 
 **Latest owner intent:** build a new scientifically/mathematically accurate research dashboard and **do not** assume previous manuscript or notebook data definitions are correct. Under earlier authorization, preserve the source-derived original N20/K5 as a **historical computational regression fixture**, and distinguish physical validity and published-paper parity.

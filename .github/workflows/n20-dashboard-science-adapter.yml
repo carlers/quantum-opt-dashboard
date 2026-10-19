@@ -1,0 +1,66 @@
+# Research-only future dashboard seam; no Streamlit or deployment.
+name: N20 future-dashboard scientific evidence adapter
+on:
+  pull_request:
+    paths:
+      - 'scripts/scientific_dashboard_adapter.py'
+      - 'scripts/tests/test_scientific_dashboard_adapter.py'
+      - 'docs/SCIENTIFIC_DASHBOARD_ADAPTER_PLAN.md'
+      - '.github/workflows/n20-dashboard-science-adapter.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cold-source-and-read-only-adapter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install original N20 scientific dependencies
+        run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
+      - name: Compile and adversarially test source claim and read-only adapter
+        run: |
+          python -m compileall -q scripts/science_claim_gate.py scripts/scientific_dashboard_adapter.py scripts/tests/test_scientific_dashboard_adapter.py
+          python -m unittest discover -s scripts/tests -p 'test_science_claim_gate.py' -v
+          python -m unittest discover -s scripts/tests -p 'test_scientific_dashboard_adapter.py' -v
+      - name: Fresh historical N20 notebook with real SCIP
+        run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/original.json"
+      - name: Reconstruct original raw GeoJSON graph
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/original.json"
+          --output "$RUNNER_TEMP/geometry.json"
+      - name: Reconstruct original eight source factors and S4 AHP audit
+        run: >
+          python -m scripts.studies.n20_s4_parameter_provenance
+          --reference "$RUNNER_TEMP/original.json"
+          --output "$RUNNER_TEMP/s4.json"
+      - name: Fail-closed scientific claim certificate
+        run: >
+          python -m scripts.science_claim_gate
+          --reference "$RUNNER_TEMP/original.json"
+          --provenance "$RUNNER_TEMP/s4.json"
+          --output "$RUNNER_TEMP/claim.json"
+      - name: Produce source-only research view manifest
+        run: >
+          python -m scripts.scientific_dashboard_adapter
+          --reference "$RUNNER_TEMP/original.json"
+          --provenance "$RUNNER_TEMP/s4.json"
+          --output "$RUNNER_TEMP/research-view.json"
+      - name: Archive bounded research evidence, not a deployed UI
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-research-dashboard-science-adapter-source-only
+          path: |
+            ${{ runner.temp }}/claim.json
+            ${{ runner.temp }}/research-view.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: State scientific limitations
+        run: |
+          echo 'Verified: original N20/K5 computation and read-only evidence rendering contract.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Blocked: manuscript parity, physical RF/hydrodynamics and new model acceptance.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Not demonstrated: Streamlit joint integration or current scenario solver attestation.' >> "$GITHUB_STEP_SUMMARY"

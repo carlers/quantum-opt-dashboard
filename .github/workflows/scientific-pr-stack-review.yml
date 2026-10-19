@@ -1,0 +1,46 @@
+# Research governance only: a read-only PR dependency graph, not a merge bot.
+name: Scientific PR stack review
+on:
+  pull_request:
+    paths:
+      - "scripts/audit_scientific_pr_stack.py"
+      - "scripts/tests/test_audit_scientific_pr_stack.py"
+      - ".github/workflows/scientific-pr-stack-review.yml"
+      - "docs/SCIENTIFIC_PR_REVIEW_HANDOFF.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  structural-stack-review:
+    name: Verify and snapshot stacked scientific PR dependencies
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile and test the read-only PR graph algorithm
+        run: |
+          python -m compileall -q scripts/audit_scientific_pr_stack.py
+          python -m unittest discover -s scripts/tests -p "test_audit_scientific_pr_stack.py" -v
+      - name: Fetch live open PR metadata and report parent-first order
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m scripts.audit_scientific_pr_stack \
+            --live \
+            --json-output _science-open-pr-graph.json \
+            --markdown-output _science-open-pr-review.md
+          cat _science-open-pr-review.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain generated graph snapshot, not research data
+        uses: actions/upload-artifact@v4
+        with:
+          name: scientific-pr-review-graph
+          path: |
+            _science-open-pr-graph.json
+            _science-open-pr-review.md
+          retention-days: 14
+          if-no-files-found: error

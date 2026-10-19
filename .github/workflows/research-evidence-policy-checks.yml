@@ -1,0 +1,42 @@
+# Fast, deterministic, pure-stdlib provenance methods (no real lake data or solver).
+# Deliberately independent from heavyweight/expiring research CI.
+name: Research evidence and manuscript arithmetic checks
+on:
+  pull_request:
+    paths:
+      - "scripts/verify_research_evidence_bundle.py"
+      - "scripts/replay_printed_manuscript_ahp.py"
+      - "scripts/tests/test_verify_research_evidence_bundle.py"
+      - "scripts/tests/test_replay_printed_manuscript_ahp.py"
+      - ".github/workflows/research-evidence-policy-checks.yml"
+      - "docs/SCIENTIFIC_NUMERICAL_EQUIVALENCE_POLICY_DRAFT.md"
+      - "docs/MANUSCRIPT_NOTEBOOK_PROVENANCE_AUDIT.md"
+      - "docs/RESEARCH_EVIDENCE_INVENTORY_2026_10_19.md"
+      - "docs/SCIENTIFIC_PR_REVIEW_HANDOFF.md"
+      - "docs/N20_ADVISER_ACCEPTANCE_CHECKLIST.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  fast-source-arithmetic-and-custody:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile stdlib-only reproducibility tools
+        run: |
+          python -m compileall -q scripts/verify_research_evidence_bundle.py scripts/replay_printed_manuscript_ahp.py
+          python scripts/replay_printed_manuscript_ahp.py
+      - name: Reject altered scientific evidence and recheck printed AHP arithmetic
+        run: |
+          python -m unittest discover -s scripts/tests -p "test_verify_research_evidence_bundle.py" -v
+          python -m unittest discover -s scripts/tests -p "test_replay_printed_manuscript_ahp.py" -v
+      - name: Declare limits of these fast checks
+        run: |
+          echo "Checks printed manuscript arithmetic and synthetic archive-integrity methods only."
+          echo "Does not run SCIP, source geospatial prep, empirical survey validation or OpenJij."
+          echo "No raw owner research evidence files are in this PR."

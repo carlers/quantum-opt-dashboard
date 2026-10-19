@@ -1,0 +1,66 @@
+# Research-only independent bounded mathematical proof; no app or promotion.
+name: N20 independent bounded result-attestation gate
+on:
+  pull_request:
+    paths:
+      - "scripts/bounded_result_attestation.py"
+      - "scripts/tests/test_bounded_result_attestation.py"
+      - "docs/BOUNDED_RESULT_ATTESTATION_PROTOCOL.md"
+      - ".github/workflows/n20-bounded-result-attestation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-graph-and-objective-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install historical reproducibility environment
+        run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
+      - name: Compile and test research math claim + adapter + bounded result verifier
+        run: |
+          python -m compileall -q scripts/bounded_result_attestation.py scripts/tests/test_bounded_result_attestation.py
+          python -m unittest discover -s scripts/tests -p 'test_science_claim_gate.py' -v
+          python -m unittest discover -s scripts/tests -p 'test_scientific_dashboard_adapter.py' -v
+          python -m unittest discover -s scripts/tests -p 'test_bounded_result_attestation.py' -v
+      - name: Cold original notebook and real SCIP source replay
+        run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-original.json"
+      - name: Source raw-GeoJSON independent graph audit
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/n20-original.json"
+          --output "$RUNNER_TEMP/n20-independent-geometry.json"
+      - name: S4 original eight-factor and AHP provenance gate
+        run: >
+          python -m scripts.studies.n20_s4_parameter_provenance
+          --reference "$RUNNER_TEMP/n20-original.json"
+          --output "$RUNNER_TEMP/n20-source-S4.json"
+      - name: Existing three-tier scientific claim certificate
+        run: >
+          python -m scripts.science_claim_gate
+          --reference "$RUNNER_TEMP/n20-original.json"
+          --provenance "$RUNNER_TEMP/n20-source-S4.json"
+          --output "$RUNNER_TEMP/n20-source-only-claims.json"
+      - name: Independent full N20 feasible region and optimum verification
+        run: >
+          python -m scripts.bounded_result_attestation
+          --reference "$RUNNER_TEMP/n20-original.json"
+          --output "$RUNNER_TEMP/n20-bounded-mathematical-proof.json"
+      - name: Archive bounded mathematical artifacts for review only
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-bounded-mathematical-attestation-source-only
+          path: |
+            ${{ runner.temp }}/n20-source-only-claims.json
+            ${{ runner.temp }}/n20-bounded-mathematical-proof.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Record limited scientific claim scope
+        run: |
+          echo "Independent bounded original N20/K5 mathematical proof; no independently authenticated arbitrary SCIP logs." >> "$GITHUB_STEP_SUMMARY"
+          echo "Global topology tested only on synthetic explicitly provided graph; cross-stack source all-15-fixed graph integration NOT performed." >> "$GITHUB_STEP_SUMMARY"
+          echo "NOT field RF, water-quality, historical paper parity, deployment or model approval." >> "$GITHUB_STEP_SUMMARY"

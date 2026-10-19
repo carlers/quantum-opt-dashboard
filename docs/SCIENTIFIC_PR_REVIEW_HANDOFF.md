@@ -12,6 +12,26 @@
 
 **Key review ordering:** #56 first; inspect source-order and checksum canaries. Then #57 exact model input modes; #61 arithmetic trace; #63 fixed-input runtime configuration. Separately inspect #27 before #59 for the historical QUBO branch. Treat the independent source-paper discrepancy [#16](https://github.com/carlers/quantum-opt-dashboard/issues/16) and numerical policy [#64](https://github.com/carlers/quantum-opt-dashboard/issues/64) as **human review decisions before declaring publication parity**.
 
+## Live PR dependency snapshot — 2026-10-19 UTC
+
+A read-only [GitHub pull-list audit](https://github.com/carlers/quantum-opt-dashboard/pull/65) found **29 open PRs, all drafts**, partitioned into **five main-rooted review families**. The **largest family contains 13 related PRs**, but its deepest *actual ancestor chain* is **11 PRs**. These are different metrics; a branched family is not a single merge sequence. The new `scripts/audit_scientific_pr_stack.py` CLI and `.github/workflows/scientific-pr-stack-review.yml` compute a refreshed reviewer map without modifying branches, issues or PRs. Current listing has **no unrepresented-parent or ready-child-of-draft-parent warnings**. This structural result does **not** imply conflict-free merges or scientific correctness.
+
+| Root PR against `main` | Live family size | Deepest PR lineage | Suggested review focus |
+| --- | ---: | ---: | --- |
+| [#56 — curated source N20](https://github.com/carlers/quantum-opt-dashboard/pull/56) | 4 | 4 | #56 → #57 → #61 → #63; source parity first, then numeric trace and runtime experiments |
+| [#13 — original deployed-pilot branch](https://github.com/carlers/quantum-opt-dashboard/pull/13) | 13 | 11 | Historical #13→#14→#15→#17→#19→#21→#23→#25→#27; fork #27→#29→#35 (CI split), fork #27→#59 (exact frozen QUBO). Separate #13→#49 application release candidate |
+| [#31 — evacuation/scientific platform](https://github.com/carlers/quantum-opt-dashboard/pull/31) | 8 | 8 | #31→#36→#39→#43→#44→#45→#46→#47; historical water and prospective evacuation science **not interchangeable** |
+| [#51 — integrated MVP/UX](https://github.com/carlers/quantum-opt-dashboard/pull/51) | 3 | 3 | #51→#53→#55; UX is independent of publication scientific review |
+| [#65 — independent numerical-policy/evidence handoff](https://github.com/carlers/quantum-opt-dashboard/pull/65) | 1 | 1 | Proposed criteria, original manuscript audit, private archive integrity and reviewer graph, no scientific model changes |
+
+**Special CI note:** [draft PR #35](https://github.com/carlers/quantum-opt-dashboard/pull/35) already split fast Streamlit AppTest/SCIP correctness from long simulated-annealing evidence and empirically verified docs-only trigger filtering via its temporary #37 test PR. Its remaining issues are a complete lock/runtime policy, source review, and approved durable archiving; do **not** reimplement the existing split. The new reviewer-graph check on #65 is intentionally separate and cheap.
+
+The preferred scientific review sequence is *parent-first, not “merge all 29”*: select the canonical N20 source and unresolved paper-data conventions with the research owner, review the independent exact/QUBO studies by protocol, and separately handle evacuation model and dashboard UX. Every prospective merge requires a fresh base/conflict and CI check plus explicit owner approval.
+
+**Next steps:** inspect the latest generated PR-graph artifact, review #56 with the owner/adviser, decide source priority and numerical acceptance policy #64, and separately schedule only those high-value scientific merges that are approved. Do not merge/deploy any branch as part of this review snapshot.
+
+---
+
 ## Review checklist
 
 - [ ] Confirm archival `experiment9 grid search copy.ipynb` **unaltered** (pinned SHA), fixed committed source GeoJSON SHA, 15 true existing stations, N20 candidate order and K5 one-hop graph.

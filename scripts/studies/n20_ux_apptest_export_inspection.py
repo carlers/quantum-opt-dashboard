@@ -164,7 +164,7 @@ def record_ux_apptest(app: Path, source: dict, science: dict, ux: dict) -> dict:
         raise AssertionError(f"Original local SCIP AppTest failed: {at.exception}")
     local = inspect_ui_zip(dict(at.session_state["mvp_result"]), "source_local")
 
-    at.radio(key=next(x.key for x in at.radio if x.label == "Wireless connectivity")).set_value(
+    next(x for x in at.radio if x.label == "Wireless connectivity").set_value(
         "Global connectivity · all stations"
     ).run()
     if at.exception:

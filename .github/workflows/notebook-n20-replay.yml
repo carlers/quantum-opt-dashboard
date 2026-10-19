@@ -10,6 +10,8 @@ on:
       - "problems/water_quality/notebooks/experiment9 grid search copy.ipynb"
       - "scripts/run_n20_reference_notebook.py"
       - "scripts/tests/test_n20_manifest.py"
+      - "scripts/n20_independent_geometry_audit.py"
+      - "scripts/tests/test_n20_independent_geometry_audit.py"
       - ".github/workflows/notebook-n20-replay.yml"
   workflow_dispatch:
 
@@ -29,11 +31,25 @@ jobs:
       - name: Install bounded numerical and Jupyter kernel dependencies
         run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
       - name: Compile clean replay driver
-        run: python -m compileall -q scripts/run_n20_reference_notebook.py
+        run: python -m compileall -q scripts/run_n20_reference_notebook.py scripts/n20_independent_geometry_audit.py
       - name: Reject altered exact coefficients and one-hop contracts
         run: python -m unittest discover -s scripts/tests -p "test_n20_manifest.py" -v
       - name: Execute N20 notebook from a fresh kernel
         run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-reference-result.json"
+      - name: Independently test geospatial reconstruction and anti-tampering
+        run: python -m unittest discover -s scripts/tests -p "test_n20_independent_geometry_audit.py" -v
+      - name: Independently reconstruct one-hop graph from original 5417-point GeoJSON
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/n20-reference-result.json"
+          --output "$RUNNER_TEMP/n20-source-geometry-certificate.json"
+      - name: Archive bounded independent geospatial adjacency certificate
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-geojson-independent-one-hop-certificate
+          path: ${{ runner.temp }}/n20-source-geometry-certificate.json
+          retention-days: 14
+          if-no-files-found: error
       - name: Archive bounded exact-model coefficient manifest and result
         uses: actions/upload-artifact@v4
         with:

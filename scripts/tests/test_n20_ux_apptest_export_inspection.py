@@ -113,7 +113,9 @@ class ActualAppTestZipAuditorTests(unittest.TestCase):
 
     def test_forged_sha256sum_rejected(self):
         def tamper(model, result, files):
-            files["model.json"] = b"{}"
+            altered = deepcopy(model)
+            altered["dataset_sha256"] = "f" * 64
+            files["model.json"] = inspect.canonical(altered)
         with self.assertRaisesRegex(ValueError, "fingerprint"):
             inspect.inspect_ui_zip(fixture(mutation=tamper), "all_stations_connected")
 
@@ -141,8 +143,12 @@ class ActualAppTestZipAuditorTests(unittest.TestCase):
     def test_missing_original_fixed_station_refused(self):
         def tamper(model, result, files):
             model["mapping"]["fixed_master_feature_positions"].pop()
+            model.pop("model_fingerprint_sha256")
+            model["model_fingerprint_sha256"] = sha256(inspect.canonical(model)).hexdigest()
+            result["model_fingerprint_sha256"] = model["model_fingerprint_sha256"]
             files["model.json"] = inspect.canonical(model)
-        with self.assertRaisesRegex(ValueError, "fingerprint"):
+            files["result.json"] = inspect.canonical(result)
+        with self.assertRaisesRegex(ValueError, "fixed/new ordered"):
             inspect.inspect_ui_zip(fixture(mutation=tamper), "all_stations_connected")
 
     def test_csv_tamper_without_sha_update_rejected(self):

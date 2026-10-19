@@ -6,6 +6,9 @@ starting Python; do not set it dynamically after importing numpy.
 from __future__ import annotations
 
 import argparse
+import ast
+from contextlib import redirect_stdout
+import io
 import hashlib
 import json
 import math
@@ -64,7 +67,17 @@ def runtime_details() -> dict:
     features = {
         str(k): bool(v) for k, v in sorted(cpumod.__cpu_features__.items())
     }
-    raw = np.show_runtime(mode="dicts")
+    # NumPy 2.5.4 prints show_runtime data; newer development versions support
+    # a mode="dicts" argument. Preserve the version pinned before this study.
+    output = io.StringIO()
+    with redirect_stdout(output):
+        np.show_runtime()
+    try:
+        raw = ast.literal_eval(output.getvalue().strip())
+    except (ValueError, SyntaxError) as exc:
+        raise ValueError("Could not parse NumPy 2.5.4 runtime information") from exc
+    if not isinstance(raw, list):
+        raise ValueError("NumPy 2.5.4 runtime information is not a list")
     # NumPy may report absolute wheel paths and host-specific library locations;
     # record only allowlisted runtime metadata. Compiled module SHA is above.
     runtimes = []

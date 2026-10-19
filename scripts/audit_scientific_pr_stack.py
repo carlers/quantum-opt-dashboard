@@ -173,7 +173,13 @@ def audit_open_prs(raw: list[dict], repo: str = DEFAULT_REPO) -> dict:
         "draft_prs": sum(p["draft"] for p in prs),
         "non_draft_prs": sum(not p["draft"] for p in prs),
         "family_count": len(families),
+        # A stack is a branching DAG: the number of relatives is NOT its
+        # deepest parent→child chain length (e.g. historical SA and UI fork).
         "longest_stack_pr_count": max(
+            (depth + 1 for depth, _, _ in memo.values()),
+            default=0,
+        ),
+        "largest_stack_family_members": max(
             (len(f["members_in_review_order"]) for f in families.values()),
             default=0,
         ),
@@ -207,7 +213,8 @@ def markdown_summary(report: dict) -> str:
         f"- Open PRs: **{report['total_open_prs']}**; "
         f"draft: **{report['draft_prs']}**.",
         f"- Separate root stacks: **{report['family_count']}**; "
-        f"deepest: **{report['longest_stack_pr_count']}** PRs.",
+        f"deepest lineage: **{report['longest_stack_pr_count']}** PRs; "
+        f"largest family: **{report['largest_stack_family_members']}** PRs.",
         "- This report does **not** merge, approve or validate scientific outputs.",
         "",
         "## Parent-before-child review order",

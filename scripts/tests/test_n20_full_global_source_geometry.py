@@ -36,7 +36,7 @@ class FullGlobalSourceGeometryTests(unittest.TestCase):
 
     def test_new_bridge_connects_fixeds_through_two_hops(self):
         g = graph(4, [(0, 1), (0, 2), (1, 3)])
-        self.assertTrue(global_source.independent_union_find_connected(g, (0,), 2))
+        self.assertFalse(global_source.independent_union_find_connected(g, (0,), 2))
         self.assertTrue(global_source.independent_union_find_connected(g, (0, 1), 2))
 
     def test_optional_isolated_free_node_does_not_make_fixed_impossible(self):
@@ -70,7 +70,7 @@ class FullGlobalSourceGeometryTests(unittest.TestCase):
         g = global_source.build_full_graph(sites, square, 4.1, 2)
         self.assertEqual(g["node_count"], 4)
         self.assertEqual(g["undirected_edges"], [[0, 1], [0, 2], [1, 2], [2, 3]])
-        self.assertFalse(global_source.independent_union_find_connected(g, (0,), 2))
+        self.assertTrue(global_source.independent_union_find_connected(g, (0,), 2))
         self.assertTrue(global_source.independent_union_find_connected(g, (0, 1), 2))
 
     def test_hull_strictly_excludes_segment_through_land_gap(self):

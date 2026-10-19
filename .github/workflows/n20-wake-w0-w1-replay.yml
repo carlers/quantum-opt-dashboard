@@ -1,0 +1,67 @@
+# Posthoc-motivated wake-off sensitivity; W0 historical source unchanged.
+# Pre-outcome protocol in an earlier DRAFT PR #81, with the known prior W1 result disclosed.
+name: N20 preregistered W0 W1 wake-formula sensitivity
+on:
+  pull_request:
+    paths:
+      - "scripts/studies/n20_wake_w0_w1.py"
+      - "scripts/studies/n20_wake_independent_scip.py"
+      - "scripts/tests/test_n20_wake_w0_w1.py"
+      - "docs/research_protocols/N20_W0_W1_WAKE_ALGEBRA_PREREG_2026_10_19.md"
+      - "docs/research_results/N20_W0_W1_WAKE_ALGEBRA_RESULTS_2026_10_19.md"
+      - ".github/workflows/n20-wake-w0-w1-replay.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  source-wake-interpretation:
+    name: Cold original SCIP, source geometry, wake-off and independent SCIP
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install bounded pinned source notebook deps
+        run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
+      - name: Verify source prereg protocol predates study and compile independent scripts
+        run: |
+          test -f docs/research_protocols/N20_W0_W1_WAKE_ALGEBRA_PREREG_2026_10_19.md
+          python -m compileall -q scripts/studies/n20_wake_w0_w1.py scripts/studies/n20_wake_independent_scip.py scripts/tests/test_n20_wake_w0_w1.py
+      - name: Signed wake algebra and formula-order adversarial checks
+        run: python -m unittest discover -s scripts/tests -p "test_n20_wake_w0_w1.py" -v
+      - name: Fresh kernel original N20 SCIP with source coefficient trace
+        run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-original-W0.json"
+      - name: Independent original GeoJSON graph verification before counterfactual
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/n20-original-W0.json"
+          --output "$RUNNER_TEMP/n20-independent-original-geometry.json"
+      - name: Reconstruct original signed source and run exact W0 and wake-off W1
+        run: >
+          python -m scripts.studies.n20_wake_w0_w1
+          --reference "$RUNNER_TEMP/n20-original-W0.json"
+          --output "$RUNNER_TEMP/n20-wake-W0-W1-source-study.json"
+      - name: Independently enumerate and SCIP-certify both scenario optima
+        run: >
+          python -m scripts.studies.n20_wake_independent_scip
+          --study "$RUNNER_TEMP/n20-wake-W0-W1-source-study.json"
+          --output "$RUNNER_TEMP/n20-wake-W0-W1-independent-SCIP.json"
+      - name: Preserve distinct historical and alternative numerical evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-posthoc-wake-off-W0-W1-source-evidence
+          path: |
+            ${{ runner.temp }}/n20-original-W0.json
+            ${{ runner.temp }}/n20-independent-original-geometry.json
+            ${{ runner.temp }}/n20-wake-W0-W1-source-study.json
+            ${{ runner.temp }}/n20-wake-W0-W1-independent-SCIP.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Declare scientific limits
+        run: |
+          echo "The wake-off outcome had ALREADY been observed in an earlier forensic review: retrospective/posthoc-motivated, NOT blind discovery." >> "$GITHUB_STEP_SUMMARY"
+          echo "The symmetric east-west source wake is not calibrated lake hydrodynamic transport; no real-current W2 scenario run." >> "$GITHUB_STEP_SUMMARY"
+          echo "Original notebook/data/model, main, preview, production and scientific PRs unchanged; no merge/deploy/public raw data." >> "$GITHUB_STEP_SUMMARY"

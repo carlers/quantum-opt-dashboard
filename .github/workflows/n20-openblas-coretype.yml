@@ -1,0 +1,98 @@
+# Issue #62 second, post-observation exploratory study: OpenBLAS target only.
+# No NumPy SIMD mask, lake optimization, historical QUBO or SA here.
+name: N20 frozen OpenBLAS Haswell intervention
+on:
+  pull_request:
+    paths:
+      - "scripts/n20_openblas_coretype_audit.py"
+      - "scripts/tests/test_n20_openblas_coretype_audit.py"
+      - ".github/workflows/n20-openblas-coretype.yml"
+      - "docs/N20_OPENBLAS_CORETYPE_PROTOCOL.md"
+      - "docs/N20_NUMPY_DISPATCH_RESULTS.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-paired-blas:
+    name: OpenBLAS auto vs Haswell / ${{ matrix.host }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [r1, r2, r3]
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pin original NumPy runtime and BLAS introspector
+        run: python -m pip install numpy==2.5.4 threadpoolctl==3.6.0
+      - name: Auto-detected original BLAS target process A
+        run: >
+          python -m scripts.n20_openblas_coretype_audit
+          --arm auto --replica ${{ matrix.host }}-auto-a
+          --output "$RUNNER_TEMP/blas-${{ matrix.host }}-auto-a.json"
+      - name: Auto-detected original BLAS target process B
+        run: >
+          python -m scripts.n20_openblas_coretype_audit
+          --arm auto --replica ${{ matrix.host }}-auto-b
+          --output "$RUNNER_TEMP/blas-${{ matrix.host }}-auto-b.json"
+      - name: Force documented Haswell OpenBLAS target in fresh process A
+        env:
+          OPENBLAS_CORETYPE: HASWELL
+        run: >
+          python -m scripts.n20_openblas_coretype_audit
+          --arm haswell --replica ${{ matrix.host }}-haswell-a
+          --output "$RUNNER_TEMP/blas-${{ matrix.host }}-haswell-a.json"
+      - name: Force same Haswell target in fresh process B
+        env:
+          OPENBLAS_CORETYPE: HASWELL
+        run: >
+          python -m scripts.n20_openblas_coretype_audit
+          --arm haswell --replica ${{ matrix.host }}-haswell-b
+          --output "$RUNNER_TEMP/blas-${{ matrix.host }}-haswell-b.json"
+      - name: Archive unmodified full numerical and target records
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-blas-${{ matrix.host }}
+          path: ${{ runner.temp }}/blas-*.json
+          retention-days: 14
+          if-no-files-found: error
+  independent-comparison:
+    needs: independent-paired-blas
+    name: Test and compare all twelve frozen norm and exp records
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Execute eight adversarial original-input controls
+        run: |
+          python -m pip install numpy==2.5.4 threadpoolctl==3.6.0
+          python -m compileall -q scripts/n20_openblas_coretype_audit.py
+          python -m unittest discover -s scripts/tests -p "test_n20_openblas_coretype_audit.py" -v
+      - name: Download all 12 original process records
+        uses: actions/download-artifact@v4
+        with:
+          pattern: n20-blas-r*
+          path: _n20-blas-records
+          merge-multiple: false
+      - name: Independently verify same frozen operand and exact BLAS target
+        run: >
+          python -m scripts.n20_openblas_coretype_audit
+          --inputs-root _n20-blas-records
+          --report _n20-openblas-target-comparison.json
+      - name: Archive numerical/compiled-binary/target evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-openblas-haswell-comparison
+          path: _n20-openblas-target-comparison.json
+          retention-days: 14
+          if-no-files-found: error

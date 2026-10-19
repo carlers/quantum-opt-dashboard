@@ -408,7 +408,14 @@ if current is None or current["fingerprint"] != fingerprint:
 metrics = current["metrics"]
 independent = current["independent"]
 if global_mode and current["chosen"] is None:
-    st.error("No certified globally connected placement: " + metrics["reason"])
+    if metrics["status"] == "time_limit_no_certified_optimum":
+        st.warning("Global search stopped at its 30-second limit. "
+                   "Feasibility and optimum remain UNDETERMINED: " + metrics["reason"])
+    elif metrics["status"].startswith("infeasible_certified"):
+        st.error("Global connectivity is mathematically INFEASIBLE for these "
+                 "source-defined sites, edges and K: " + metrics["reason"])
+    else:
+        st.error("No verified global result: " + metrics["reason"])
     st.caption(
         "All 15 original stations are mandatory; changing source connectivity, K "
         "or the radio-distance assumptions would define a different research scenario."
@@ -417,7 +424,7 @@ if global_mode and current["chosen"] is None:
         st.write("Disconnected components even with all 20 candidates:",
                  metrics["all_35_site_graph_components"])
     st.download_button(
-        "Download graph and infeasibility evidence (.zip)",
+        "Download graph and inconclusive/infeasibility evidence (.zip)",
         data=current["zip"], file_name=f"water-global-{fingerprint[:12]}.zip",
         mime="application/zip", key="mvp_download",
     )

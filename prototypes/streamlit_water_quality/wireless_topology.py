@@ -95,7 +95,7 @@ def graph_from_source(data: "LakeData", instance: "Instance",
             # Distance check before expensive GEOS segment predicate.
             if math.hypot(float(b[0] - a[0]), float(b[1] - a[1])) > dmax:
                 continue
-            if not hull.contains(LineString((tuple(a), tuple(b))):
+            if not hull.contains(LineString((tuple(a), tuple(b)))):
                 continue
             adjacent[i].add(j)
             adjacent[j].add(i)

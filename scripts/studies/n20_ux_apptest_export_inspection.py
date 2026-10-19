@@ -154,7 +154,9 @@ def record_ux_apptest(app: Path, source: dict, science: dict, ux: dict) -> dict:
     """Execute both actual app modes; enforce state invalidation before global."""
     if not app.is_file():
         raise ValueError("Pinned UX Streamlit app file missing")
-    at = AppTest.from_file(str(app), default_timeout=120).run()
+    # AppTest resolves relative filenames against THIS module's directory,
+    # not the workflow working directory; supply a verified absolute UX path.
+    at = AppTest.from_file(str(app.resolve(strict=True)), default_timeout=120).run()
     if at.exception:
         raise AssertionError(f"Pinned UI initial render failed: {at.exception}")
     _require(next(x for x in at.radio if x.label == "Wireless connectivity").value

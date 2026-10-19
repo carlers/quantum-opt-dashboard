@@ -77,6 +77,7 @@ def make_scientific_view(original: dict, s4: dict, scenario: dict,
     same_objective = active_objective_sha == source_objective_sha
     source_profile = (
         same_objective
+        and scenario["model_input"] == original["model_input"]
         and scenario["topology_mode"] == SOURCE_TOPOLOGY
         and scenario["graph_sha256"] == certificate["independent_geometry_sha256"]
         and scenario["input_origin"] == SOURCE_ORIGIN

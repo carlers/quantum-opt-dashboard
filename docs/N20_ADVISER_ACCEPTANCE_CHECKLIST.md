@@ -22,6 +22,8 @@
 
 **Private evidence custody update (2026-10-19):** In addition to the earlier 26-ZIP historical archive, a **new separate** 15-original-ZIP / 37-file integrated N20 archival bundle was prepared, complete with original run/artifact links and outer SHA `7463332681fafc26ee441c9456251e89059722844ba26a548bb4cb20808879c9`. The research owner must **download and store both** in an approved private/institutional location. Conversation delivery is **not** permanent custody or public-release approval. See [updated evidence inventory](RESEARCH_EVIDENCE_INVENTORY_2026_10_19.md).
 
+**Critical provisional scientific review (not a sign-off):** [N20_PROVISIONAL_ADVISER_REVIEW_2026_10_19.md](N20_PROVISIONAL_ADVISER_REVIEW_2026_10_19.md) challenges the *model assumptions*, rather than just reproducing old source code. It documents **7 of 20 candidate nodes impossible to choose**, the winning five new nodes occupying **four new-only connected components**, an east–west symmetric “directional wake” implementation, an N=50 paper penalty-table arithmetic discrepancy, and the difference between source optima and scientifically valid GIS/hydrodynamic decisions. These are reviewer findings and posthoc sensitivity calculations, **not** approved model corrections. Read them before signing B1–B4.
+
 ## B. Decisions for the adviser — leave unchecked until explicitly approved
 
 - [ ] **B1 — Source authority.** Approve the **notebook-derived N=20/K=5 case only** as the working computational reference, while preserving the original source notebook and GeoJSON with their exact checksums. If not approved, identify the specific disputed assumptions/inputs.

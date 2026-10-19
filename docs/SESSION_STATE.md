@@ -1,3 +1,15 @@
+# Owner-reported saved archives; scientific adviser provisional critical review — 2026-10-19
+
+**Owner reported “both archives saved”**. Update custody to *reported saved*, not a proof the downloaded copy's outer SHA was independently checked, that rights have been cleared or that an institutional archive exists. Full preserved SHA hashes are recorded in evidence inventory.
+
+After actual source-manifest and owner-DOCX review, new **unsigned** [critical adviser memo](N20_PROVISIONAL_ADVISER_REVIEW_2026_10_19.md) identifies 7 of 20 sites **structurally infeasible** (2,4,5,8,11,16,18), source winner {0,7}/{1}/{3}/{6} **four new-only connected components**, an orientation-symmetric east-west wake alignment penalty despite a downstream description, a definite Table VI N=50 subtotal mismatch (2.196+1.167=3.363, printed 2.334), candidate generation/cutoff tension, missing upstream risk/AHP/WorldPop provenance, and hardcoded/cross-host/model validity limitations. Computed counterfactuals are **posthoc diagnosis, not original manuscript runs**; no model/data/paper/code corrections or scientific sign-off applied.
+
+Provisional B1-B7 disposition: B1 **conditional computational baseline only**, B2 **defer physical geometry/connectivity validation**, B3 **R1 paper / R2 frozen SA** and no unjustified blanket threshold, B4 **do not certify paper reproduction**, B5 **narrow claims only**, B6 **saved reported but checksum/rights/access need verification**, B7 **defer merge/deploy**.
+
+**Next steps:** show owner the seven recommendations and evidence; ask owner explicitly whether to authorize read-only model flaw/sensitivity follow-up in draft PR. Only after that begin revised modeled scenarios; preserve baseline and obtain separate merge/deploy authorization.
+
+---
+
 # Separate exact N20 source evidence downloaded, not yet owner-archived — 2026-10-19 UTC
 
 **Standing user preference:** every completed response includes **Next steps** and exact step-by-step user actions when approval/storage is needed. Downloaded 15 new verified original GitHub Actions artifact ZIPs (37 internal files) across runs #39186452841, #39187619344, #39191911068, #39191911072, #39192139080 and #39192139090. Packaged privately in `quantum-opt-n20-integrated-evidence-2026-10-19.zip`, SHA256 `7463332681fafc26ee441c9456251e89059722844ba26a548bb4cb20808879c9`; separate SHA and manifest provided to user in conversation. **Not uploaded to institutional/private external storage; user needs to download and retain.** Existing earlier 26-ZIP package remains a separate previously offered object (SHA `462add7e32375916957607b6f90f646fee046e73f21edd4818d3b8e1abadfdbc`). Live source artifact expiries **Nov 2, 2026 UTC**. No raw GeoJSON/paper was re-released. Details `docs/RESEARCH_EVIDENCE_INVENTORY_2026_10_19.md`.

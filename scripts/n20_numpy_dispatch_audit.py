@@ -172,7 +172,15 @@ def measure(replica: str, mode: str) -> dict:
     if mode == "no-avx2-fma3":
         for feature in ("AVX2", "FMA3"):
             if runtime["cpu_features_enabled"].get(feature) is not False:
-                raise ValueError(f"Intended CPU feature was not disabled: {feature}")
+                raise ValueError(
+                    f"Intended CPU feature was not disabled: {feature}; "
+                    f"numpy={runtime['numpy']}; "
+                    f"baseline={runtime['cpu_baseline']}; "
+                    f"dispatch={runtime['cpu_dispatch']}; "
+                    f"AVX2={runtime['cpu_features_enabled'].get('AVX2')}; "
+                    f"FMA3={runtime['cpu_features_enabled'].get('FMA3')}; "
+                    f"mask={envval}"
+                )
     return {
         "schema_version": 1,
         "experiment": EXPERIMENT,

@@ -1,3 +1,17 @@
+# Preregistered G1 candidate-generator study — source and separate SCIP proof complete (2026-10-19 UTC)
+
+**Authorized scope:** user allowed review-only preregistered N20 physical-model sensitivity with no archived source/data edits, merger, publication, main/preview/production deploy. Separate protocol DRAFT [#79](https://github.com/carlers/quantum-opt-dashboard/pull/79), fixed at `8aa4d0114c64efe21007a344c9acc3bee086c0bd` **before alternative code/results**; child experiment DRAFT [#80](https://github.com/carlers/quantum-opt-dashboard/pull/80) stacks on #79→integrated science #68, independent of dashboard UX PR #78.
+
+**Original-source plus new G1 program verified:** [CI #39230401305](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39230401305) SUCCESS at scientific code commit `aec9994a546571485ff543ad3b6c318844f0f804`. 11 synthetic original-pool/land/eligibility tamper tests pass, actual original N20/SCIP fresh-kernel replay + raw original independent geo gate pass, original G0 candidate IDs/MIQP/1,077 K5/digest/energy unchanged. G1 uses identical original 10k target hex and nearest-source snapping+unique, filters eligible direct original fixed GEOS-water+Dmax links from **4,485 eligible pool entries** before applying original farthest-first. G1 20 candidates all reachable, **15,504** locally feasible K5, new optimum original feature IDs `[2394,1893,4594,3466,47]`, source mathematical energy `−3.5442206422431903`. Separate independent `math.hypot` raw-GeoJSON source graph, 15,504 source combinations, dedicated SCIP MIQP linearization and SciPy dense `cdist` coverage all agreed for both G0/G1. G0 historical optimum unchanged `[5253,2394,1557,47,5409]` energy `−3.3012934918564643`.
+
+**Scientific tradeoff:** G1 lowers **20 generated pool** mean distance across 5,417 source sites by ~30.252m but increases worst by ~262.790m; for **15 fixed + actual 5 deployed optimum** G1 increases mean nearest distance ~92.398m and worst ~1130.759m. This is **not physical coverage validation**. Full accepted/negative/mixed H0–H4, actual source fingerprints and study caveats: `docs/research_results/N20_G1_CANDIDATE_ELIGIBILITY_RESULTS_2026_10_19.md`.
+
+**Evidence:** source/geometry/G0-G1 plus independent SCIP certificate archive [#12176648487](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39230401305/artifacts/12176648487), expires 2026-11-02 09:29:40 UTC; owner custody of older research bundles does NOT include this newer artifact unless separately saved.
+
+**Next steps:** check final PR/Issue #71 and this report for no posthoc hypothesis edits, ask owner whether future G2 coverage-aware generator should be preregistered separately, consider follow-up wake #72, keep historical G0 reference and all branches unmerged. Do not deploy or publish raw GIS without separate authorization.
+
+---
+
 # Combined scientific N20 reference integration validated — 2026-10-19 UTC
 
 **Owner must see “Next steps” in all updates.** Review-only [DRAFT PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) merges existing experimental *logic* from sibling source science branches, not GitHub pull requests into main. Base is unchanged draft #63 (source precision #61→#57→#56); source independent spatial fork #66→#67 unchanged. **No deployment, archived paper, GeoJSON, original notebook or base-pr branch updates.**

@@ -1,3 +1,15 @@
+# N20 wake-algebra source sensitivity (2026-10-19 UTC)
+
+Owner authorized review-only source scientific-model audit/preregistered sensitivity without source rewrites, deploys or main merges. Issue #72 and umbrella #69. Original [DRAFT PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) source baseline untouched; separate *protocol-only* [DRAFT PR #81](https://github.com/carlers/quantum-opt-dashboard/pull/81) committed at `2ca9c312f1592535f81dfbe19a5fae4bd02c9343` **BEFORE** implementing the child [study DRAFT PR #82](https://github.com/carlers/quantum-opt-dashboard/pull/82). The earlier adviser forensic memo #65 had **already observed W1 wake-off same optimum/−3.302471**; this new prereg protocol honestly labels work **posthoc-motivated reproduction**, not blind discovery.
+
+[Code-head CI #39232910850](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39232910850) SUCCESS: 11 adversarial wake algebra/cone boundary tests, truly fresh original source N20/SCIP, independent source GeoJSON local graph, reconstructed W0 source coefficients, new W1 delta-only coefficient loop, full original 15,504 combinations / 1,077 source local feasible SHA, two independent PySCIPOpt 'optimal' certifications. W0 original [0,1,3,6,7] E=−3.3012934918564643; W1 delta=0 winner **same** E=−3.302471040188822; original winner wake contribution +0.0011775483323579472; positive wake exists in 27 free/fixed and 9 free/free geometry interactions, quadratic term count W0 12 vs W1 6; top-10 sets overlap 10/10. Algebra symmetric under c→−c: original formula is an east–west **alignment proxy** not a validated downstream-flow model.
+
+Full [report](docs/research_results/N20_W0_W1_WAKE_ALGEBRA_RESULTS_2026_10_19.md) (from repo root `docs/research_results/N20_W0_W1_WAKE_ALGEBRA_RESULTS_2026_10_19.md`). First code run artifact [#12177937488](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39232910850/artifacts/12177937488) expires Nov 2 09:49:42 UTC, owner custody of this new artifact **not confirmed**.
+
+**Next steps:** review report/PR/Issue #72, rerun exact-head CI triggered by report addition, preserve newest artifact privately with source rights as needed, then address separately #73 geometry/AHP assumptions or source hydrodynamics data before any W2. Do not claim physical lake-current validation or quantum hardware success; original N20 notebook/GeoJSON, main, preview and deployed pilot unchanged.
+
+---
+
 # Combined scientific N20 reference integration validated — 2026-10-19 UTC
 
 **Owner must see “Next steps” in all updates.** Review-only [DRAFT PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) merges existing experimental *logic* from sibling source science branches, not GitHub pull requests into main. Base is unchanged draft #63 (source precision #61→#57→#56); source independent spatial fork #66→#67 unchanged. **No deployment, archived paper, GeoJSON, original notebook or base-pr branch updates.**

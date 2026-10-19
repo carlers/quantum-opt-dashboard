@@ -32,7 +32,7 @@ class PreRegisteredCandidatePoolTests(unittest.TestCase):
             (0, 0), (10, 0), (10, 10), (7, 10),
             (7, 3), (3, 3), (3, 10), (0, 10),
         ])
-        coords = np.asarray([(2, 8), (8, 8), (1, 1), (9, 1)], dtype=float)
+        coords = np.asarray([(2, 8), (8, 8), (8, 6), (9, 1)], dtype=float)
         selected = study.direct_fixed_filter(coords, np.asarray([0, 2]),
                                               np.asarray([1]), hull, 12)
         self.assertEqual(selected.tolist(), [2])
@@ -81,7 +81,7 @@ class PreRegisteredCandidatePoolTests(unittest.TestCase):
         self.assertEqual(study.K_NEW, 5)
 
     def test_source_checksum_tampering_must_stop_before_experiments(self):
-        with patch.object(study.DATA, "read_bytes", return_value=b"forged"):
+        with patch("pathlib.Path.read_bytes", return_value=b"forged"):
             with self.assertRaisesRegex(ValueError, "checksum mismatch"):
                 study.load_source()
 

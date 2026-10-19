@@ -4,17 +4,14 @@
 
 ## 1. AHP matrix and reported global weights are not the same eigenvector
 
-The manuscript's **Table III**, main criteria A/B/C/D, prints the reciprocal pairwise matrix
+The manuscript's **Table III** prints the reciprocal pairwise matrix for main criteria A/B/C/D:
 
-[
-A =
-egin{bmatrix}
-1 & 4 & 6 & 8\
-1/4 & 1 & 3 & 5\
-1/6 & 1/3 & 1 & 3\
-1/8 & 1/5 & 1/3 & 1
-end{bmatrix}.
-]
+|  | A | B | C | D |
+| --- | ---: | ---: | ---: | ---: |
+| A | 1 | 4 | 6 | 8 |
+| B | 1/4 | 1 | 3 | 5 |
+| C | 1/6 | 1/3 | 1 | 3 |
+| D | 1/8 | 1/5 | 1/3 | 1 |
 
 The **Table IV** printed sub-criteria global weights are:
 

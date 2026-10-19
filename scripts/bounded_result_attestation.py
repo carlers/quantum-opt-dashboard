@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 from itertools import combinations
+from fractions import Fraction
 import math
 
 from scripts import science_claim_gate as gate
@@ -112,6 +113,20 @@ def _score(model: dict, chosen: tuple[int, ...]) -> float:
     return math.fsum([*(linear[i] for i in chosen), *pair])
 
 
+def _exact_binary_coefficients(model: dict) -> tuple[list[int], list[tuple[int, int, int]], int]:
+    """Convert exact IEEE-754 source coefficients to integers with shared 2^k scale."""
+    linear = [Fraction.from_float(float.fromhex(x))
+              for x in model["linear_float64_hex"]]
+    pairs = [(i, j, Fraction.from_float(float.fromhex(q)))
+             for i, j, q in model["quadratic_ij_float64_hex"]]
+    scale = max([1, *(x.denominator for x in linear),
+                 *(q.denominator for _, _, q in pairs)])
+    a = [x.numerator * (scale // x.denominator) for x in linear]
+    q = [(i, j, v.numerator * (scale // v.denominator))
+         for i, j, v in pairs]
+    return a, q, scale
+
+
 def attest_bounded_result(scenario: dict, report: dict,
                           graph: dict | None = None) -> dict:
     """Prove an N<=20 small mathematical instance by independent full search.
@@ -175,29 +190,35 @@ def attest_bounded_result(scenario: dict, report: dict,
         chosen = None
         energy = None
 
+    linear_exact, pairs_exact, denominator = _exact_binary_coefficients(model)
+
+    def exact_integer_score(subset: tuple[int, ...]) -> int:
+        chosen_set = set(subset)
+        return (sum(linear_exact[i] for i in subset)
+                + sum(q for i, j, q in pairs_exact
+                      if i in chosen_set and j in chosen_set))
+
     feasible_count = 0
     feasible_digest = sha256()
     best = None
-    best_energy = None
+    best_integer = None
     for subset in combinations(range(n), k):
         if not is_feasible(subset):
             continue
         feasible_count += 1
         feasible_digest.update((",".join(map(str, subset)) + "\n").encode("ascii"))
-        objective = _score(model, subset)
-        if best_energy is None or objective < best_energy - 1e-10:
-            best, best_energy = subset, objective
+        objective = exact_integer_score(subset)
+        if best_integer is None or objective < best_integer:
+            best, best_integer = subset, objective
     if status == "infeasible" and feasible_count:
         raise ValueError("Reported infeasible but exhaustive search found feasible sites")
-    if status in ("optimal", "optimal_exhaustive"):
-        if feasible_count == 0 or energy is None or not math.isclose(
-            energy, best_energy, rel_tol=0.0, abs_tol=1e-8
-        ):
-            raise ValueError("Claimed optimal result disagrees with exhaustive mathematical proof")
     independently_optimal = (
-        chosen is not None and best_energy is not None and
-        math.isclose(energy, best_energy, rel_tol=0.0, abs_tol=1e-8)
+        chosen is not None and best_integer is not None
+        and exact_integer_score(chosen) == best_integer
     )
+    if status in ("optimal", "optimal_exhaustive") and not independently_optimal:
+        raise ValueError("Claimed optimal result disagrees with exact binary rational proof")
+    best_energy = float(Fraction(best_integer, denominator)) if best_integer is not None else None
     return {
         "schema_version": SCHEMA,
         "scenario_sha256": identity,
@@ -210,6 +231,9 @@ def attest_bounded_result(scenario: dict, report: dict,
         "feasible_subsets": feasible_count,
         "feasible_sets_sha256": feasible_digest.hexdigest(),
         "best_energy": best_energy,
+        "exact_optimum_energy_numerator": str(best_integer) if best_integer is not None else None,
+        "exact_optimum_energy_denominator": str(denominator),
+        "reported_energy_comparison_abs_tolerance": 1e-8,
         "independent_optimal_set": list(best) if best is not None else None,
         "reported_solver_status_unattested": status,
         "reported_selection": list(chosen) if chosen is not None else None,

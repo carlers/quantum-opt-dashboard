@@ -1,0 +1,110 @@
+# Exploratory same-commit source N20 objective SHA variance study.
+# No paper/D2 reconciliation, physical calibration, source retuning or deployment.
+name: N20 cross-host objective identity forensic audit
+on:
+  pull_request:
+    paths:
+      - "scripts/studies/n20_objective_crossrun.py"
+      - "scripts/tests/test_n20_objective_crossrun.py"
+      - "docs/research_protocols/N20_OBJECTIVE_FINGERPRINT_REPLICATION_2026_10_19.md"
+      - ".github/workflows/n20-objective-fingerprint-forensics.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fresh-source-replays:
+    name: Pinned source replays / ${{ matrix.replica }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [r1, r2, r3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pin known direct NumPy SCIP notebook versions for controlled comparison
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          matplotlib==3.11.2 nbclient==0.11.0 nbformat==5.11.1
+          ipykernel==6.31.0
+      - name: Record bounded numeric/CPU runtime provenance
+        run: >
+          python scripts/compare_n20_replays.py
+          --metadata-output "$RUNNER_TEMP/runtime.json"
+          --replica "${{ matrix.replica }}"
+      - name: Actual original N20 notebook + SCIP fresh kernel one
+        run: >
+          python scripts/run_n20_reference_notebook.py
+          --result "$RUNNER_TEMP/replicate-${{ matrix.replica }}-a.json"
+      - name: Actual original N20 notebook + SCIP fresh kernel two
+        run: >
+          python scripts/run_n20_reference_notebook.py
+          --result "$RUNNER_TEMP/replicate-${{ matrix.replica }}-b.json"
+      - name: Independently check original raw GeoJSON geometry on this host
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/replicate-${{ matrix.replica }}-a.json"
+          --output "$RUNNER_TEMP/source-geometry.json"
+      - name: Retain both complete raw source model manifests, not hashes alone
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-forensic-original-${{ matrix.replica }}
+          path: |
+            ${{ runner.temp }}/replicate-*.json
+            ${{ runner.temp }}/runtime.json
+            ${{ runner.temp }}/source-geometry.json
+          retention-days: 14
+          if-no-files-found: error
+
+  compare-independent-hosts:
+    name: Classify objective and full model differences across six source processes
+    needs: fresh-source-replays
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install exactly the same scientific dependency versions
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          matplotlib==3.11.2 nbclient==0.11.0 nbformat==5.11.1
+          ipykernel==6.31.0
+      - name: Test negative controls for tampering, fake source and changed physical meaning
+        run: |
+          python -m unittest discover -s scripts/tests -p "test_n20_objective_crossrun.py" -v
+          python -m unittest discover -s scripts/tests -p "test_compare_n20_replays.py" -v
+          python -m unittest discover -s scripts/tests -p "test_science_claim_gate.py" -v
+          python -m unittest discover -s scripts/tests -p "test_scientific_dashboard_adapter.py" -v
+          python -m unittest discover -s scripts/tests -p "test_bounded_result_attestation.py" -v
+      - name: Restore raw reports from three independently provisioned runners
+        uses: actions/download-artifact@v4
+        with:
+          pattern: n20-forensic-original-*
+          path: _n20-forensic-hosts
+          merge-multiple: false
+      - name: Compare all 6 complete source models, objective SHA and numeric hexadecimal values
+        run: >
+          python -m scripts.studies.n20_objective_crossrun
+          --inputs-root _n20-forensic-hosts
+          --report _n20-objective-fingerprint-evidence.json
+          --min-results 6
+      - name: Archive immutable bounded observational comparison report
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-original-objective-crossrun-comparison
+          path: _n20-objective-fingerprint-evidence.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Label diagnostic vs source claims clearly
+        run: |
+          echo "Observational fresh N20 objective fingerprint study, not peer-reviewed physical or manuscript truth." >> "$GITHUB_STEP_SUMMARY"
+          echo "Exact model and objective hashes are distinct namespaces; any observed SHA differences are retained." >> "$GITHUB_STEP_SUMMARY"
+          echo "Original AHP D2 road, historical local graph and frozen N20 source are unchanged." >> "$GITHUB_STEP_SUMMARY"
+          echo "Prior #89/#92 runs did not archive full original coefficients; no ungrounded retroactive pairwise comparison." >> "$GITHUB_STEP_SUMMARY"

@@ -1,3 +1,11 @@
+# Separate exact N20 source evidence downloaded, not yet owner-archived — 2026-10-19 UTC
+
+**Standing user preference:** every completed response includes **Next steps** and exact step-by-step user actions when approval/storage is needed. Downloaded 15 new verified original GitHub Actions artifact ZIPs (37 internal files) across runs #39186452841, #39187619344, #39191911068, #39191911072, #39192139080 and #39192139090. Packaged privately in `quantum-opt-n20-integrated-evidence-2026-10-19.zip`, SHA256 `7463332681fafc26ee441c9456251e89059722844ba26a548bb4cb20808879c9`; separate SHA and manifest provided to user in conversation. **Not uploaded to institutional/private external storage; user needs to download and retain.** Existing earlier 26-ZIP package remains a separate previously offered object (SHA `462add7e32375916957607b6f90f646fee046e73f21edd4818d3b8e1abadfdbc`). Live source artifact expiries **Nov 2, 2026 UTC**. No raw GeoJSON/paper was re-released. Details `docs/RESEARCH_EVIDENCE_INVENTORY_2026_10_19.md`.
+
+**Next steps:** confirm latest fast PR #65 CI, add a short and accurate custody update to issue #34 and PR #65, and give user steps for private storage + decision(s) needed. Owner/adviser scientific B1–B6 decisions remain unsigned; no merges/deploys/public archives without explicit approval.
+
+---
+
 # Adviser N20 computational acceptance handoff — 2026-10-19 UTC
 
 **Owner standing rule:** Always include explicit **Next steps**. New unsigned, source-evidence-grounded `docs/N20_ADVISER_ACCEPTANCE_CHECKLIST.md` added to this **review-only draft PR #65**. It verifies bounded original notebook N20/K5 computational claims against exact-head CI #39192139080 and #39192139090 on **unmerged draft PR #68** and separates those from **seven unapproved owner/adviser decisions** (source authority; hull/adjacency; numerical tolerance and R0/R1/R2 tier; manuscript AHP/D2/SCIP discrepancy; allowed claims/new evacuation model; evidence rights/storage; separately authorized merge action). No signer name or approval is fabricated. It links the published-manuscript source audit #16 and policy #64 and recognizes old GIS/archived source checksums.

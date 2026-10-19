@@ -20,6 +20,8 @@
 
 [Geometry certificate artifact #12159589226](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39192139080/artifacts/12159589226), [exact source model record #12159379845](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39192139080/artifacts/12159379845), and [six-process comparison artifact #12159414693](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39192139090/artifacts/12159414693) expire **2026-11-02 UTC** under current CI retention. Evidence links and repository metadata alone do **not** constitute durable custody. Archive permission and destination remain undecided ([#34](https://github.com/carlers/quantum-opt-dashboard/issues/34)).
 
+**Private evidence custody update (2026-10-19):** In addition to the earlier 26-ZIP historical archive, a **new separate** 15-original-ZIP / 37-file integrated N20 archival bundle was prepared, complete with original run/artifact links and outer SHA `7463332681fafc26ee441c9456251e89059722844ba26a548bb4cb20808879c9`. The research owner must **download and store both** in an approved private/institutional location. Conversation delivery is **not** permanent custody or public-release approval. See [updated evidence inventory](RESEARCH_EVIDENCE_INVENTORY_2026_10_19.md).
+
 ## B. Decisions for the adviser — leave unchecked until explicitly approved
 
 - [ ] **B1 — Source authority.** Approve the **notebook-derived N=20/K=5 case only** as the working computational reference, while preserving the original source notebook and GeoJSON with their exact checksums. If not approved, identify the specific disputed assumptions/inputs.

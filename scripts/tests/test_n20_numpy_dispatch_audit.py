@@ -88,7 +88,7 @@ class DispatchAuditTests(unittest.TestCase):
     def test_mismatched_binary_wheels_on_same_host_rejected(self):
         data = records()
         data[1]["runtime"]["extensions_sha256"][1]["sha256"] = "3" * 64
-        with self.assertRaisesRegex(ValueError, "different installed NumPy binaries"):
+        with self.assertRaisesRegex(ValueError, "Different installed NumPy binaries"):
             compare(data)
 
     def test_mask_must_be_verified_as_active(self):

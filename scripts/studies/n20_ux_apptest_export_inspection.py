@@ -150,7 +150,8 @@ def inspect_ui_zip(session_result: dict, mode: str) -> dict:
     }
 
 
-def record_ux_apptest(app: Path, source: dict, science: dict, ux: dict) -> dict:
+def record_ux_apptest(app: Path, source: dict, science: dict, ux: dict,
+                      archive_sink: dict | None = None) -> dict:
     """Execute both actual app modes; enforce state invalidation before global."""
     if not app.is_file():
         raise ValueError("Pinned UX Streamlit app file missing")
@@ -164,7 +165,8 @@ def record_ux_apptest(app: Path, source: dict, science: dict, ux: dict) -> dict:
     at.button(key="mvp_run").click().run()
     if at.exception:
         raise AssertionError(f"Original local SCIP AppTest failed: {at.exception}")
-    local = inspect_ui_zip(dict(at.session_state["mvp_result"]), "source_local")
+    local_result = dict(at.session_state["mvp_result"])
+    local = inspect_ui_zip(local_result, "source_local")
 
     next(x for x in at.radio if x.label == "Wireless connectivity").set_value(
         "Global connectivity · all stations"
@@ -176,8 +178,8 @@ def record_ux_apptest(app: Path, source: dict, science: dict, ux: dict) -> dict:
     at.button(key="mvp_run").click().run()
     if at.exception:
         raise AssertionError(f"Global exact-search Streamlit AppTest failed: {at.exception}")
-    global_session = inspect_ui_zip(dict(at.session_state["mvp_result"]),
-                                    "all_stations_connected")
+    global_result = dict(at.session_state["mvp_result"])
+    global_session = inspect_ui_zip(global_result, "all_stations_connected")
 
     _require(local["active_model_fingerprint_sha256"]
              != global_session["active_model_fingerprint_sha256"],
@@ -206,6 +208,12 @@ def record_ux_apptest(app: Path, source: dict, science: dict, ux: dict) -> dict:
         == ux["original_objective_quadratic_ij_float64_hex"],
         "UX AppTest current compiled score differs from independently executed UX backend"
     )
+    if archive_sink is not None:
+        # Caller writes these ONLY after complete independent state/CSV/graph
+        # verification, so the exact archived bytes match reported ZIP SHAs.
+        archive_sink["original_local_scip"] = local_result["zip"]
+        archive_sink["exploratory_global_exact"] = global_result["zip"]
+
     return {
         "schema_version": 1,
         "scope": "actual_ux_Streamlit_AppTest_local_and_global_read_only_snapshot",
@@ -229,14 +237,32 @@ def main() -> None:
     p.add_argument("--science-global", type=Path, required=True)
     p.add_argument("--ux-global", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--original-local-zip", type=Path, required=True)
+    p.add_argument("--exploratory-global-zip", type=Path, required=True)
     args = p.parse_args()
-    if args.output.exists():
-        raise FileExistsError("Refuse to overwrite earlier UX AppTest snapshot")
+    for item in (args.output, args.original_local_zip, args.exploratory_global_zip):
+        if item.exists():
+            raise FileExistsError("Refuse to overwrite earlier UX AppTest evidence: " + str(item))
+    if len({args.output.resolve(), args.original_local_zip.resolve(),
+            args.exploratory_global_zip.resolve()}) != 3:
+        raise ValueError("Research report and actual AppTest ZIP paths must differ")
     records = [
         json.loads(p.read_text(encoding="utf-8"))
         for p in (args.source_reference, args.science_global, args.ux_global)
     ]
-    result = record_ux_apptest(args.app, *records)
+    evidence_archives = {}
+    result = record_ux_apptest(args.app, *records, archive_sink=evidence_archives)
+    archives = (
+        (args.original_local_zip, evidence_archives["original_local_scip"],
+         result["local_actual_scip_archive"]["zip_sha256"]),
+        (args.exploratory_global_zip, evidence_archives["exploratory_global_exact"],
+         result["global_actual_exact_enumeration_archive"]["zip_sha256"]),
+    )
+    for path, blob, expected_digest in archives:
+        _require(sha256(blob).hexdigest() == expected_digest,
+                 "Original AppTest ZIP bytes changed after verified evidence inspection")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(blob)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(canonical(result))
     print("N20_CURRENT_UX_APPTEST_EVIDENCE " + json.dumps({

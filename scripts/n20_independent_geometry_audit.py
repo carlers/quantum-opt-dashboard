@@ -196,6 +196,8 @@ def certify_geometry(record: dict, source: Path = SOURCE) -> dict:
     if water_hull.is_empty or not water_hull.is_valid:
         raise AssertionError("Original lake concave hull is invalid")
     independent = reconstruct(actual_xy, water_hull, calculated_dmax, N_FREE)
+    if independent["considered_pairs"] != 490:
+        raise AssertionError("Expected exactly 190 free/free and 300 free/fixed pairs")
     if independent["near_threshold_pairs_1e_minus_7_m"]:
         raise AssertionError("Ambiguous distance threshold edge; review float64/GEOS")
     if independent["free_neighbor_indices"] != model["free_neighbor_indices"]:
@@ -267,6 +269,11 @@ def main() -> None:
         "feasible_combinations": audit["spatial_graph"]["feasible_combinations"],
         "feasible_sha256": audit["spatial_graph"]["feasible_site_sets_sha256"],
         "geometry_sha256": audit["spatial_graph_sha256"],
+        "tested_pairs": audit["spatial_graph"]["tested_pairs"],
+        "interior_pairs": audit["spatial_graph"]["interior_pairs"],
+        "distance_eligible_edges": audit["spatial_graph"]["distance_eligible_edges"],
+        "d_max_m_hex": audit["spatial_graph"]["distance_threshold_m_from_geojson_hex"],
+        "threshold_margin_m_hex": audit["spatial_graph"]["nearest_distance_threshold_margin_m_hex"],
     }, sort_keys=True))
 
 

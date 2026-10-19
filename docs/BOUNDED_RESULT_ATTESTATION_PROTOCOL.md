@@ -1,0 +1,47 @@
+# Preregistered bounded mathematical outcome attestation — source-only research seam
+
+**Issue:** [#91](https://github.com/carlers/quantum-opt-dashboard/issues/91). **Base:** read-only claim adapter [DRAFT #89](https://github.com/carlers/quantum-opt-dashboard/pull/89), chained to source-only scientific claim #86, S4 #84/#83 and unmerged reference #68. **This PR is a pure Python scoped research proof, not a Streamlit integration, source-author field study, solver trust service, or source-model replacement.**
+
+## Mathematical attestation provided
+
+`scripts/bounded_result_attestation.py` independently evaluates a specified binary quadratic objective **E(S) = sum_{i in S} a_i + sum_{i<j, i,j in S} q_ij** using the exact `float.hex()` coefficients pinned in the input model, and enumerates all `n choose K` subsets. To prove the optimum *without using an arbitrary numerical tie tolerance*, every binary64 coefficient is converted to its exact rational value using integer scaling with a common power-of-two denominator. The exact integer scores are compared across all feasible subsets; reported floating-point energies are separately checked against independent `math.fsum` within an explicit absolute tolerance of **1e-8**. An energy within that tolerance does **not** imply exact optimum.
+
+**Scope bounds:** `n <= 20` candidate sites and `math.comb(n,K) <= 200000` subsets. Outside these limits the verifier **refuses** to provide a mathematical proof; it never silently takes a sample or turns timeout into optimality. The frozen source historical N20/K5 is 15,504 possible subsets, with 1,077 local-one-hop feasible subsets, and original selected `[0,1,3,6,7]`. The CI must independently recover these source-specific claims from a fresh notebook and original raw GeoJSON. Reports include an exact rational optimum as decimal-string numerator/denominator, the independent feasible-set digest, actual selected feasible/optimal status and the exact scenario hash.
+
+### Two *mathematical graph semantics*, not two verified radio networks
+
+**Original local one-hop:** consume the explicitly declared source-model `free_neighbor_indices` and `fixed_neighbor_flags`, check symmetric/unique site relationships, require each chosen site to have at least one fixed or chosen free neighbor. This preserves source notebook's local rule; it **does not** certify one globally connected network. For frozen source only, raw GeoJSON and original notebook are **independently** validated before calling the new attestor. An exploratory scenario may change these model definitions, but its source provenance and physical interpretation stay unverified.
+
+**Exploratory global all-stations:** require a complete explicitly enumerated undirected graph with **N candidates plus every mandatory original fixed station**, reject missing fixed nodes, duplicate/malformed edges and mismatched `graph_sha256` derived from the complete edge record. Require all fixed plus selected candidate nodes to lie in exactly one component. If original local neighborhood fields are supplied, confirm that free/free and fixed-link Boolean relationships are consistent with the global edge list. A synthetic bridge example shows two fixed nodes joined only through a selected new candidate; an unbridged mandatory fixed node yields mathematically **infeasible**. This is **not** a fresh reproduction of original all-15-fixed 860/15,504 source graph (unmerged UX #78), nor independent reconstruction of radio propagation.
+
+### Crucial boundaries and states
+
+- `reported_solver_status_unattested` records what the caller says (`optimal`, `optimal_exhaustive`, `time_limit`, `infeasible`). It is not proof that SCIP or an external solver actually ran, that time limits were respected or that a user-provided LP represents the same problem. A fake optimal claim is rejected when its selection disagrees with independently exact enumeration. A time-limit incumbent remains reported as time-limited even if independently proved optimal from its coefficients.
+- `reported_selection_is_independently_optimal` is **only** exact mathematical optimality for the explicitly supplied coefficients, set and graph. `infeasibility_independently_proved` is only bounded mathematical exhaustive infeasibility. Neither implies good monitoring sites, valid hydrodynamic transport, legitimate AHP judgments or measured radio links.
+- `scenario_sha256` matches the full model input (including nonobjective Dmax), scored objective, graph digest, solver mode and backend controls. Stale report identities are rejected. A matching cache hash alone is not a trusted signature or independent solver log.
+- No external data upload, historical manuscript DOCX, WorldPop layer, new sensitivity values, GIS study conclusions or third-party license approval. D2 remains source road proximity, manuscript D2 WorldPop and AHP Tables III/IV remain unreconciled.
+
+## CI and pending integration
+
+Workflow `.github/workflows/n20-bounded-result-attestation.yml` must run inherited source gate and adapter tests, the additional adversarial bounded verifier suite, then real original notebook/SCIP, independent raw GeoJSON, S4 and source-only scientific certificate, followed by **fresh new exact feasible/optimum mathematical proof** at the exact draft head. The machine-readable artifact is numerical and expires after 14 days. Test numbers are not evidence until the actual exact-HEAD workflow succeeds.
+
+Separate UX [draft #78](https://github.com/carlers/quantum-opt-dashboard/pull/78) has its own original 35-node geometric graph and exact all-stations enumeration. This PR **does not combine** the two unmerged ancestries, touch Streamlit, implement source all-stations proof, archive permanent thesis data, or authenticate arbitrary production result exports.
+
+**Acceptance still pending under Issue #91:** independently review cross-stack source graph identity, trusted backend SCIP/log/model-LP parity, actual current per-run evidence export, real two-mode Streamlit AppTest, all-15-existing original network 860/15,504 and proper no-solution/timeout UI; obtain scientifically authoritative lake geometry, LLDA expert AHP/D2 worksheets, measured RF/backhaul and DO/current calibration (#87) before any field-valid model replacement.
+
+**Next steps:** verify the cold mathematical proof CI at its exact head; correct defects only, record evidence on #91/#88 and in session handoff; prepare a separate human-reviewed full UI integration plan. No merge, preview, publication or deployment without separate user approval.
+
+
+## Exact-head experiment audit (2026-10-19)
+
+First complete source-proof review HEAD `baab8504bc6a087e13b2e2262ad7d69c0874253c`, [GitHub Actions #39287590948](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948): **success** on **42** unit tests (12 source claim, 14 adapter, 16 bounded-verifier), fresh original SCIP notebook, independent GeoJSON source graph, S4 AHP/factor checks, original claim certificate and independent exact IEEE-754 coefficient mathematical proof. The proof emits original **20 candidate / 15 fixed / budget 5** source local **1,077 feasible subsets**, **-3.3012934918564643** and **[0,1,3,6,7]**. [Bounded source-only evidence ZIP artifact #12203347942](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948/artifacts/12203347942), scheduled 2026-11-02 16:42:26 UTC expiry; external archival custody not verified.
+
+### Cross-run bit-exact objective identity is not automatically stable
+
+Although original N20 scores and selected stations matched across these two independently successful cold CI runs, their emitted **exact original objective fingerprints differ**:
+- [#89 cold CI #39285551761](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39285551761): `8536a3db295bd4f4e0faa8ad599bfbb3c01a0c4391c04ecc145701f83adc3a56`
+- [#92 cold CI #39287590948](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948): `2b238848f43d1763fe093b38360941677e2fa46f1a6c01d05b5b359a62dc5809`
+
+The differing SHA values mean **bit-exact manifest identity across these runs is not demonstrated**. Neither run establishes the coefficient-level cause, exact ULP count, or whether a specific NumPy/vectorization/host setting induced it; that requires a separate exact-coordinate/coefficient manifest comparison under [Issue #24](https://github.com/carlers/quantum-opt-dashboard/issues/24). **Do not replace the exact identity requirement with a false shared SHA, nor infer scientifically different source-factor definitions from a SHA mismatch alone.** This attestation proves an exact optimum for the coefficients *actually generated on its particular runner*, not bit-exact coefficient invariance between two runners.
+
+The successful first head CI does not automatically cover later documentation commits: verify the final PR HEAD before any proposed merge or scientific handoff. PR remains draft.

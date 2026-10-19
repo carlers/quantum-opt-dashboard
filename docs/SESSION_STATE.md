@@ -1,3 +1,27 @@
+# Exact original N20 bounded mathematical attestation — successful draft evidence (2026-10-19)
+
+**DRAFT PR #92** https://github.com/carlers/quantum-opt-dashboard/pull/92, downstream of **source-only adapter DRAFT #89**, no shared ancestry with unmerged UX global-topology PR #78. Original **implementation HEAD `baab8504bc6a087e13b2e2262ad7d69c0874253c`** [cold CI #39287590948](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948) **SUCCESS:** 12 source claim +14 adapter +16 new bounded exact-result tests passed (42), real original notebook SCIP, source raw geometry, S4, manuscript/physical BLOCKED claims, independent exact-rational N20 local 1,077-feasible K5 mathematical optimum `[0,1,3,6,7]`, `-3.3012934918564643`. [Proof artifact #12203347942](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948/artifacts/12203347942) 14-day expiry 2026-11-02 16:42:26 UTC. Future source-only review artifact must be saved externally before expiration if needed.
+
+**Cross-run exact coefficient identity unresolved:** PR #89 [CI #39285551761](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39285551761) succeeded separately with exact source objective fingerprint `8536a3db295bd4f4e0faa8ad599bfbb3c01a0c4391c04ecc145701f83adc3a56`. #92 original independent cold run printed different exact SHA `2b238848f43d1763fe093b38360941677e2fa46f1a6c01d05b5b359a62dc5809`, despite same source solution and energy. Precise coefficient differences have NOT been compared; don't claim one-ULP causality or treat two digests as same bit-exact objective. Filed on precision #24.
+
+**Limits:** #92 proves exact outcome for specified binary64 coefficients and provided one-hop graph; it does not authenticate a live SCIP run or physical radio viability. Global graph tests in #92 are only synthetic; original UX #78 reports a separate 860/15,504 full-fixed-node result and remains independently unmerged and field-unvalidated. Main/preview/production/history untouched; no full dashboard integration or model adoption.
+
+**Next steps:** verify any subsequent documentation HEAD in exact-head CI, retain #92 review-only, review source+UX branch dependency and create separate trusted per-run solver/UI validation draft if authorized under #88/#91. Acquire authoritative LLDA/AHP/GIS/field inputs #87 and address numeric cross-run trace #24 prior to claiming cross-host identical objective. No merge, deploy, publication, or physics sign-off.
+
+---
+
+# Issue #91 bounded independently checked mathematical result — DRAFT research (2026-10-19)
+
+**Branch:** `science-bounded-solver-result-attestation` stacked on [DRAFT #89](https://github.com/carlers/quantum-opt-dashboard/pull/89) (source-gate #86 → original source S4 #84/#83 → source #68). Separate unmerged UX #78 is NOT imported. Read [bounded attestation protocol](docs/BOUNDED_RESULT_ATTESTATION_PROTOCOL.md).
+
+**Code:** `scripts/bounded_result_attestation.py` independently fully enumerates up to 20 candidates / 200000 combinations, validates exact source-model local one-hop or explicit complete **synthetic/global mathematical graph**, checks selected-site feasibility, SHA-bound source scenario, original/changed Dmax, malformed/forged solver status, raw objective and exact binary64 coefficient optimality via integer-scaled rational values. Reports mathematical optimum only for the provided model, not SCIP log authentication, historical paper or physical sensor-network validation. Tests are synthetic plus a separate genuine fresh N20 SCI P cold source/geometry/S4 gate.
+
+**Scope restrictions:** no Streamlit, current dashboard solver-runtime proof, source all-15-fixed global original graph integration, original notebook/GeoJSON/paper edits, new data, physical/scientific validation, new ranges, merge or deployment. Current branch CI needs exact-HEAD verification; no pass claimed before workflow completes.
+
+**Next steps:** create review-only draft PR for #91, inspect exact-head CI, fix defects, report bounded result separately from UI acceptance; future trusted result-verification+UI integration follows source-vs-UX dependency review and author-owned #87 physical/AHP/GIS evidence.
+
+---
+
 # Review-only scientific evidence adapter for future Streamlit — 2026-10-19
 
 **Current draft:** child of source-only scientific claim gate DRAFT #86 on a new branch `science-dashboard-evidence-readonly-adapter`. Issue #85 scientific objective/claim gate is independently verified on #86 at `d8a39099761a`; Issue #88 remains **open** for later real dashboard implementation. Separate UX chain #55 → #77 → #78 is not on this branch and has not been integrated.

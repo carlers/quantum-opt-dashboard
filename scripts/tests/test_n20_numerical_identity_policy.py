@@ -89,7 +89,7 @@ class N20ObservedPrecisionPolicyTests(unittest.TestCase):
     def test_outside_observed_linear_ulp_envelope_rejected(self):
         a, b = observed_pair()
         b["linear_float64_hex"][9] = math.nextafter(
-            float.fromhex(b["linear_float64_hex"][9]), math.inf
+            float.fromhex(b["linear_float64_hex"][9]), -math.inf
         ).hex()
         r = policy.diagnose_original_n20_objective_pair(a, b)
         self.assertFalse(r["observed_posthoc_numerical_envelope_only"])

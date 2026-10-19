@@ -6,6 +6,8 @@ on:
     paths:
       - "scripts/studies/n20_dual_checkout_ux_contract.py"
       - "scripts/tests/test_n20_dual_checkout_ux_contract.py"
+      - "scripts/studies/n20_ux_apptest_export_inspection.py"
+      - "scripts/tests/test_n20_ux_apptest_export_inspection.py"
       - "docs/N20_DUAL_CHECKOUT_UX_SCIENCE_CONTRACT.md"
       - ".github/workflows/n20-dual-checkout-ux-science.yml"
   workflow_dispatch:
@@ -86,6 +88,19 @@ jobs:
           "$RUNNER_TEMP/uxenv/bin/python"
           _ux_snapshot/prototypes/streamlit_water_quality/export_global_reference.py
           --output "$RUNNER_TEMP/ux-original-full-global.json"
+      - name: Adversarially test actual AppTest-produced ZIP and selected CSV verifier
+        run: >
+          "$RUNNER_TEMP/uxenv/bin/python" -m unittest discover -s scripts/tests
+          -p "test_n20_ux_apptest_export_inspection.py" -v
+      - name: Inspect BOTH actual current Streamlit AppTest result ZIPs and mode invalidation
+        run: >
+          "$RUNNER_TEMP/uxenv/bin/python"
+          scripts/studies/n20_ux_apptest_export_inspection.py
+          --app _ux_snapshot/prototypes/streamlit_water_quality/app.py
+          --source-reference "$RUNNER_TEMP/source-N20-reference.json"
+          --science-global "$RUNNER_TEMP/science-source-full-global.json"
+          --ux-global "$RUNNER_TEMP/ux-original-full-global.json"
+          --output "$RUNNER_TEMP/ux-current-session-AppTest-export-integrity.json"
       - name: Independently cross-check entire source and UX exported graph, objective and status
         run: >
           python -m scripts.studies.n20_dual_checkout_ux_contract
@@ -102,6 +117,7 @@ jobs:
             ${{ runner.temp }}/source-original-science-claims.json
             ${{ runner.temp }}/science-source-full-global.json
             ${{ runner.temp }}/ux-original-full-global.json
+            ${{ runner.temp }}/ux-current-session-AppTest-export-integrity.json
             ${{ runner.temp }}/two-stack-review-only-evidence-contract.json
           retention-days: 14
           if-no-files-found: error

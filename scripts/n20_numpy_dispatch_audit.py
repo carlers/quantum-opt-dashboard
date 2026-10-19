@@ -6,7 +6,6 @@ starting Python; do not set it dynamically after importing numpy.
 from __future__ import annotations
 
 import argparse
-import ast
 from contextlib import redirect_stdout
 import io
 import hashlib
@@ -67,17 +66,24 @@ def runtime_details() -> dict:
     features = {
         str(k): bool(v) for k, v in sorted(cpumod.__cpu_features__.items())
     }
-    # NumPy 2.5.4 prints show_runtime data; newer development versions support
-    # a mode="dicts" argument. Preserve the version pinned before this study.
+    # NumPy 2.5.4 show_runtime() prints a representation containing e.g.
+    # calls for dtype/version/path objects. Do NOT eval or literal_eval it.
+    # Use typed CPU feature metadata and threadpoolctl's structured source.
     output = io.StringIO()
     with redirect_stdout(output):
         np.show_runtime()
-    try:
-        raw = ast.literal_eval(output.getvalue().strip())
-    except (ValueError, SyntaxError) as exc:
-        raise ValueError("Could not parse NumPy 2.5.4 runtime information") from exc
-    if not isinstance(raw, list):
-        raise ValueError("NumPy 2.5.4 runtime information is not a list")
+    if not output.getvalue().strip():
+        raise ValueError("NumPy runtime introspection unexpectedly produced no report")
+    from threadpoolctl import threadpool_info
+    raw = [{
+        "simd_extensions": {
+            "baseline": list(cpumod.__cpu_baseline__),
+            "found": [k for k in cpumod.__cpu_dispatch__
+                      if cpumod.__cpu_features__.get(k, False)],
+            "not_found": [k for k in cpumod.__cpu_dispatch__
+                          if not cpumod.__cpu_features__.get(k, False)],
+        },
+    }, *threadpool_info()]
     # NumPy may report absolute wheel paths and host-specific library locations;
     # record only allowlisted runtime metadata. Compiled module SHA is above.
     runtimes = []
@@ -108,6 +114,7 @@ def runtime_details() -> dict:
         "cpu_baseline": list(cpumod.__cpu_baseline__),
         "cpu_dispatch": list(cpumod.__cpu_dispatch__),
         "cpu_features_enabled": features,
+        "runtime_sources": "numpy.show_runtime invoked; typed CPU metadata and threadpoolctl.info used",
         "show_runtime_allowlisted": runtimes,
         "extensions_sha256": extensions(),
         "env": {

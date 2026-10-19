@@ -1,0 +1,135 @@
+# Distinct research branches checked out side by side: NEVER merge/rebase/cherry-pick
+# UX checkout is exactly approved-for-reading PR #78 commit, not a moving head.
+name: N20 dual-checkout scientific evidence and Streamlit backend coherence
+on:
+  pull_request:
+    paths:
+      - "scripts/studies/n20_dual_checkout_ux_contract.py"
+      - "scripts/tests/test_n20_dual_checkout_ux_contract.py"
+      - "scripts/studies/n20_ux_apptest_export_inspection.py"
+      - "scripts/tests/test_n20_ux_apptest_export_inspection.py"
+      - "docs/N20_DUAL_CHECKOUT_UX_SCIENCE_CONTRACT.md"
+      - ".github/workflows/n20-dual-checkout-ux-science.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: n20-dual-backend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  review-only-joint-backend-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout science proof draft unchanged
+        uses: actions/checkout@v4
+      - name: Checkout the independent UX implementation as a second repository tree
+        uses: actions/checkout@v4
+        with:
+          ref: 8752d17372d9d4dd544acbbfd686b4bb45e33f40
+          path: _ux_snapshot
+          persist-credentials: false
+      - name: Confirm reviewed independent UX commit and pristine separate tree
+        run: |
+          test "$(git -C _ux_snapshot rev-parse HEAD)" = "8752d17372d9d4dd544acbbfd686b4bb45e33f40"
+          test -f _ux_snapshot/prototypes/streamlit_water_quality/tests/test_wireless_ui.py
+          test -f scripts/n20_full_global_source_geometry.py
+          echo "Two pinned source trees; no merge or deployment" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install direct pinned original-science dependencies
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          matplotlib==3.11.2 nbclient==0.11.0 nbformat==5.11.1
+          ipykernel==6.31.0
+      - name: Challenge both backends' evidence contract with forged inputs
+        run: |
+          python -m compileall -q scripts/studies/n20_dual_checkout_ux_contract.py
+          python -m unittest discover -s scripts/tests -p "test_n20_dual_checkout_ux_contract.py" -v
+          python -m unittest discover -s scripts/tests -p "test_n20_full_global_source_geometry.py" -v
+          python -m unittest discover -s scripts/tests -p "test_bounded_result_attestation.py" -v
+          python -m unittest discover -s scripts/tests -p "test_science_claim_gate.py" -v
+          python -m unittest discover -s scripts/tests -p "test_scientific_dashboard_adapter.py" -v
+      - name: Execute original source notebook in genuinely fresh Jupyter kernel with real SCIP
+        run: >
+          python scripts/run_n20_reference_notebook.py
+          --result "$RUNNER_TEMP/source-N20-reference.json"
+      - name: Independently reconstruct original source raw GeoJSON
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/source-N20-reference.json"
+          --output "$RUNNER_TEMP/source-original-geometry.json"
+      - name: Recheck original source S4 AHP/factor provenance
+        run: >
+          python -m scripts.studies.n20_s4_parameter_provenance
+          --reference "$RUNNER_TEMP/source-N20-reference.json"
+          --output "$RUNNER_TEMP/source-original-S4.json"
+      - name: Enforce original-source only allowed, manuscript/physical blocked
+        run: >
+          python -m scripts.science_claim_gate
+          --reference "$RUNNER_TEMP/source-N20-reference.json"
+          --provenance "$RUNNER_TEMP/source-original-S4.json"
+          --output "$RUNNER_TEMP/source-original-science-claims.json"
+      - name: Reconstruct independently scored full 35-site source global model
+        run: >
+          python -m scripts.n20_full_global_source_geometry
+          --reference "$RUNNER_TEMP/source-N20-reference.json"
+          --output "$RUNNER_TEMP/science-source-full-global.json"
+      - name: Install independent UX Streamlit runtime in isolated Python environment
+        run: |
+          python -m venv "$RUNNER_TEMP/uxenv"
+          "$RUNNER_TEMP/uxenv/bin/python" -m pip install -r _ux_snapshot/requirements.txt "pytest>=8,<10"
+      - name: Actual Streamlit AppTest original-local and full-global UX modes
+        run: >
+          "$RUNNER_TEMP/uxenv/bin/python" -m pytest
+          _ux_snapshot/prototypes/streamlit_water_quality/tests/test_wireless_ui.py
+          -v -q
+      - name: Execute pinned UX backend model, independent exact search and full geometry exporter
+        run: >
+          "$RUNNER_TEMP/uxenv/bin/python"
+          _ux_snapshot/prototypes/streamlit_water_quality/export_global_reference.py
+          --output "$RUNNER_TEMP/ux-original-full-global.json"
+      - name: Adversarially test actual AppTest-produced ZIP and selected CSV verifier
+        run: >
+          "$RUNNER_TEMP/uxenv/bin/python" -m unittest discover -s scripts/tests
+          -p "test_n20_ux_apptest_export_inspection.py" -v
+      - name: Inspect BOTH actual current Streamlit AppTest result ZIPs and mode invalidation
+        run: >
+          "$RUNNER_TEMP/uxenv/bin/python"
+          scripts/studies/n20_ux_apptest_export_inspection.py
+          --app _ux_snapshot/prototypes/streamlit_water_quality/app.py
+          --source-reference "$RUNNER_TEMP/source-N20-reference.json"
+          --science-global "$RUNNER_TEMP/science-source-full-global.json"
+          --ux-global "$RUNNER_TEMP/ux-original-full-global.json"
+          --original-local-zip "$RUNNER_TEMP/ux-actual-local-SCIP-AppTest.zip"
+          --exploratory-global-zip "$RUNNER_TEMP/ux-actual-global-exact-AppTest.zip"
+          --output "$RUNNER_TEMP/ux-current-session-AppTest-export-integrity.json"
+      - name: Independently cross-check entire source and UX exported graph, objective and status
+        run: >
+          python -m scripts.studies.n20_dual_checkout_ux_contract
+          --source-reference "$RUNNER_TEMP/source-N20-reference.json"
+          --science-global "$RUNNER_TEMP/science-source-full-global.json"
+          --ux-global "$RUNNER_TEMP/ux-original-full-global.json"
+          --ux-commit-sha "$(git -C _ux_snapshot rev-parse HEAD)"
+          --output "$RUNNER_TEMP/two-stack-review-only-evidence-contract.json"
+      - name: Archive observed independent graph and UX source evidence for review only
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-readonly-dual-checkout-science-ux-research
+          path: |
+            ${{ runner.temp }}/source-original-science-claims.json
+            ${{ runner.temp }}/science-source-full-global.json
+            ${{ runner.temp }}/ux-original-full-global.json
+            ${{ runner.temp }}/ux-current-session-AppTest-export-integrity.json
+            ${{ runner.temp }}/ux-actual-local-SCIP-AppTest.zip
+            ${{ runner.temp }}/ux-actual-global-exact-AppTest.zip
+            ${{ runner.temp }}/two-stack-review-only-evidence-contract.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Disclose absence of live run attestation and real physical validation
+        run: |
+          echo "This is source science and a separately checked-out pinned UX implementation; neither source tree is merged." >> "$GITHUB_STEP_SUMMARY"
+          echo "UX Streamlit AppTest exercised two modes; backend exporter result was independently checked against original source geometry and exact energy." >> "$GITHUB_STEP_SUMMARY"
+          echo "NO trusted signed current Streamlit user session, authenticated solver log, live UI evidence gating, manuscript parity or physical RF/DO validation exists." >> "$GITHUB_STEP_SUMMARY"

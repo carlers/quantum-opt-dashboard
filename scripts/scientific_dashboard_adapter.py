@@ -52,9 +52,13 @@ def scenario_signature(scenario: dict) -> str:
     if scenario["input_origin"] == SOURCE_ORIGIN and controls:
         raise ValueError("Custom controls cannot masquerade as frozen source inputs")
     objective_sha = gate.objective_fingerprint(scenario["model_input"])
+    # A scoring objective does not include graph-range metadata (e.g. Dmax).
+    # A cache identity MUST also bind the complete compiled model payload.
+    full_model_sha = gate.full_manifest_digest(scenario["model_input"])
     return sha256(gate.canonical({
         "schema_version": SCHEMA,
         "objective_sha256": objective_sha,
+        "complete_model_input_sha256": full_model_sha,
         "topology_mode": mode,
         "graph_sha256": scenario["graph_sha256"],
         "input_origin": scenario["input_origin"],

@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import math
+from itertools import combinations
 from pathlib import Path
 
 import nbformat
@@ -29,6 +30,7 @@ EXPECTED_MASTER = [5253, 2394, 1557, 47, 5409]
 EXPECTED_DATA_SHA = "e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7"
 EXPECTED_NOTEBOOK_SHA = "08cbc1572048f4c34aab508ae195c82575acd685c7d29695d0eccecdf67cc048"
 EXPECTED_ENERGY = -3.3012934918564643
+EXPECTED_FEASIBLE = 1077  # Historical source-derived x-only exhaustive canary
 OUTPUT_MARKER = "N20_CLEAN_RESULT "
 
 
@@ -96,7 +98,11 @@ def verify_exact_model(record: dict) -> None:
         raise AssertionError("One-hop free adjacency is not symmetric")
     if not all(math.isfinite(float.fromhex(s)) for row in coordinates for s in row):
         raise AssertionError("Nonfinite projected candidate coordinate")
-    selected = set(record["selected_local_positions"])
+    selected_raw = record["selected_local_positions"]
+    selected = set(selected_raw)
+    if (len(selected_raw) != 5 or len(selected) != 5
+            or any(not isinstance(i, int) or not 0 <= i < 20 for i in selected_raw)):
+        raise AssertionError("Selected site indices must be five distinct local N20 positions")
     if any(not fixed[i] and not selected.intersection(neighbors[i]) for i in selected):
         raise AssertionError("Selected stations violate the reported one-hop rules")
     reconstructed_energy = sum(linear[i] for i in selected) + sum(
@@ -106,10 +112,35 @@ def verify_exact_model(record: dict) -> None:
         raise AssertionError("Decoded complete coefficient model differs from claimed score")
 
 
+def feasible_space_certificate(model: dict) -> tuple[int, str]:
+    """Independently enumerate reported one-hop adjacency, not notebook outputs."""
+    fixed = model["fixed_neighbor_flags"]
+    adjacent = [set(group) for group in model["free_neighbor_indices"]]
+    digest = hashlib.sha256()
+    feasible_count = 0
+    for subset in combinations(range(20), 5):
+        chosen = set(subset)
+        if all(fixed[i] or chosen.intersection(adjacent[i]) for i in subset):
+            feasible_count += 1
+            digest.update((",".join(map(str, subset)) + "\n").encode("ascii"))
+    return feasible_count, digest.hexdigest()
+
+
+def verify_feasible_space(record: dict) -> None:
+    actual_count, actual_sha = feasible_space_certificate(record["model_input"])
+    if record.get("feasible_combinations") != actual_count:
+        raise AssertionError("Feasible K5 subset count differs from independent one-hop audit")
+    if record.get("feasible_site_sets_sha256") != actual_sha:
+        raise AssertionError("Feasible K5 subset SHA-256 differs from independent adjacency audit")
+
+
 def verify_result(record: dict) -> None:
     if record["schema_version"] != 2:
         raise AssertionError("N20 report schema has changed")
     verify_exact_model(record)
+    verify_feasible_space(record)
+    if record["feasible_combinations"] != EXPECTED_FEASIBLE:
+        raise AssertionError("Source-derived N20 feasible-set size differs from reviewed 1077")
     if record["dataset_sha256"] != EXPECTED_DATA_SHA:
         raise AssertionError("The source GeoJSON digest does not match the pinned baseline")
     if record["archived_notebook_sha256"] != EXPECTED_NOTEBOOK_SHA:

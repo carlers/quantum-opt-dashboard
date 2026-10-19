@@ -1,3 +1,31 @@
+# Issue #62 runtime cause narrowed — paired NumPy and OpenBLAS controls (2026-10-19 UTC)
+
+**Owner workflow preference:** Every response/handoff must state **next steps** explicitly. New independent [draft stacked PR #63](https://github.com/carlers/quantum-opt-dashboard/pull/63) on source-N20 operation trace PR #61. No merges/production/preview/main/history writes.
+
+**Study 1 (preregistered; explicitly amended pre-result after masked preflight):** GitHub [#39180686631](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39180686631) SUCCESS: 3 x86 hosts × 2 baseline/2 `NPY_DISABLE_CPU_FEATURES=X86_V3,X86_V4` NumPy 2.5.4 processes each = 12; 10/10 adversarial tests, source fixed SHA and NumPy/OpenBLAS shared extension SHA identical across all hosts. AMD EPYC 9V45 and Intel Xeon 8573C each showed 2 one-ULP `np.exp` changes under mask; AMD EPYC 7763 no change; **all four original `np.linalg.norm` cases unchanged under this mask** on each host, while cross-host norm modes persisted. Wrong old-style `AVX2,FMA3` preflight was **not** valid and is documented in `docs/N20_NUMPY_DISPATCH_PROTOCOL.md`. Strong but bounded NumPy ufunc dispatch sensitivity.
+
+**Study 2 (separately declared after Study 1):** [#39181329033](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39181329033) SUCCESS, 3 hosts × 2 auto/2 `OPENBLAS_CORETYPE=HASWELL` processes each, original frozen operands and x86 compiled binary SHA invariant; 8/8 adversarial tests. Intel Xeon 6973P-C auto-`SkylakeX` changed **all four original norm results by one ULP** when forced to `Haswell`, matching the natural Haswell modes of EPYC 9V74/7763; exp unchanged. Two other hosts already selected Haswell and had zero change. Within-arm fresh-process replicates bitwise identical. **Observed OpenBLAS-selected target sensitivity** for norm independent of NumPy ufunc dispatch control; not one proven CPU instruction or approved universal numerical fix.
+
+**Results and protocols:** `docs/N20_NUMPY_DISPATCH_RESULTS.md`, `docs/N20_NUMPY_DISPATCH_PROTOCOL.md`, `docs/N20_OPENBLAS_CORETYPE_PROTOCOL.md` with raw 14-day artifact links (expire around Nov 2 UTC). Source N20 scientific notebook, 25-cell archival version, GeoJSON, AHP/D2 manuscript, source MIQP/K5 constraints and history B QUBO/SA all unchanged.
+
+**Next steps:** Finish exact-head PR #63 CI review after the documentation checkpoint; write evidence comments into issue #62, #24, roadmap #2; create a separate scientific reproducibility policy proposal (pin runtime, report exact input+original outcome tolerance, run multi-host and sensitivity checks) before any numerical stabilization is ever adopted. Keep PR #63 **draft/unmerged** and do not change main/preview/production.
+
+---
+
+# Issue #62 — fixed NumPy binary/dispatch intervention phase (2026-10-19 UTC)
+
+**Owner instruction:** Continue independent scientific work and **always state next steps in every work handoff/response**. The user did not authorize merging or changing live deployment. New feature branch `science-n20-numpy-dispatch-controls` stacked on last reviewed trace PR #61 at `0239baa1`, itself on PR #57 and clean scientific N20 notebook PR #56.
+
+- Freeze **same six exact IEEE754 NumPy operands** from validated 300 free-to-existing station trace #60. Source reference and prior results unchanged. No original archive, GeoJSON, notebook model mathematics, QUBO, SA sample, main, preview or prod modification.
+- New `scripts/n20_numpy_dispatch_audit.py` records `np.show_runtime(mode="dicts")` allowlisted SIMD/BLAS metadata and SHA-256 of installed NumPy compiled extensions/bundled libraries (no full paths), and exact frozen `np.linalg.norm`, `np.exp` plus *separately labeled* diagnostic square/reduce/sqrt, math.hypot and math.exp stages. Pinned NumPy 2.5.4.
+- New `scripts/tests/test_n20_numpy_dispatch_audit.py` has 10 adversarial tests (altered binary, missing host, missing SIMD mask, different frozen operands, 1-ULP mode change, etc.)
+- New `.github/workflows/n20-numpy-dispatch-controls.yml` runs **3 independently allocated Ubuntu 24.04 x86 GitHub hosts**, each with **2 baseline new interpreters + 2 new interpreters launched with `NPY_DISABLE_CPU_FEATURES=AVX2,FMA3`**, meaning 12 separate fixed-input NumPy observations. Numeric threading env fixed to 1 across arms, same binaries required within host, compiled SHA and CPU features observed. An aggregate job checks and reports all differences. Original clean-N20 SCIP/exhaustive and prior full 300-pair controls are inherited reference evidence, not replaced.
+- `docs/N20_NUMPY_DISPATCH_PROTOCOL.md` preregisters the comparison, intervention and limitations before seeing new output. Neither an equal result nor changed mode automatically proves CPU instruction/BLAS causal attribution.
+
+**Next steps:** Open stacked draft PR; check exact-head CI, debug invalid source/logs only if necessary, archive all 12 raw process reports and test evidence; update #62, #24, #2 and PR. Propose only a separately reviewed future numerical portability policy, never a silent rounding fix. Do not merge or deploy without separate explicit authorization.
+
+---
+
 # Finalized issue #60 computational evidence — exact frozen operands across x86 and ARM (2026-10-18 UTC)
 
 Draft [PR #61](https://github.com/carlers/quantum-opt-dashboard/pull/61) stacked on unmerged original-model precision PR #57 and working N20 notebook PR #56. Source N20 pair trace verified **20 of 300 free–fixed pair records** differed across 3 separate host jobs × 2 fresh N20 SCIP/exhaustive notebooks; 12 records first changed at `np.linalg.norm` distance, 4 at a separately evaluated `np.exp` diagnostic with identical exponent input, and 4 only reflected earlier changed accumulators. Original 20×15 pair identity/linear increment reconstruction and scientific N20 objective/constraints all passed. **Last-bit changes only in final free-site linear positions 9,10,17,19.**

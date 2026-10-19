@@ -30,3 +30,18 @@ Separate UX [draft #78](https://github.com/carlers/quantum-opt-dashboard/pull/78
 **Acceptance still pending under Issue #91:** independently review cross-stack source graph identity, trusted backend SCIP/log/model-LP parity, actual current per-run evidence export, real two-mode Streamlit AppTest, all-15-existing original network 860/15,504 and proper no-solution/timeout UI; obtain scientifically authoritative lake geometry, LLDA expert AHP/D2 worksheets, measured RF/backhaul and DO/current calibration (#87) before any field-valid model replacement.
 
 **Next steps:** verify the cold mathematical proof CI at its exact head; correct defects only, record evidence on #91/#88 and in session handoff; prepare a separate human-reviewed full UI integration plan. No merge, preview, publication or deployment without separate user approval.
+
+
+## Exact-head experiment audit (2026-10-19)
+
+First complete source-proof review HEAD `baab8504bc6a087e13b2e2262ad7d69c0874253c`, [GitHub Actions #39287590948](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948): **success** on **42** unit tests (12 source claim, 14 adapter, 16 bounded-verifier), fresh original SCIP notebook, independent GeoJSON source graph, S4 AHP/factor checks, original claim certificate and independent exact IEEE-754 coefficient mathematical proof. The proof emits original **20 candidate / 15 fixed / budget 5** source local **1,077 feasible subsets**, **-3.3012934918564643** and **[0,1,3,6,7]**. [Bounded source-only evidence ZIP artifact #12203347942](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948/artifacts/12203347942), scheduled 2026-11-02 16:42:26 UTC expiry; external archival custody not verified.
+
+### Cross-run bit-exact objective identity is not automatically stable
+
+Although original N20 scores and selected stations matched across these two independently successful cold CI runs, their emitted **exact original objective fingerprints differ**:
+- [#89 cold CI #39285551761](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39285551761): `8536a3db295bd4f4e0faa8ad599bfbb3c01a0c4391c04ecc145701f83adc3a56`
+- [#92 cold CI #39287590948](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39287590948): `2b238848f43d1763fe093b38360941677e2fa46f1a6c01d05b5b359a62dc5809`
+
+The differing SHA values mean **bit-exact manifest identity across these runs is not demonstrated**. Neither run establishes the coefficient-level cause, exact ULP count, or whether a specific NumPy/vectorization/host setting induced it; that requires a separate exact-coordinate/coefficient manifest comparison under [Issue #24](https://github.com/carlers/quantum-opt-dashboard/issues/24). **Do not replace the exact identity requirement with a false shared SHA, nor infer scientifically different source-factor definitions from a SHA mismatch alone.** This attestation proves an exact optimum for the coefficients *actually generated on its particular runner*, not bit-exact coefficient invariance between two runners.
+
+The successful first head CI does not automatically cover later documentation commits: verify the final PR HEAD before any proposed merge or scientific handoff. PR remains draft.

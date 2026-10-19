@@ -1,0 +1,70 @@
+# Strict scientific source identity is mandatory; numerical proximity is not cache authority.
+name: N20 exact-vs-diagnostic numerical identity policy
+on:
+  pull_request:
+    paths:
+      - "scripts/n20_numerical_identity_policy.py"
+      - "scripts/tests/test_n20_numerical_identity_policy.py"
+      - "docs/N20_NUMERICAL_IDENTITY_POLICY.md"
+      - ".github/workflows/n20-numerical-identity-policy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-source-diagnostic-isolation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install direct pinned source-research dependencies
+        run: >
+          python -m pip install
+          numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0
+          matplotlib==3.11.2 nbclient==0.11.0 nbformat==5.11.1
+          ipykernel==6.31.0
+      - name: Adversarially isolate exact objective SHA from observed low-bit diagnostics
+        run: |
+          python -m compileall -q scripts/n20_numerical_identity_policy.py scripts/tests/test_n20_numerical_identity_policy.py
+          python -m unittest discover -s scripts/tests -p 'test_n20_numerical_identity_policy.py' -v
+          python -m unittest discover -s scripts/tests -p 'test_n20_objective_crossrun.py' -v
+          python -m unittest discover -s scripts/tests -p 'test_science_claim_gate.py' -v
+          python -m unittest discover -s scripts/tests -p 'test_scientific_dashboard_adapter.py' -v
+          python -m unittest discover -s scripts/tests -p 'test_bounded_result_attestation.py' -v
+      - name: Real cold original N20/SCIP source result (not physical calibration)
+        run: >
+          python scripts/run_n20_reference_notebook.py
+          --result "$RUNNER_TEMP/n20-original-policy.json"
+      - name: Confirm source graph independent of displayed numeric diagnostic
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/n20-original-policy.json"
+          --output "$RUNNER_TEMP/n20-original-geometry-policy.json"
+      - name: Verify actual cold original input is exactly itself and still does not authorize cache reuse
+        run: |
+          python - "$RUNNER_TEMP/n20-original-policy.json" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          from scripts.n20_numerical_identity_policy import diagnose_original_n20_objective_pair
+          record = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          result = diagnose_original_n20_objective_pair(record["model_input"], record["model_input"])
+          assert result["same_exact_objective"]
+          assert result["same_complete_model_input"]
+          assert result["observed_posthoc_numerical_envelope_only"]
+          assert result["cached_solver_result_reuse_permitted_by_this_diagnostic"] is False
+          assert result["solver_optimality_authenticated_here"] is False
+          assert result["field_radio_or_water_quality_validated"] is False
+          print("N20_DIAGNOSTIC_ONLY " + json.dumps({
+              "objective_sha256": result["first_exact_objective_sha256"],
+              "cannot_reuse_cached_solver_result": True,
+              "not_manuscript_or_physical_validation": True,
+          }, sort_keys=True))
+          PY
+      - name: State narrow evidence boundary
+        run: |
+          echo "Source-only exact-vs-diagnostic policy and cold original N20/SCIP recheck." >> "$GITHUB_STEP_SUMMARY"
+          echo "Observed posthoc source precision envelope NEVER allows reusing solver results or treating two bitwise different objectives as identical." >> "$GITHUB_STEP_SUMMARY"
+          echo "This is not evidence of manuscript parity, measured RF/DO or an authorized live Streamlit solver implementation." >> "$GITHUB_STEP_SUMMARY"

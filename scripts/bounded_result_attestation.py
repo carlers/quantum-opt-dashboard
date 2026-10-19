@@ -254,3 +254,31 @@ def attest_original_source_local(reference: dict) -> dict:
             or proof["independent_optimal_set"] != [0, 1, 3, 6, 7]):
         raise AssertionError("Cold source-only independent mathematical proof failed")
     return proof
+
+def main() -> None:
+    """CLI exclusively audits the genuine cold original local scientific fixture."""
+    import argparse
+    import json
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--reference", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    args = parser.parse_args()
+    if args.output.exists():
+        raise FileExistsError("Refusing to overwrite historical evidence")
+    reference = json.loads(args.reference.read_text(encoding="utf-8"))
+    result = attest_original_source_local(reference)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_bytes(gate.canonical(result))
+    print("N20_BOUNDED_INDEPENDENT_MATH_ATTESTATION " + json.dumps({
+        "feasible_subsets": result["feasible_subsets"],
+        "best_energy": result["best_energy"],
+        "independent_optimal_set": result["independent_optimal_set"],
+        "solver_execution_and_logs_authenticated": False,
+        "real_radio_links_or_physical_monitoring_validated": False,
+    }, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

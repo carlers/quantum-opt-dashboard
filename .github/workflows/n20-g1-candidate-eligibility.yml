@@ -7,6 +7,7 @@ on:
       - "scripts/studies/n20_g1_independent_certificate.py"
       - "scripts/tests/test_n20_g1_candidate_eligibility.py"
       - "docs/research_protocols/N20_G1_CANDIDATE_ELIGIBILITY_PREREG_2026_10_19.md"
+      - "docs/research_results/N20_G1_CANDIDATE_ELIGIBILITY_RESULTS_2026_10_19.md"
       - ".github/workflows/n20-g1-candidate-eligibility.yml"
   workflow_dispatch:
 permissions:

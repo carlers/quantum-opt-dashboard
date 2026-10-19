@@ -67,7 +67,7 @@ class S4HistoricalParameterAuditTests(unittest.TestCase):
 
     def test_out_of_range_factor_not_silently_recast_as_population(self):
         source = np.zeros((1, 8))
-        source[0, 7] = 8.0
+        source[0, 7] = 80.0  # 80 * original D2 weight exceeds full denominator
         num, den, utility = prov.factor_utility(source, prov.ORIGINAL_WEIGHTS)
         self.assertGreater(float(num[0]), 0)
         self.assertEqual(float(utility[0]), 1.0)  # explicit original clipping

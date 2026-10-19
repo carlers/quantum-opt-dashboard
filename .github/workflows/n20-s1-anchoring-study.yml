@@ -1,0 +1,60 @@
+# Read-only scientific sensitivity run. Original notebook and GeoJSON unchanged.
+# The protocol is a separate earlier commit and draft PR #74; no outcome-driven tweaks.
+name: Preregistered N20 anchor reachability S0 S1 S2
+on:
+  pull_request:
+    paths:
+      - "scripts/studies/n20_anchor_connectivity_sensitivity.py"
+      - "scripts/tests/test_n20_anchor_connectivity_sensitivity.py"
+      - ".github/workflows/n20-s1-anchoring-study.yml"
+      - "docs/research_protocols/N20_S1_ANCHOR_REACHABILITY_PREREG_2026_10_19.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  source-pinned-combinatorial-study:
+    name: Cold original SCIP plus independent GeoJSON and registered graph variants
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install source notebook scientific dependencies without retuning
+        run: python -m pip install -r problems/water_quality/notebooks/requirements-n20.txt
+      - name: Verify source-preregistered analysis code is syntactically sound
+        run: |
+          python -m compileall -q scripts/studies/n20_anchor_connectivity_sensitivity.py scripts/tests/test_n20_anchor_connectivity_sensitivity.py
+          test -f docs/research_protocols/N20_S1_ANCHOR_REACHABILITY_PREREG_2026_10_19.md
+      - name: Adversarially test three preregistered graph predicates
+        run: python -m unittest discover -s scripts/tests -p "test_n20_anchor_connectivity_sensitivity.py" -v
+      - name: Rerun unmodified original N20 model in fresh notebook SCIP kernel
+        run: python scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/n20-original-source-result.json"
+      - name: Independently reconstruct original source complete GeoJSON graph
+        run: >
+          python -m scripts.n20_independent_geometry_audit
+          --result "$RUNNER_TEMP/n20-original-source-result.json"
+          --output "$RUNNER_TEMP/n20-original-spatial-certificate.json"
+      - name: Enumerate S0 S1 S2 exactly against same old coefficients
+        run: >
+          python -m scripts.studies.n20_anchor_connectivity_sensitivity
+          --result "$RUNNER_TEMP/n20-original-source-result.json"
+          --geometry "$RUNNER_TEMP/n20-original-spatial-certificate.json"
+          --output "$RUNNER_TEMP/n20-preregistered-s0-s1-s2-result.json"
+      - name: Preserve original model, geometry and scenario manifest distinctly
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-preregistered-s0-s1-s2-source-evidence
+          path: |
+            ${{ runner.temp }}/n20-original-source-result.json
+            ${{ runner.temp }}/n20-original-spatial-certificate.json
+            ${{ runner.temp }}/n20-preregistered-s0-s1-s2-result.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Declare research limits in workflow summary
+        run: |
+          echo "S0 historical source unchanged; S1/S2 are preregistered graph COUNTERFACTUALS." >> "$GITHUB_STEP_SUMMARY"
+          echo "No fixed-fixed infrastructure data inferred. No author publication or physical radio validation." >> "$GITHUB_STEP_SUMMARY"
+          echo "No merging, deploying, source dataset rewriting or manuscript correction performed." >> "$GITHUB_STEP_SUMMARY"

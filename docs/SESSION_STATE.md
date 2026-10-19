@@ -1,3 +1,19 @@
+# Owner-approved preregistered model audit: S0/S1/S2 completed (2026-10-19 UTC)
+
+**Owner authorized on 2026-10-19:** review-only scientific N20 model audit and preregistered experiments, preserving original archived notebook, GeoJSON, baseline, all existing draft PRs, main, preview and production; explicitly no merge, publication or deploy. User previously confirmed the two older evidence archives saved.
+
+Issues: umbrella [#69](https://github.com/carlers/quantum-opt-dashboard/issues/69), first sensitivity [#70](https://github.com/carlers/quantum-opt-dashboard/issues/70), later candidate generator #71, wake physics #72 and hull/Dmax/AHP #73. Distinct protocol DRAFT [PR #74](https://github.com/carlers/quantum-opt-dashboard/pull/74) committed at `37438b0` BEFORE its child study code DRAFT [PR #75](https://github.com/carlers/quantum-opt-dashboard/pull/75).
+
+**Exact study-code head `91484f659270735da24df1ff18487b6184ca9726`**: [CI #39219858893](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39219858893) **SUCCESS**, 16/16 anti-tamper unit tests, real clean original source N20 SCIP kernel and all 15,504 combinations, independent original GeoJSON graph reconstruction, then preregistered S0/S1/S2 graph study. The old S0 feasible region **1,077**, selection `[0,1,3,6,7]`, energy ≈`−3.3012934918564643` unchanged. S1 requires *each selected-new component* directly anchored to any observed existing station: **1,077**, **identical complete feasible-set SHA** and optimum as S0 (**H1 null**). S2 requires *all five selected new nodes* in a single directly observed component through new+fixed edges but NO assumed fixed/fixed edges: **110** feasible, optimum `[1,3,6,10,19]`, original same-objective energy ≈`−2.121029253124326` (Δ=+1.1802642387321383). Old winner fails S2, four new-only components all anchored. Seven nominal original sites `[2,4,5,8,11,16,18]` cannot be chosen under any original reachability mode. Independently recomputed all counts+membership SHA+optimal costs with a distinct offline union-find/BFS implementation from saved raw CI source artifact.
+
+First CI #39219698054 **failed before any actual N20 source execution** due an invalid synthetic fixture that triggered an earlier genuine baseline guard; only that synthetic test was repaired and recorded, no preregistered hypotheses or scientific definitions altered. Full exact results+SHA/CI expiry in `docs/research_results/N20_S1_ANCHOR_GRAPH_RESULTS_2026_10_19.md`. New GitHub artifact #12170629530 contains original source model, independent geo and scenario JSON, expires Nov 2 2026 UTC, owner can privately download. The separate protocol remains unchanged in #74.
+
+**Scientific limits:** S2 is a graph-based mathematical counterfactual, not a validated wireless radio, hydrological, shore-linked or original paper source model. Existing-to-existing backhaul is UNKNOWN and deliberately not inferred; no physical claim or correction authorized. Follow-on #71 alternative candidate pool must be separately preregistered before outcomes; #72 wake and #73 uncertainties follow.
+
+**Next steps:** update #69/#70/#2, refresh DRAFT PR #75 and review evidence; owner clarifies intended physical connectivity and available radio/backhaul data before adopting any revised formulation. Do not merge, publish, deploy or alter original historic results.
+
+---
+
 # Combined scientific N20 reference integration validated — 2026-10-19 UTC
 
 **Owner must see “Next steps” in all updates.** Review-only [DRAFT PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) merges existing experimental *logic* from sibling source science branches, not GitHub pull requests into main. Base is unchanged draft #63 (source precision #61→#57→#56); source independent spatial fork #66→#67 unchanged. **No deployment, archived paper, GeoJSON, original notebook or base-pr branch updates.**

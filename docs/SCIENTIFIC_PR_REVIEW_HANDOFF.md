@@ -12,6 +12,16 @@
 
 **Key review ordering:** #56 first; inspect source-order and checksum canaries. Then #57 exact model input modes; #61 arithmetic trace; #63 fixed-input runtime configuration. Separately inspect #27 before #59 for the historical QUBO branch. Treat the independent source-paper discrepancy [#16](https://github.com/carlers/quantum-opt-dashboard/issues/16) and numerical policy [#64](https://github.com/carlers/quantum-opt-dashboard/issues/64) as **human review decisions before declaring publication parity**.
 
+## Updated live review snapshot after source verification forks
+
+A fresh read-only GitHub PR-list query on **2026-10-19 UTC**, after PRs #66–#68 were opened, found **32 open PRs, all drafts**, still across **five** root families. The source-reference family rooted at [#56](https://github.com/carlers/quantum-opt-dashboard/pull/56) now contains **seven** PRs: source #56, precision #57→#61→#63, spatial #66→#67, and the combined validation candidate #68 (based on #63 and implementing the complementary spatial tests). The largest family overall remains **13**, and the deepest actual ancestry chain **11**. This is a live read-only count, **not a new run of the PR-stack auditor**; the earlier 29-PR snapshot below is retained as its historical CI evidence.
+
+The concise human decision record is [N20_ADVISER_ACCEPTANCE_CHECKLIST.md](N20_ADVISER_ACCEPTANCE_CHECKLIST.md). Evidence in [combined draft PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) can support a bounded source-derived N20 result, **but not a manuscript-parity or merge authorization**. The independent draft [#65](https://github.com/carlers/quantum-opt-dashboard/pull/65) carries the policy and the adviser checklist; no explicit signoff has been supplied.
+
+**Next steps:** review #56 first, then inspect each sibling fork and the combined #68 candidate; obtain the owner's/adviser's B1–B6 scientific decisions and approved evidence custody. Merge/deploy only through a separate explicit authorization and refreshed CI/conflict check.
+
+---
+
 ## Live PR dependency snapshot — 2026-10-19 UTC
 
 A read-only [GitHub pull-list audit](https://github.com/carlers/quantum-opt-dashboard/pull/65) found **29 open PRs, all drafts**, partitioned into **five main-rooted review families**. The **largest family contains 13 related PRs**, but its deepest *actual ancestor chain* is **11 PRs**. These are different metrics; a branched family is not a single merge sequence. The new `scripts/audit_scientific_pr_stack.py` CLI and `.github/workflows/scientific-pr-stack-review.yml` compute a refreshed reviewer map without modifying branches, issues or PRs. Current listing has **no unrepresented-parent or ready-child-of-draft-parent warnings**. This structural result does **not** imply conflict-free merges or scientific correctness.

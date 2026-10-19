@@ -1,3 +1,13 @@
+# Adviser N20 computational acceptance handoff — 2026-10-19 UTC
+
+**Owner standing rule:** Always include explicit **Next steps**. New unsigned, source-evidence-grounded `docs/N20_ADVISER_ACCEPTANCE_CHECKLIST.md` added to this **review-only draft PR #65**. It verifies bounded original notebook N20/K5 computational claims against exact-head CI #39192139080 and #39192139090 on **unmerged draft PR #68** and separates those from **seven unapproved owner/adviser decisions** (source authority; hull/adjacency; numerical tolerance and R0/R1/R2 tier; manuscript AHP/D2/SCIP discrepancy; allowed claims/new evacuation model; evidence rights/storage; separately authorized merge action). No signer name or approval is fabricated. It links the published-manuscript source audit #16 and policy #64 and recognizes old GIS/archived source checksums.
+
+Latest **live metadata** independently fetched after #66–#68 exist: **32 open PRs, all drafts**, across five main-rooted families, largest family 13 and deepest parent lineage 11; source #56 family now **7** with two sibling scientific forks and combined draft #68. Former auto-audit 29-PR figure remains a **historical prior snapshot**, not current CI evidence.
+
+**Next steps:** get exact-head fast policy/evidence CI green, update PR #65/Issues #5/#16/#64/#34/#2, ask adviser to complete decision record, store rights-authorized evidence before 2026-11-02, and plan separate reviewed integration/merge only if explicitly permitted. Do not merge, deploy, change main/preview/production or alter source manuscript.
+
+---
+
 # Current research policy/evidence checkpoint — 2026-10-19 UTC
 
 **Owner instruction:** Work continuously on next roadmap tasks, and include a clear **Next steps** statement in every user-facing response and research handoff. No permission to merge or deploy scientific PRs.

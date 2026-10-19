@@ -13,6 +13,7 @@ on:
       - "docs/MANUSCRIPT_NOTEBOOK_PROVENANCE_AUDIT.md"
       - "docs/RESEARCH_EVIDENCE_INVENTORY_2026_10_19.md"
       - "docs/SCIENTIFIC_PR_REVIEW_HANDOFF.md"
+      - "docs/N20_ADVISER_ACCEPTANCE_CHECKLIST.md"
   workflow_dispatch:
 permissions:
   contents: read

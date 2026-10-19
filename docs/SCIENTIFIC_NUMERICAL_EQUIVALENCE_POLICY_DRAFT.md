@@ -2,6 +2,8 @@
 
 **Status: PROPOSAL ONLY.** Research [issue #64](https://github.com/carlers/quantum-opt-dashboard/issues/64); evidence from draft PRs [#56](https://github.com/carlers/quantum-opt-dashboard/pull/56), [#57](https://github.com/carlers/quantum-opt-dashboard/pull/57), [#61](https://github.com/carlers/quantum-opt-dashboard/pull/61), [#63](https://github.com/carlers/quantum-opt-dashboard/pull/63), and independent historical QUBO/SA [#59](https://github.com/carlers/quantum-opt-dashboard/pull/59). This document is not a change to original science, solver coefficients, historical results or deployed application. The research owner and adviser must approve any numerical acceptance thresholds or runtime mode.
 
+**Adviser review sheet:** [N20_ADVISER_ACCEPTANCE_CHECKLIST.md](N20_ADVISER_ACCEPTANCE_CHECKLIST.md) consolidates exact-head bounded N20 evidence from separate draft [PR #68](https://github.com/carlers/quantum-opt-dashboard/pull/68) into seven **unsigned** decisions. Successful CI validates the source computation only; the reviewer must still decide the meaningful tolerance and environment tier, original assumptions, manuscript differences and lawful evidence storage. This draft policy is **not yet accepted**.
+
 ## 1. What are we actually trying to reproduce?
 
 Treat **four separate targets**, never as synonyms:

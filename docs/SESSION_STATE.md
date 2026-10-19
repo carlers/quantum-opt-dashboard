@@ -1,3 +1,15 @@
+# Proposed dashboard wireless-mode selector — documentation-only (2026-10-19)
+
+**Owner clarification:** Historical notebook's **local one-hop** constraint is intentional; direct wireless links are modeled as straight paths not crossing land. Owner would like a dashboard choice between **local clusters, global chain, global connectivity**. Definitions of the last two remain **proposals needing two owner choices**: is "chain" each selected sensor's multi-hop path to any original existing station or literally one single chain; does global include only all selected new sensors in one connected network with at least one original station, or require all original 15 existing stations connected (fixed/fixed topology not given)?
+
+**This draft branch** `ux-water-wireless-topology-modes-spec` stacked on unchanged [UX DRAFT #55](https://github.com/carlers/quantum-opt-dashboard/pull/55) changes **documentation ONLY**. See `docs/WATER_WIRELESS_TOPOLOGY_SELECTOR_SPEC.md` and [Issue #76](https://github.com/carlers/quantum-opt-dashboard/issues/76). It documents actual [preregistered CI #39219858893](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39219858893): original local 1,077 feasible K5; multi-hop-to-fixed also 1,077 with exact same members (null result); one-connected selected network 110, alternative optimum. These are modeled graph counterfactuals, not physically verified wireless designs.
+
+**Technical prerequisite:** Current Streamlit pilot `prototypes/streamlit_water_quality/model.py` `Instance.fixed_neighbors` records only **Boolean** proximity to any fixed station. A truly connected network must preserve the **actual original 20×15 free/fixed edge identities** from GeoJSON; do not invent existing/fixed links. Direct edges are historical concave hull + Dmax proxy, not radio propagation guarantee. Do not create an inert UI selector before there is a properly enforced solver and independent validator.
+
+**Next steps:** open DRAFT docs PR; owner selects exact chain/global meanings; then a distinct implementation DRAFT with actual graph-constrained solver, AppTests, mode-specific fingerprints/exports, negative controls and original unchanged default. No historic notebook, GeoJSON, main, preview, deployment or research model changes.
+
+---
+
 # Current draft: pre-solve lake candidate overview (2026-10-18)
 
 Branch `ux-water-candidate-map-before-solve` is a review-only UX follow-up stacked on preview/PR #53. It shows the same source-pinned 20 candidate + 15 existing stations as a gray/red map before SCIP, and reuses the renderer to show blue selected new sites only after verified solve. Changing K or other fingerprinted inputs invalidates the old result and restores the unsolved map. Headless regression added; CI and Cloud/browser retest must be recorded in GitHub issue #54. No solver, source, reference notebook, main, production, or deployed preview updates.

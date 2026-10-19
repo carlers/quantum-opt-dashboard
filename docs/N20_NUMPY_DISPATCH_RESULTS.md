@@ -34,3 +34,33 @@ The *next* experiment is explicitly **post-observation exploratory**, not a seco
 OpenBLAS documents `OPENBLAS_CORETYPE` as an override for a DYNAMIC_ARCH build: https://www.openmathlib.org/OpenBLAS/docs/runtime_variables/ . NumPy explicitly states `numpy.linalg` may rely on CPU-specific BLAS/LAPACK: https://numpy.org/doc/stable/reference/routines.linalg.html .
 
 **Limits:** This is a tiny finite set of six source-derived operands, not broad platform certification. Matching extension SHAs excludes differing *those measured binary files* as the proximate difference in this run, but does **not** exclude differing dynamic CPU dispatch, libc, OS, or hidden runtime states. No original notebook weights, historical article numbers, input QUBO penalties, source archive or prior benchmark results have been changed. All branches stay draft/unmerged, no deployment.
+
+## Study 2 — same-host OpenBLAS Haswell coretype override, post-result exploratory
+
+[GitHub Actions run #39181329033](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39181329033), scientific code head `b1448392a186a372cb4732567c7d92d41569dc6d`: **SUCCESS**, three separately allocated x86 Ubuntu 24.04 jobs × **two fresh auto + two fresh `OPENBLAS_CORETYPE=HASWELL` processes each**, **12/12 process records**, complete independent comparison, **8/8 synthetic falsification tests** passed. The six frozen IEEE754 input groups, pinned NumPy 2.5.4/OpenBLAS binary file checksums, Python 3.12 and one-thread direct numeric settings were unchanged from Study 1. The override was set on the **process launcher before importing NumPy** and confirmed by the `threadpoolctl` OpenBLAS selected architecture. [Read-only pre-result protocol](N20_OPENBLAS_CORETYPE_PROTOCOL.md).
+
+| Runner | CPU reported | OpenBLAS architecture, auto → forced | Four `np.linalg.norm` inputs | Two NumPy `np.exp` inputs |
+| --- | --- | --- | --- | --- |
+| r1 | AMD EPYC **9V74** | Haswell → Haswell | No change, **negative control** | No change |
+| r2 | AMD EPYC **7763** | Haswell → Haswell | No change, **negative control** | No change |
+| r3 | Intel Xeon **6973P-C** | **SkylakeX → Haswell** | **All four changed one binary64 ULP**, matching r1/r2's Haswell results | No change |
+
+**Original public `np.linalg.norm` numerical outputs on the actually affected r3 host:**
+
+| Frozen pair | Auto SkylakeX `np.linalg.norm` | Forced Haswell `np.linalg.norm` |
+| --- | --- | --- |
+| free0/fixed32 | `0x1.2223d36ece989p+14` | `0x1.2223d36ece988p+14` |
+| free9/fixed26 | `0x1.89bffffffff11p+12` | `0x1.89bffffffff10p+12` |
+| free10/fixed30 | `0x1.6d09d5acd89cep+12` | `0x1.6d09d5acd89cfp+12` |
+| free17/fixed25 | `0x1.51800000000b0p+12` | `0x1.51800000000afp+12` |
+
+Both repeated processes in *each arm* were bitwise identical, on *every host*. The separately calculated `np.square`, `np.sum`, `np.sqrt`, `math.hypot`, `math.exp`, and NumPy `np.exp` diagnostics **did not change under this Haswell override on any host**. Thus this comparison isolates a **within-machine OpenBLAS target-selection-sensitive norm difference** for these exact N20-derived vectors; the NumPy SIMD-mask Study 1 separately demonstrated an exp-sensitive change. Two distinct documented configuration interventions control the two different observed operation families.
+
+**Raw evidence:** [comparison artifact #12156386935](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39181329033/artifacts/12156386935) and unmodified host-process records [r1 #12155989133](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39181329033/artifacts/12155989133), [r2 #12156043556](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39181329033/artifacts/12156043556), [r3 #12155773518](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39181329033/artifacts/12155773518). Retention until approximately November 2, 2026 UTC. Original source provenance and exact compiled NumPy/OpenBLAS SHA equality within each host were validated. Method is **exploratory** because it was chosen after observing Study 1; retain the two natural-Haswell negative hosts as reported.
+
+### Combined scientific interpretation
+
+Both conditions differ by a single explicitly controlled runtime setting **within the same host and identical compiled NumPy/OpenBLAS binaries**. The reported case-dependent output-bit changes are therefore linked to the **NumPy dispatch target selection for `np.exp`** and **OpenBLAS dynamic target selection for `np.linalg.norm`** in the observed hosted environments. This is stronger than inferring a cause from CPU names or floating-point source coefficients alone.
+
+Still **not supported**: assignment to one individual assembler instruction, universal NumPy/BLAS cross-platform reproducibility, scientific relevance of one ULP in other N/K instances, mathematical correction of the historical manuscript, QPU performance claims, or automatically adding an `OPENBLAS_CORETYPE`/NumPy SIMD mask to the production dashboard. The latter could change scientific computation globally and would require a separately reviewed reproducibility policy with sensitivity tests. Original full N20 SCIP/exhaustive canaries already passed in parent PRs #56/#57/#61 and were not rerun inside these tiny diagnostic processes.
+

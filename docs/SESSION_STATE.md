@@ -1,3 +1,17 @@
+# Issue #62 runtime cause narrowed — paired NumPy and OpenBLAS controls (2026-10-19 UTC)
+
+**Owner workflow preference:** Every response/handoff must state **next steps** explicitly. New independent [draft stacked PR #63](https://github.com/carlers/quantum-opt-dashboard/pull/63) on source-N20 operation trace PR #61. No merges/production/preview/main/history writes.
+
+**Study 1 (preregistered; explicitly amended pre-result after masked preflight):** GitHub [#39180686631](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39180686631) SUCCESS: 3 x86 hosts × 2 baseline/2 `NPY_DISABLE_CPU_FEATURES=X86_V3,X86_V4` NumPy 2.5.4 processes each = 12; 10/10 adversarial tests, source fixed SHA and NumPy/OpenBLAS shared extension SHA identical across all hosts. AMD EPYC 9V45 and Intel Xeon 8573C each showed 2 one-ULP `np.exp` changes under mask; AMD EPYC 7763 no change; **all four original `np.linalg.norm` cases unchanged under this mask** on each host, while cross-host norm modes persisted. Wrong old-style `AVX2,FMA3` preflight was **not** valid and is documented in `docs/N20_NUMPY_DISPATCH_PROTOCOL.md`. Strong but bounded NumPy ufunc dispatch sensitivity.
+
+**Study 2 (separately declared after Study 1):** [#39181329033](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39181329033) SUCCESS, 3 hosts × 2 auto/2 `OPENBLAS_CORETYPE=HASWELL` processes each, original frozen operands and x86 compiled binary SHA invariant; 8/8 adversarial tests. Intel Xeon 6973P-C auto-`SkylakeX` changed **all four original norm results by one ULP** when forced to `Haswell`, matching the natural Haswell modes of EPYC 9V74/7763; exp unchanged. Two other hosts already selected Haswell and had zero change. Within-arm fresh-process replicates bitwise identical. **Observed OpenBLAS-selected target sensitivity** for norm independent of NumPy ufunc dispatch control; not one proven CPU instruction or approved universal numerical fix.
+
+**Results and protocols:** `docs/N20_NUMPY_DISPATCH_RESULTS.md`, `docs/N20_NUMPY_DISPATCH_PROTOCOL.md`, `docs/N20_OPENBLAS_CORETYPE_PROTOCOL.md` with raw 14-day artifact links (expire around Nov 2 UTC). Source N20 scientific notebook, 25-cell archival version, GeoJSON, AHP/D2 manuscript, source MIQP/K5 constraints and history B QUBO/SA all unchanged.
+
+**Next steps:** Finish exact-head PR #63 CI review after the documentation checkpoint; write evidence comments into issue #62, #24, roadmap #2; create a separate scientific reproducibility policy proposal (pin runtime, report exact input+original outcome tolerance, run multi-host and sensitivity checks) before any numerical stabilization is ever adopted. Keep PR #63 **draft/unmerged** and do not change main/preview/production.
+
+---
+
 # Issue #62 — fixed NumPy binary/dispatch intervention phase (2026-10-19 UTC)
 
 **Owner instruction:** Continue independent scientific work and **always state next steps in every work handoff/response**. The user did not authorize merging or changing live deployment. New feature branch `science-n20-numpy-dispatch-controls` stacked on last reviewed trace PR #61 at `0239baa1`, itself on PR #57 and clean scientific N20 notebook PR #56.

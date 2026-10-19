@@ -93,7 +93,7 @@ class OpenBLASCoretypeTests(unittest.TestCase):
             verify_record(cases[2])
 
     def test_mismatched_one_process_count_fails(self):
-        with self.assertRaisesRegex(ValueError, "twelve independent"):
+        with self.assertRaisesRegex(ValueError, "12 independent"):
             compare(synthetic()[:-1])
 
     def test_one_different_repeat_is_observable(self):

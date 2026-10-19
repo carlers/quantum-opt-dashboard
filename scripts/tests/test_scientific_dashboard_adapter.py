@@ -93,6 +93,17 @@ class DashboardAdapterTests(unittest.TestCase):
         self.assertTrue(out["same_exact_objective"])
         self.assertFalse(out["active_scenario_is_frozen_source_profile"])
 
+    def test_changed_dmax_in_complete_model_invalidates_cached_result(self):
+        s = scenario()
+        old_stamp = bridge.scenario_signature(s)
+        s["model_input"]["d_max_m_float64_hex"] = float(1000).hex()
+        self.assertEqual(self.view(s)["same_exact_objective"], True)
+        self.assertNotEqual(old_stamp, bridge.scenario_signature(s))
+        self.assertEqual(
+            self.view(s, {"scenario_sha256": old_stamp})["result_visibility"],
+            "hide_stale",
+        )
+
     def test_same_objective_global_topology_still_exploratory(self):
         s = scenario()
         s.update(topology_mode=bridge.GLOBAL_TOPOLOGY, solver_backend="exact_enumeration")

@@ -31,7 +31,7 @@ jobs:
             prototypes/streamlit_water_quality/tests/test_detached_n20_verifier.py
       - name: Hostile original N20 real SCIP/LP/challenge review test
         env:
-          PYTHONPATH: \${{ github.workspace }}/prototypes/streamlit_water_quality
+          PYTHONPATH: ${{ github.workspace }}/prototypes/streamlit_water_quality
         run: >
           python -m pytest
           prototypes/streamlit_water_quality/tests/test_detached_n20_verifier.py
@@ -95,11 +95,11 @@ jobs:
         with:
           name: n20-unsigned-original-scip-lp-detached-verification
           path: |
-            \${{ runner.temp }}/research-review-nonce.json
-            \${{ runner.temp }}/co-generated-NOT-trusted-reference.json
-            \${{ runner.temp }}/original-n20-submitted-evidence.json
-            \${{ runner.temp }}/original-n20-emitted.lp
-            \${{ runner.temp }}/N20-UNSIGNED-detached-verdict.json
+            ${{ runner.temp }}/research-review-nonce.json
+            ${{ runner.temp }}/co-generated-NOT-trusted-reference.json
+            ${{ runner.temp }}/original-n20-submitted-evidence.json
+            ${{ runner.temp }}/original-n20-emitted.lp
+            ${{ runner.temp }}/N20-UNSIGNED-detached-verdict.json
           retention-days: 14
           if-no-files-found: error
       - name: Do not promote same-host source commitment to a trusted root

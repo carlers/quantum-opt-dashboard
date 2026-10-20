@@ -48,7 +48,8 @@ def test_route_water_custom_research_water_resolves_expected_scientific_modules(
     require_origin("notebook_reference_model",
                    "problems/water_quality/notebook_reference_model.py")
     require_origin("bundle_runner", "problems/evacuation_centers/bundle_runner.py")
-    require_origin("guided_math_ui", "prototypes/streamlit_configurable/guided_math_ui.py")
+    require_origin("prototypes.streamlit_configurable.guided_math_ui",
+                   "prototypes/streamlit_configurable/guided_math_ui.py")
     assert not app.session_state.get("completed_run")
     assert "mvp_result" not in app.session_state
 

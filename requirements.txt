@@ -1,2 +1,4 @@
 # Streamlit Cloud root dependency discovery for integrated app.
 -r prototypes/unified_dashboard/requirements.txt
+# Install the reviewed UI import package for consistent qualified module origins.
+-e .

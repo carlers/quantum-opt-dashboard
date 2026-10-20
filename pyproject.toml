@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantum-opt-dashboard-ui-imports"
+version = "0.1.0"
+description = "Qualified Python package anchors for the staged scientific dashboard UI import migration"
+requires-python = ">=3.12"
+
+[tool.setuptools]
+packages = ["prototypes", "prototypes.streamlit_configurable"]

@@ -9,13 +9,13 @@ experiment, configurable synthetic research models, and a bounded,
 classical-only OpenJij/QUBO study.
 
 ```sh
-python -m pip install -r prototypes/unified_dashboard/requirements.txt
+python -m pip install -r requirements.txt
 streamlit run prototypes/unified_dashboard/app.py
 ```
 
 Or for Streamlit Community Cloud, choose
 `prototypes/unified_dashboard/app.py` as the main application path and
-use the unified requirements file. Configure Python 3.12.
+use the root requirements file, including the local qualified editor namespace. Configure Python 3.12.
 
 ### Navigation
 

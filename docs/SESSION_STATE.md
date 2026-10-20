@@ -1,3 +1,13 @@
+# UX independently attested current N20 solver result and ZIP gate — 2026-10-20
+
+**Review-only branch:** `ux-water-runtime-verified-export-gate`, from pinned separate UX DRAFT #78 `8752d17372d9d4dd544acbbfd686b4bb45e33f40`. Do not merge with unmerged scientific #96 chain; this branch is an independently authored mathematical verifier installed into UX Streamlit, with no original notebook/GeoJSON/manuscript/main/preview/production edits.
+
+**New changes:** `prototypes/streamlit_water_quality/runtime_attestation.py` independently verifies current actual compiled original 20-candidate/15-fixed model, exact coefficient/controls/adjacency bytes and correct all-15-fixed global graph; enumerates every bounded K subset with union-find/local neighbor proof and **exact integer scaled binary64 objective ordering**, verifies claimed status/score/selected sites and ZIP's actual SHA256SUMS/CSV/LP or wireless graph, then places a narrowly scoped runtime attestation in Streamlit session state **before any result map/table/ZIP is rendered**. Every rerender checks active model, graph, results and archive SHA against that attestation, dropping old data if stale or forged. 11 real-instance/adversarial tests in `tests/test_runtime_attestation.py`. Experimental mathematical proof only; no authentic SCIP logs/LP structure validation, paper D2/AHP or RF/DO field validation and no signed per-user trust boundary. Protocol: `docs/N20_UX_RUNTIME_MATHEMATICAL_RESULT_GATE.md`.
+
+**Status before CI:** Implementation drafted, not yet exact-head verified. Next: open child DRAFT PR on UX #78, run preexisting Streamlit pilot fast regression plus new tests and correct failures only in current isolated DRAFT. Separately maintain science DRAFT #96 cold notebook/source claim and dual checkout audits; actual combined ancestry, preview/main/production require human owner review.
+
+---
+
 # All 15 existing + K selected wireless network source result verified (2026-10-19)
 
 **Owner's precise requirement:** two choices only, original local source one-hop (default) vs all-original+all-selected nodes in one wireless graph component. Both use source-pinned straight-water-link & Dmax geometric proxies. Not previous S1/S2; no physical radio link survey or fixed station backhaul evidence. [Implementation DRAFT PR #78](https://github.com/carlers/quantum-opt-dashboard/pull/78) stacks above docs-only #77, UX #55. No archived source edits, main/preview/prod merge/deploy.

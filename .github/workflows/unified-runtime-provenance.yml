@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "scripts/release_runtime_manifest.py"
+      - "scripts/import_namespace_inventory.py"
+      - "prototypes/unified_dashboard/tests/test_import_namespace_inventory.py"
+      - "docs/ISSUE_108_IMPORT_NAMESPACE_MIGRATION_PLAN.md"
       - "prototypes/unified_dashboard/tests/test_runtime_provenance.py"
       - "prototypes/unified_dashboard/pages/**"
       - "prototypes/unified_dashboard/research.py"
@@ -31,11 +34,18 @@ jobs:
           python -m pip check
       - name: Syntax and actual routed scientific module origins
         run: |
-          python -m compileall -q scripts/release_runtime_manifest.py \
-            prototypes/unified_dashboard/tests/test_runtime_provenance.py
+          python -m compileall -q scripts/release_runtime_manifest.py scripts/import_namespace_inventory.py \
+            prototypes/unified_dashboard/tests/test_runtime_provenance.py \
+            prototypes/unified_dashboard/tests/test_import_namespace_inventory.py
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
+            prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
             -q -s
+      - name: Observe process-global import hazards without executing source science
+        run: |
+          python -I scripts/import_namespace_inventory.py \
+            --output "$RUNNER_TEMP/issue108-import-namespace-observed.json"
+          test -s "$RUNNER_TEMP/issue108-import-namespace-observed.json"
       - name: Freeze every actually installed distribution, do not lock or guess
         run: |
           python -m pip freeze --all > "$RUNNER_TEMP/observed-py312-installed-freeze.txt"
@@ -79,6 +89,7 @@ jobs:
           path: |
             ${{ runner.temp }}/observed-py312-installed-freeze.txt
             ${{ runner.temp }}/unified-py312-runtime-observed.json
+            ${{ runner.temp }}/issue108-import-namespace-observed.json
           retention-days: 14
           if-no-files-found: error
       - name: Preserve honest scientific and trust boundaries

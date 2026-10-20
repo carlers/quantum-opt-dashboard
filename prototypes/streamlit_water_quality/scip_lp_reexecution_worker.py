@@ -46,7 +46,7 @@ def solve_exported_lp(path: Path, expected_sha256: str, max_seconds: int) -> dic
     original_names = [v.name for v in model.getVars(transformed=False)]
     _require(len(original_names) == len(set(original_names))
              and len(original_names) <= 300
-             and all(re.fullmatch(r"(?:x\\d+|p\\d+_\\d+)", name)
+             and all(re.fullmatch(r"(?:x\d+|p\d+_\d+)", name)
                      for name in original_names),
              "unexpected independent loaded LP variable namespace")
     _require({f"x{i}" for i in range(SOURCE_N)}.issubset(set(original_names)),
@@ -75,7 +75,7 @@ def solve_exported_lp(path: Path, expected_sha256: str, max_seconds: int) -> dic
             bits.append(int(value > .5))
         for name, variable in names.items():
             if name.startswith("p"):
-                match = re.fullmatch(r"p(\\d+)_(\\d+)", name)
+                match = re.fullmatch(r"p(\d+)_(\d+)", name)
                 _require(match is not None, "unknown pair name")
                 i, j = int(match.group(1)), int(match.group(2))
                 _require(0 <= i < j < SOURCE_N, "invalid pair index")

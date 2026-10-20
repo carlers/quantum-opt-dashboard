@@ -31,9 +31,36 @@ No historical/authoritative expert AHP sheets, manuscript population/WorldPop vs
 
 ## Review gates
 
-- [ ] Dedicated child-process true source SCIP reexecution CI passes and actual LP/JSON bytes are archived and checked.
-- [ ] Existing pilot (source mathematical verifier and real Streamlit AppTests), unified dashboard and triple-checkout original-source science CI remain green.
-- [ ] Real N20 original local feasible=1,077, global exploratory feasible=860/15,504 unchanged; alternate original objective binary64 fingerprints remain **distinct**, not cache-interchangeable.
-- [ ] Reviewer confirms separate-process receipt provides only **local observation** and may not upgrade app result label to authenticated SCIP process/log/host, certified physical RF monitoring or manuscript AHP/D2 parity.
+- [x] Dedicated true child-process source LP reexecution CI passed, with literal original LP and complete observed JSON process report independently downloaded and their SHA bytes checked.
+- [x] Existing pilot (source mathematical verifier and real Streamlit AppTests), unified dashboard and triple-checkout original-source science CI all passed at experimental executable HEAD.
+- [x] N20 original local feasible=1,077, separate exploratory global feasible=860/15,504 unchanged; alternate binary64 objective fingerprints remain distinct, never cache-interchangeable.
+- [ ] Human reviewer still needs to confirm process/host threat model. This draft enforces **local unsigned observation** flags, not authenticated SCIP process/log/host, certified physical RF monitoring or manuscript AHP/D2 parity.
 
 **Strategy:** Keep this a standalone review-only science experiment first. Do **not** install this subprocess into each current interactive Streamlit user solve or allow it to gate live results until execution-time impact, process permissions, memory/resource bounds, replay artifact custody, observability and threat model are reviewed by the owner. Any actual app integration, merging, preview or production deployment is a separately approved change.
+
+
+## Executed original-source experimental findings — 2026-10-20
+
+The initial dedicated run [#39406524358](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39406524358) failed at **Python test import path**, before any source/scientific LP replay tests executed. The workflow was corrected to set the prototype directory explicitly in `PYTHONPATH`, without changing experimental model, source data or algorithmic coefficients.
+
+**Successful exact original executable CI SHA `d25931515de2bee497608284fcc7d282cb38aef0`**:
+
+- [**Dedicated separate-process LP read and optimize #39406682562**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39406682562): **21/21 tests** (10 new child-process/forgery/flat-tie tests plus 11 original LP-structure tests). Direct `SCIP.readProblem` of the archived original emitted LP and a real second SCIP optimize returned **optimal** at **[0,1,3,6,7]** (same as the first real SCIP), **primal = dual = -3.301293491856464** and **gap = 0.0** as reported by the second SCIP executable. The receipt asserts the first process was **not** cryptographically authenticated. Original source LP SHA256 `283b3b373499ebde663a8614ca5049f5a3a425ba40e6073a0d3b0fce011d027b` (3,516 bytes). The independent child process reported **32 original binary variables** (20 source site binaries, 12 pair-product binaries), PySCIPOpt **6.3.0** on Python **3.12.15**.
+- [**Full pilot including real Streamlit local/global #39406682565**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39406682565): **121/121 tests**, original local 1,077 feasible, distinct exploratory global all 15 fixed+K5 **860/15,504**, exact full global feasible-member SHA `3ec652e943e26d7aa67ba71203dba6c5413a88a47dc4f24a2428a49c171bbc40`, selected [0,1,3,6,7]. Experimental second process is **not installed into the interactive app**.
+- [**Unified dashboard #39406682568**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39406682568): **SUCCESS**.
+- [**Independent triple checkout cold original source vs current UX #39406682564**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39406682564): **SUCCESS**: **24** existing targeted runtime/Streamlit tests plus independently executed original source notebook/SCIP, original 5,417-point raw GeoJSON, S4 factor/AHP source and honest scientific claim tiers, independently reconstructed 35-node all-fixed original modeled graph and exact K5 mathematical proof. In this particular CI, source and UX original binary64 objective hashes were both `8536a3db295bd4f4e0faa8ad599bfbb3c01a0c4391c04ecc145701f83adc3a56`. Distinct observed cross-platform `2b238848...` identity remains separate (#24). Paper parity and physical measurement remain BLOCKED.
+
+### Lossless original first SCIP LP and second solver receipt
+
+[**GitHub artifact #12256857555**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39406682562/artifacts/12256857555) expires **2026-11-03 10:16:22 UTC**. Independently downloaded ZIP SHA256 `956390f04b13114024bb0b57cd1372325e88eb8b290af52219943fa5b5993c1c` (3,010-byte ZIP) and verified both file members:
+
+| Actual retained file | Byte count | SHA-256 |
+| --- | ---: | --- |
+| `original-n20-first-scip-emitted.lp` | 3,516 | `283b3b373499ebde663a8614ca5049f5a3a425ba40e6073a0d3b0fce011d027b` |
+| `original-n20-independent-scip-process-replay.json` | 3,760 | `9f5581ab73b3cd49a620d88d95ecd91c773529e0dda309b97728c1e6596c3b26` |
+
+[**Independent source-vs-UX four-JSON science artifact #12257387273**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39406682564/artifacts/12257387273) expires **2026-11-03 10:17:02 UTC**, ZIP SHA256 `e9f55439f69be3a381befe632c7cc8af490e40a81f9b0c1fd3df3fc392d61675`; all four member bytes/SHA verified. No private author DOCX, new licensed data or historical notebook uploaded. A conversation download copy exists, but **long-term institutional custody is not established**.
+
+This is a powerful independent **mathematical and local process re-execution observation**, but it still does not authenticate the upstream solver binary/process, prove every branch-and-bound bound by a portable independent certificate, or sign arbitrary user sessions. Even a file whose SHA matches can be supplied/attested by a compromised same-machine environment. Source AHP road-D2 vs paper population/WorldPop and physical field lake/RF/DO remain scientifically blocked.
+
+**Next:** preserve exact-head science/app CI after any documentation-only edit; update the GitHub issue/PR human review queue. Require human review of threat model and performance before adopting a second SCIP invocation as a release gate; do not auto-deploy or merge.

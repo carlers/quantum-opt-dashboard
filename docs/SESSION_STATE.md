@@ -1,3 +1,15 @@
+# First SCIP selection feasibility and solver provenance trust-boundary audit — 2026-10-20
+
+**New review-only UX science branch:** `science-scip-replay-first-run-feasibility-threat-audit`, child of unmerged original LP separate-process study DRAFT #99 at `028fcb32dcb45c23ddc5e835e5dbc508803c42d2`, separate original source independent science ancestry #96. No original notebook/GeoJSON/archived manuscript or app/source model/SCIP compiler modifications. Existing UX independent runtime model gate and LP structural checks unchanged.
+
+**Concrete science integrity flaw fixed:** prior `check_independent_process_receipt()` required original first SCIP selection to have exactly optimal binary64 rational energy and K sites, but independently checked **only second child** selection's source local graph. On actual original N20 site geometry with synthetic exactly flat objective, a counterfeit FIRST K5 infeasible set has same score 0 and could pass as optimal. New independent `_source_local_feasible` requires original one-hop source connectivity for **BOTH** chosen sets before score comparison. New original first SCIP metadata checks require `feasible, budget_ok, connectivity_ok` true, correct `num_selected`, no `isolated` sites, and finite converged optimal `gap <=1e-6`. Parametrized adversarial original-source tests forge first/second disconnected exact tied-score K5, first-run gap NaN/negative/0.5/missing and falsified original metric fields. These are artificial adversarial perturbations, not historical source data edits. Full threat model and future external signature decision criteria in `docs/research_protocols/SCIP_FIRST_RUN_TRUST_BOUNDARY_2026_10_20.md`.
+
+**Status:** code/tests/protocol created pending new review-only DRAFT and exact-HEAD all four CI. The true 3,516-byte original LP, separate second SCIP process, first and second source mathematical optimum remain original research scope, not authenticated host/SICIP binary/first actual process log or third-party signed solution. Do **not** add an untrusted cryptographic signer or automatically integrate a second process into interactive Streamlit. Original D2-road vs paper WorldPop population/AHP and field RF/backhaul/DO/current/shoreline remain BLOCKED.
+
+**Next:** open DRAFT PR child #99, verify new genuine SCIP replay tests plus full live-app Streamlit pilot, unified dashboard and pinned original source scientific triple-checkout. Fix only observed failures on this review branch; record exact-HEAD evidence and issue #91/#88 comments. No merges/rebases/deploys or original manuscript/file changes.
+
+---
+
 # Independent second SCIP process on emitted original N20 LP verified — 2026-10-20
 
 **Review-only [DRAFT PR #99](https://github.com/carlers/quantum-opt-dashboard/pull/99)** child of unmerged SCIP LP structure DRAFT #98 and UX runtime gate #97, **separate** original source science chain through #96. No original notebook, archival DOCX, 5,417-record GeoJSON, source coefficients or main/preview/production changes; no merges or deployments.

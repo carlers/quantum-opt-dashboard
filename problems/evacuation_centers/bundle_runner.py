@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "framework" / "python"))
 from qopt.core.experiment_bundle import canonical, load_bundle
 from qopt.core.binary_quadratic import run_binary_quadratic
-from synthetic_reference import (
+from problems.evacuation_centers.synthetic_reference import (
     SyntheticProblem, independent_enumeration, maximal_coverage_reference,
     scip_lexicographic, validate_parity,
 )

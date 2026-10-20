@@ -13,7 +13,7 @@ import sys
 
 import numpy as np
 
-from notebook_reference_model import (
+from problems.water_quality.notebook_reference_model import (
     FACTOR_NAMES, NOTEBOOK_WEIGHTS, PAPER_WEIGHTS, evaluate,
     load_data, make_instance, solve_scip,
 )

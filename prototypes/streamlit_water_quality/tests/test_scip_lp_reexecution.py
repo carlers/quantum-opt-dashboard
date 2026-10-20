@@ -6,6 +6,7 @@ SCIP global-network solver and no field or manuscript validity claims.
 from __future__ import annotations
 
 from copy import deepcopy
+from itertools import combinations
 from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -15,7 +16,7 @@ import pytest
 
 from model import NOTEBOOK_WEIGHTS, load_data, make_instance, solve_scip
 from scip_lp_reexecution import (
-    check_independent_process_receipt, reexecute_emitted_lp_in_child,
+    _source_local_feasible, check_independent_process_receipt, reexecute_emitted_lp_in_child,
 )
 from scip_lp_structure import certify_emitted_scip_lp
 from runtime_attestation import exact_bounded_oracle, exact_selection_objective
@@ -39,6 +40,60 @@ def original_verified_child():
             instance, original_lp, chosen, source_metrics,
         )
     return instance, original_lp, chosen, source_metrics, report
+
+
+@pytest.fixture(scope="module")
+def exact_flat_valid_child(original_verified_child):
+    """Use real original lake adjacency, real SCIP LP, and EXACTLY tied scores."""
+    inst = original_verified_child[0]
+    flat = replace(inst, linear=np.zeros(20), quadratic=tuple())
+    with TemporaryDirectory(prefix="flat_N20_adversarial_local_") as tmp:
+        lp_path = Path(tmp) / "flat_N20_first.lp"
+        first, metrics = solve_scip(flat, time_limit=30., export_lp_path=lp_path)
+        lp = lp_path.read_bytes()
+        proof = reexecute_emitted_lp_in_child(flat, lp, first, metrics)
+    assert proof["best_exact_binary64_score_numerator"] == "0"
+    assert proof["independent_child_status"] == "optimal"
+    assert proof["independent_feasible_original_local_count"] == 1077
+    fake = next(
+        selected for selected in combinations(range(20), 5)
+        if not _source_local_feasible(
+            flat, [int(i in selected) for i in range(20)]
+        )
+    )
+    falsified = np.zeros(20, dtype=int)
+    falsified[list(fake)] = 1
+    assert int(falsified.sum()) == flat.budget
+    assert exact_selection_objective(flat, fake) == 0
+    return flat, lp, first, metrics, proof, falsified
+
+
+def test_forged_upstream_first_solution_same_exact_optimal_score_but_disconnected_rejected(exact_flat_valid_child):
+    """Regression: K5 and exact optimum alone must NOT certify first-run validity."""
+    inst, lp, first, metrics, proof, fake = exact_flat_valid_child
+    assert exact_selection_objective(inst, np.flatnonzero(fake)) == 0
+    assert proof["upstream_selected_original_graph_feasible"] is True
+    assert proof["second_process_selected_original_graph_feasible"] is True
+    # Previously this counterfeit would pass because the upstream candidate
+    # had K=5 and exactly the same flat objective as an actual optimum.
+    with pytest.raises(ValueError, match="upstream original SCIP selection violates source local graph"):
+        check_independent_process_receipt(
+            inst, lp, proof["observed_child_receipt"], fake, metrics
+        )
+
+
+def test_forged_child_same_exact_optimal_score_but_disconnected_rejected(exact_flat_valid_child):
+    inst, lp, first, metrics, proof, fake = exact_flat_valid_child
+    forged = deepcopy(proof["observed_child_receipt"])
+    forged["original_binary20"] = fake.tolist()
+    with pytest.raises(ValueError, match="independent replayed SCIP selection violates source local graph"):
+        check_independent_process_receipt(inst, lp, forged, first, metrics)
+
+
+def test_actual_real_first_second_local_graph_flags_present(original_verified_child):
+    inst, lp, first, metrics, proof = original_verified_child
+    assert proof["upstream_selected_original_graph_feasible"] is True
+    assert proof["second_process_selected_original_graph_feasible"] is True
 
 
 def test_second_independent_process_genuinely_reads_original_lp_and_proves_bounds(original_verified_child):

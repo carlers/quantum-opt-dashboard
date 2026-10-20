@@ -9,4 +9,4 @@ description = "Qualified Python package anchors for the staged scientific dashbo
 requires-python = ">=3.12"
 
 [tool.setuptools]
-packages = ["prototypes", "prototypes.streamlit_configurable", "problems", "problems.evacuation_centers"]
+packages = ["prototypes", "prototypes.streamlit_configurable", "problems", "problems.evacuation_centers", "problems.water_quality"]

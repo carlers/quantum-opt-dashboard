@@ -68,7 +68,10 @@ def test_unified_entrypoint_original_scip_actual_lp_csv_and_archive_match_displa
         "each_original_local_one_hop_verified"
     ] is True
     assert any(m.label == "SCIP status" and m.value == "optimal" for m in app.metric)
-    assert any(b.key == "mvp_download" for b in app.button)
+    # AppTest does not enumerate st.download_button in app.button; validate
+    # active evidence bytes plus the visible, truthful source description.
+    assert any("Evidence contains formulation coefficients" in str(c.proto)
+               for c in app.caption)
 
     files = assert_exact_archive(current["zip"], {
         "model.json", "result.json", "selected_sites.csv", "actual_scip_model.lp",
@@ -118,7 +121,10 @@ def test_unified_global_modeswitch_invalidates_local_and_exports_no_fake_scip_lp
     assert current["attestation"]["strictly_bound_to_compiled_current_run"] is True
     assert any(m.label == "Exact search status" for m in app.metric)
     assert not [m for m in app.metric if m.label == "SCIP status"]
-    assert any(b.key == "mvp_download" for b in app.button)
+    # Actual downloaded ZIP bytes are checked below; Streamlit AppTest
+    # cannot directly click st.download_button in its ordinary button list.
+    assert any("Global evidence contains formulation" in str(c.proto)
+               for c in app.caption)
 
     files = assert_exact_archive(current["zip"], {
         "model.json", "result.json", "selected_sites.csv", "wireless_graph.json",

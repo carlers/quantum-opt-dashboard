@@ -20,19 +20,16 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 EXAMPLES = ROOT / "problems" / "evacuation_centers" / "examples"
 WATER_EXAMPLES = ROOT / "problems" / "water_quality" / "examples"
-sys.path.insert(0, str(ROOT / "problems" / "water_quality"))
 sys.path.insert(0, str(ROOT / "framework" / "python"))
-sys.path.insert(0, str(ROOT / "problems" / "evacuation_centers"))
 
 from qopt.core.experiment_bundle import canonical, load_bundle
 from qopt.core.binary_quadratic import validate_binary_problem
 from qopt.core.math_ir import validate_ir, render_original
-from bundle_runner import _synthetic_evacuation, execute
-from water_bundle_adapter import _parameters as _water_parameters, _validate_geojson
-from notebook_reference_model import make_instance, load_data
+from problems.evacuation_centers.bundle_runner import _synthetic_evacuation, execute
+from problems.water_quality.water_bundle_adapter import _parameters as _water_parameters, _validate_geojson
+from problems.water_quality.notebook_reference_model import make_instance, load_data
 from prototypes.streamlit_configurable.guided_math_ui import show_guided_controls
 
 

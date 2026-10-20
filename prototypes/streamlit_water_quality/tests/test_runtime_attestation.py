@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import replace
+from fractions import Fraction
 from hashlib import sha256
 from io import BytesIO
 from itertools import combinations
@@ -28,7 +29,7 @@ from wireless_topology import (
 )
 from runtime_attestation import (
     _local_connected, attest_current_result, check_visible_result,
-    exact_bounded_oracle, model_identity, digest,
+    exact_bounded_oracle, exact_selection_objective, model_identity, digest,
 )
 
 DATA = Path(__file__).resolve().parents[3] / "problems/water_quality/data/LDB_centroids_clean.geojson"
@@ -122,6 +123,82 @@ def test_all_15_fixed_global_real_export_is_independently_proven(global_run):
     )
     assert oracle["exact_selected_indices"] == [0, 1, 3, 6, 7]
     assert check_visible_result(inst, model, graph, stored(model, bits, metrics, archive, proof, inst))
+
+
+def test_exact_binary64_ties_accept_other_optimal_witness(real_source):
+    """Synthetic tie: do not impose an arbitrary lexicographic optimizer result.
+
+    The original real notebook/GeoJSON is unchanged; the deliberately flat
+    coefficients are a mathematical unit-test construction, NOT source data.
+    A genuine SCIP zero-cost LP is generated for this synthetic instance.
+    """
+    _, source_digest, original = real_source
+    instance = replace(
+        original, linear=np.zeros(20, dtype=float), quadratic=tuple()
+    )
+    model = compiled(instance, source_digest)
+    oracle = exact_bounded_oracle(instance, LOCAL_MODE, None)
+    alternative = next(
+        subset for subset in combinations(range(20), 5)
+        if list(subset) != oracle["exact_selected_indices"]
+        and _local_connected(instance, subset)
+    )
+    assert exact_selection_objective(instance, alternative) == Fraction(0)
+    assert list(alternative) != oracle["exact_selected_indices"]
+    with TemporaryDirectory() as folder:
+        lp_path = Path(folder) / "actual_scip_model.lp"
+        _, genuine_metrics = solve_scip(instance, time_limit=30., export_lp_path=lp_path)
+        lp_bytes = lp_path.read_bytes()
+    assert genuine_metrics["optimal"] is True
+    selected = np.zeros(20, dtype=int)
+    selected[list(alternative)] = 1
+    csv_bytes = selected_csv(instance, selected)
+    source_audit = check_selected(instance, selected, genuine_metrics, model)
+    zip_bytes = evidence_zip(model, source_audit, genuine_metrics, csv_bytes, lp_bytes)
+    proof = attest_current_result(
+        instance, model, None, selected, genuine_metrics, zip_bytes, csv_bytes, lp_bytes,
+    )
+    assert proof["mathematical_verifier"]["exact_selected_indices"] != list(alternative)
+    assert exact_selection_objective(instance, alternative) == Fraction(
+        int(oracle["exact_numerator"]), int(oracle["exact_denominator"])
+    )
+
+
+def test_near_tie_cannot_be_marked_optimal_by_energy_tolerance(real_source):
+    """Synthetic one-ULP-scale energy difference must fail exact optimum gate."""
+    _, source_digest, original = real_source
+    coefficients = np.zeros(20, dtype=float)
+    coefficients[0] = -(2.0 ** -40)
+    instance = replace(original, linear=coefficients, quadratic=tuple())
+    model = compiled(instance, source_digest)
+    oracle = exact_bounded_oracle(instance, LOCAL_MODE, None)
+    assert 0 in oracle["exact_selected_indices"]
+    alternative = next(
+        subset for subset in combinations(range(1, 20), 5)
+        if _local_connected(instance, subset)
+    )
+    assert exact_selection_objective(instance, alternative) == Fraction(0)
+    assert Fraction(int(oracle["exact_numerator"]),
+                    int(oracle["exact_denominator"])) == Fraction.from_float(-(2.0 ** -40))
+    selected = np.zeros(20, dtype=int)
+    selected[list(alternative)] = 1
+    # Negative energy delta is smaller than the reported 1e-8 score tolerance:
+    # fake SCIP status/metrics cannot assert this mathematically worse choice.
+    with TemporaryDirectory() as folder:
+        lp_path = Path(folder) / "actual_scip_model.lp"
+        _, actual_solver = solve_scip(instance, time_limit=30., export_lp_path=lp_path)
+        lp_bytes = lp_path.read_bytes()
+    claimed = deepcopy(actual_solver)
+    claimed["status"] = "optimal"
+    claimed["optimal"] = True
+    claimed["energy"] = 0.0
+    csv_bytes = selected_csv(instance, selected)
+    audit = check_selected(instance, selected, claimed, model)
+    zip_bytes = evidence_zip(model, audit, claimed, csv_bytes, lp_bytes)
+    with pytest.raises(ValueError, match="unproved optimum"):
+        attest_current_result(
+            instance, model, None, selected, claimed, zip_bytes, csv_bytes, lp_bytes,
+        )
 
 
 def test_tampered_live_result_selected_sites_hidden(local_run):

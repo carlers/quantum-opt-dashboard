@@ -28,7 +28,7 @@ from wireless_topology import (
 )
 from runtime_attestation import (
     _local_connected, attest_current_result, check_visible_result,
-    exact_bounded_oracle, model_identity,
+    exact_bounded_oracle, model_identity, digest,
 )
 
 DATA = Path(__file__).resolve().parents[3] / "problems/water_quality/data/LDB_centroids_clean.geojson"
@@ -96,6 +96,7 @@ def stored(model, bits, metrics, archive, proof):
         "fingerprint": model["model_fingerprint_sha256"],
         "chosen": bits.tolist(), "metrics": deepcopy(metrics),
         "zip": archive, "attestation": deepcopy(proof),
+        "attestation_sha256": digest(proof),
     }
 
 
@@ -210,6 +211,13 @@ def test_false_global_exhaustive_status_rejected(global_run):
     fake["combinations_examined"] = 300
     with pytest.raises(ValueError, match="exhaustively"):
         attest_current_result(inst, model, graph, bits, fake, archive, csv)
+
+
+def test_math_oracle_claim_tampering_cannot_survive_rerender(global_run):
+    inst, model, graph, bits, metrics, archive, csv, proof = global_run
+    state = stored(model, bits, metrics, archive, proof)
+    state["attestation"]["mathematical_verifier"]["feasible_count"] = 999
+    assert not check_visible_result(inst, model, graph, state)
 
 
 def test_source_site_and_graph_hash_stale_hidden(global_run):

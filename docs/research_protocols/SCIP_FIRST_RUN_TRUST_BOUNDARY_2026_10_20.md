@@ -40,9 +40,24 @@ A release-grade independent trust boundary would require a **separately governed
 
 ## Acceptance checklist
 
-- [ ] Genuine first+second PySCIPOpt LP replay and forged *exactly tied but upstream disconnected* N20 K5 regression pass.
-- [ ] Forged first SCIP `gap` (nonfinite, nonzero or negative), falsified original feasibility/budget/local connectivity flags, selected count or isolated list cannot be promoted to independent source-verified optimality.
-- [ ] Existing live Streamlit AppTests, unified dashboard, and separate source-science triple-checkout remain green at **exact PR HEAD**; no change to original model/LP production code.
+- [x] Genuine first+second PySCIPOpt LP replay and forged *exactly tied but upstream disconnected* N20 K5 regression passed in executable-head CI.
+- [x] Forged first SCIP `gap` (nonfinite, nonzero or negative), original feasibility/budget/local connectivity flags, selected count or isolated list were rejected in executable-head CI.
+- [x] Live Streamlit AppTests, unified dashboard and separate cold source-science triple-checkout passed at original executable-head commit; documentation-only final-head CI still to confirm.
 - [ ] Human science/security review decides whether to adopt a trusted external execution/signer service, what it is allowed to claim and what it costs. No automatic signing feature, merge, deployment or physical/manuscript status upgrade.
 
 Review artifacts retain original raw SCIP LP and independent child process receipt, never unpublished manuscripts or new third-party restricted lake data. The original source local K5 1,077 feasible subset count and exploratory all-original-fixed global K5 860 feasible are distinct mathematical definitions and remain unchanged.
+
+
+## Experimentally observed execution and negative-test outcome (2026-10-20)
+
+**Executable original-source implementation head `dc9a546a0e5d0b04dd6737a7d11714508a0d61a7`:** four independent GitHub CI checks passed:
+- [**True separate-process SCIP LP receipt #39412072365**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39412072365) **33/33 tests**, including actual original N20/K5 PySCIPOpt subprocess reread/re-solve, 11 original structural-LP tests, and the new synthetic-exact-flat-but-infeasible **first- and second-solver K5 adversarial tests**, nonfinite/negative/high claimed first gap, contradicted first source `feasible/budget_ok/connectivity_ok/num_selected/isolated` labels. The real independent second SCIP still reports source **selected [0,1,3,6,7]**, **optimal**, **primal=dual=-3.301293491856464**, **gap=0**.
+- [**Existing full Streamlit pilot #39412072341**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39412072341): **133/133 tests** and original-source local feasible K5 1,077 vs **separate exploratory all-15-mandatory-existing fixed globally connected** feasible K5 860/15,504.
+- [**Unified dashboard #39412072368**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39412072368) **SUCCESS**.
+- [**Original science vs UX triple-checkout #39412072529**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39412072529) **SUCCESS**: original notebook/real SCIP, raw 5,417-feature original GeoJSON/S4 original source AHP/D2-road, independent 35-node all-15-fixed geometry and exact K5 proof, science and UX full graph/objective matched. This runner observed strict original binary64 score SHA `2b238848f43d1763fe093b38360941677e2fa46f1a6c01d05b5b359a62dc5809` for both science and UX; prior `8536a3db...` is a DIFFERENT strict objective fingerprint, never interchangeable. Source computational claim VERIFIED; manuscript and physical claim BLOCKED. No quantum advantage claim.
+
+**Lossless independent byte verification:** [first-emitted SCIP LP and second process receipt artifact #12260500531](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39412072365/artifacts/12260500531), GitHub expiry **2026-11-03 11:02:31 UTC**, downloaded ZIP SHA256 `5dcbc86eb9ec5287a1eb5e356fea912de6a4383d43952e45add0d165f49915db`. The original actual 3,516-byte LP SHA is `283b3b373499ebde663a8614ca5049f5a3a425ba40e6073a0d3b0fce011d027b`; the 3,945-byte new child receipt SHA is `c3b61976c91f6a02d1cec6556b449e75f06a232049afec7f0e20e9dc99c6311a`, both contents independently read and SHA-verified, with `upstream_selected_original_graph_feasible=true`, `second_process_selected_original_graph_feasible=true`, and `session_is_cryptographically_signed=false`.
+
+[**Pinned source/UX independent four-JSON evidence artifact #12259761379**](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39412072529/artifacts/12259761379), expiry **2026-11-03 11:03:14 UTC**, ZIP SHA256 `88c8f7cc1accccacaf55a24842bd866a6aa1ad17c013fecad210a7edd8643dff`, all four source/UX JSON members downloaded and SHA-verified. Short-lived GitHub CI retention and a conversation download do **not** constitute institutional reproducibility archival custody.
+
+**Limitations unchanged:** This closes the *mathematical admissibility flaw* in the first selection receipt, not malicious first SCIP executable tampering. A separately executed second solver is not a trusted signer; a self-generated SHA is not a verifiable remote signature; source geometric graph assumptions are not calibrated RF/backhaul, paper WorldPop/population AHP, hydrodynamic current or measured lake water quality. No production or current Streamlit UI process integration and no unapproved merge.

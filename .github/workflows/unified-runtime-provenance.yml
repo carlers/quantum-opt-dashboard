@@ -46,6 +46,7 @@ jobs:
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
+            prototypes/unified_dashboard/tests/test_qualified_editor_imports.py \
             -q -s
       - name: Observe process-global import hazards without executing source science
         run: |

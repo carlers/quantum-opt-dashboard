@@ -159,7 +159,7 @@ def test_changed_or_missing_fixed_graph_not_allowed(global_run):
     bad_graph = replace(graph, edges=graph.edges[1:])
     with pytest.raises(ValueError, match="graph"):
         model_identity(inst, model, bad_graph)
-    with pytest.raises(ValueError, match="source-local"):
+    with pytest.raises(ValueError, match="active global graph"):
         model_identity(inst, model, None)
 
 

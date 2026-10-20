@@ -1,0 +1,114 @@
+# Science/UX research compatibility check without merging separate histories.
+# The three source trees remain separate. Only current UX model/export engine
+# blobs identical to previously reviewed PR #78 are compared with the source
+# independent evidence from pinned PR #96. This does not deploy the app.
+name: Water UX actual runtime attestor vs pinned independent science
+on:
+  pull_request:
+    paths:
+      - "prototypes/streamlit_water_quality/**"
+      - ".github/workflows/ux-n20-runtime-vs-science.yml"
+      - "docs/N20_UX_RUNTIME_MATHEMATICAL_RESULT_GATE.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ux-n20-runtime-vs-science-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  independent-cold-source-and-current-ux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current UX runtime attestor
+        uses: actions/checkout@v4
+      - name: Checkout exact earlier-reviewed UX backend baseline, SEPARATE tree
+        uses: actions/checkout@v4
+        with:
+          ref: 8752d17372d9d4dd544acbbfd686b4bb45e33f40
+          path: _ux_pinned_engine
+          persist-credentials: false
+      - name: Checkout existing exact-head science source verification, SEPARATE tree
+        uses: actions/checkout@v4
+        with:
+          ref: 093941793b91ecef46c31dad72898da66bf638ac
+          path: _science_snapshot
+          persist-credentials: false
+      - name: Require original UX graph and model compiler implementation unmodified
+        run: |
+          test "$(git -C _ux_pinned_engine rev-parse HEAD)" = "8752d17372d9d4dd544acbbfd686b4bb45e33f40"
+          test "$(git -C _science_snapshot rev-parse HEAD)" = "093941793b91ecef46c31dad72898da66bf638ac"
+          for filename in model.py mvp_audit.py wireless_topology.py export_global_reference.py; do
+            path="prototypes/streamlit_water_quality/$filename"
+            test "$(git hash-object "$path")" = "$(git -C _ux_pinned_engine rev-parse "HEAD:$path")" || {
+              echo "Current backend engine differs from reviewed pinned UX #78; MUST re-review scientific contract." >&2
+              exit 1
+            }
+          done
+          echo "Only Streamlit live wrapper and independent verifier changed. Source science and original UX backend pinned separately." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install isolated original science environment
+        run: |
+          python -m venv "$RUNNER_TEMP/sourceenv"
+          "$RUNNER_TEMP/sourceenv/bin/python" -m pip install \
+            numpy==2.5.4 scipy==1.18.1 shapely==2.2.0 pyscipopt==6.3.0 \
+            matplotlib==3.11.2 nbclient==0.11.0 nbformat==5.11.1 ipykernel==6.31.0
+      - name: Run truly fresh original N20 real SCIP notebook and source record
+        run: |
+          cd _science_snapshot
+          "$RUNNER_TEMP/sourceenv/bin/python" scripts/run_n20_reference_notebook.py --result "$RUNNER_TEMP/independent-N20-source.json"
+      - name: Independently verify original 5417-point GIS, S4 original factors and claim status
+        run: |
+          cd _science_snapshot
+          "$RUNNER_TEMP/sourceenv/bin/python" -m scripts.n20_independent_geometry_audit --result "$RUNNER_TEMP/independent-N20-source.json" --output "$RUNNER_TEMP/independent-N20-original-geometry.json"
+          "$RUNNER_TEMP/sourceenv/bin/python" -m scripts.studies.n20_s4_parameter_provenance --reference "$RUNNER_TEMP/independent-N20-source.json" --output "$RUNNER_TEMP/independent-source-S4.json"
+          "$RUNNER_TEMP/sourceenv/bin/python" -m scripts.science_claim_gate --reference "$RUNNER_TEMP/independent-N20-source.json" --provenance "$RUNNER_TEMP/independent-source-S4.json" --output "$RUNNER_TEMP/independent-source-claim-status.json"
+      - name: Independently reconstruct all mandatory original 15 fixed global geometric network
+        run: |
+          cd _science_snapshot
+          "$RUNNER_TEMP/sourceenv/bin/python" -m scripts.n20_full_global_source_geometry --reference "$RUNNER_TEMP/independent-N20-source.json" --output "$RUNNER_TEMP/independent-source-global.json"
+      - name: Install separate actual current Streamlit runtime environment
+        run: |
+          python -m venv "$RUNNER_TEMP/currentuxenv"
+          "$RUNNER_TEMP/currentuxenv/bin/python" -m pip install -r requirements.txt "pytest>=8,<10"
+      - name: Current actual UX model, SCIP and global attestor adversarial tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/prototypes/streamlit_water_quality
+        run: >
+          "$RUNNER_TEMP/currentuxenv/bin/python" -m pytest
+          prototypes/streamlit_water_quality/tests/test_runtime_attestation.py
+          prototypes/streamlit_water_quality/tests/test_runtime_app_state_tampering.py
+          prototypes/streamlit_water_quality/tests/test_wireless_ui.py
+          -q -s
+      - name: Independently execute original current UX backend mathematical exporter
+        run: >
+          "$RUNNER_TEMP/currentuxenv/bin/python"
+          prototypes/streamlit_water_quality/export_global_reference.py
+          --output "$RUNNER_TEMP/current-ux-original-global.json"
+      - name: Cross-check exact per-site global graph, objective, solver report and source
+        run: |
+          cd _science_snapshot
+          "$RUNNER_TEMP/sourceenv/bin/python" -m scripts.studies.n20_dual_checkout_ux_contract \
+            --source-reference "$RUNNER_TEMP/independent-N20-source.json" \
+            --science-global "$RUNNER_TEMP/independent-source-global.json" \
+            --ux-global "$RUNNER_TEMP/current-ux-original-global.json" \
+            --ux-commit-sha 8752d17372d9d4dd544acbbfd686b4bb45e33f40 \
+            --output "$RUNNER_TEMP/current-UX-vs-original-independent-source.json"
+      - name: Preserve bounded source-vs-UX research JSON (no third-party data redistribution)
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-current-UX-runtime-vs-unmerged-original-source-science
+          path: |
+            ${{ runner.temp }}/independent-source-claim-status.json
+            ${{ runner.temp }}/independent-source-global.json
+            ${{ runner.temp }}/current-ux-original-global.json
+            ${{ runner.temp }}/current-UX-vs-original-independent-source.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: State compatibility and physical limit
+        run: |
+          echo "This is a triple-checkout independent mathematical research comparison, NOT any merge/deployment of science and UX." >> "$GITHUB_STEP_SUMMARY"
+          echo "Original source notebook real SCIP, 15 mandatory existing global modeled graph, active UX runtime verifier tests and backend source identity independently compared." >> "$GITHUB_STEP_SUMMARY"
+          echo "The geometry remains a lake hull/range proxy; manuscript AHP/D2 parity and physical RF/DO/current quality remain blocked." >> "$GITHUB_STEP_SUMMARY"

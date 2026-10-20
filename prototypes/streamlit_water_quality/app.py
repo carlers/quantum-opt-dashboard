@@ -31,6 +31,7 @@ from wireless_topology import (
     GLOBAL_MODE, LOCAL_MODE, graph_from_source, exact_global_search,
     fully_connected, global_evidence_zip,
 )
+from runtime_attestation import attest_current_result, check_visible_result, digest
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"
@@ -257,9 +258,9 @@ except (ValueError, RuntimeError, IndexError) as exc:
 
 fingerprint = model["model_fingerprint_sha256"]
 old = st.session_state.get("mvp_result")
-if old is not None and old["fingerprint"] != fingerprint:
+if old is not None and not check_visible_result(instance, model, wireless_graph, old):
     st.session_state.pop("mvp_result", None)
-    st.info("Inputs changed. The previous result is hidden; rerun SCIP to solve this model.")
+    st.info("Inputs changed or attested run bytes no longer match. Previous result, map and evidence are hidden; rerun the solver.")
 
 is_reference = (not global_mode and k == 5 and source.startswith("Notebook")
                 and beta == 1.0 and delta == 1.0)
@@ -356,6 +357,7 @@ if run:
     with st.spinner("Checking complete global topology…" if global_mode else
                     "Solving original local formulation with SCIP…"):
         try:
+            lp_evidence = None
             if global_mode:
                 chosen, metrics = exact_global_search(
                     instance, wireless_graph, timeout_seconds=SCIP_TIME_LIMIT
@@ -386,24 +388,38 @@ if run:
                                 tuple(audit["selected_local_positions"]) != NOTEBOOK_N20_K5_LOCAL_INDICES):
                             raise AssertionError("Certified notebook N20 benchmark unexpectedly changed")
                     csv_bytes = selected_csv(instance, chosen)
+                    lp_evidence = lp_path.read_bytes()
                     archive = evidence_zip(
-                        model, audit, metrics, csv_bytes, lp_path.read_bytes()
+                        model, audit, metrics, csv_bytes, lp_evidence
                     )
+            # Fresh independent exact mathematical proof and byte-for-byte
+            # model/CSV/LP/graph archive checks BEFORE result enters UI state.
+            attestation = attest_current_result(
+                instance, model, wireless_graph, chosen, metrics,
+                archive, csv_bytes, lp_evidence,
+            )
             st.session_state["mvp_result"] = {
                 "fingerprint": fingerprint,
                 "chosen": chosen.tolist() if chosen is not None else None,
                 "metrics": metrics,
                 "independent": audit,
                 "zip": archive,
+                "attestation": attestation,
+                "attestation_sha256": digest(attestation),
             }
         except (ValueError, OSError, RuntimeError, AssertionError) as exc:
             st.session_state.pop("mvp_result", None)
             st.error("Could not verify this mathematical scenario: " + str(exc))
 
 current = st.session_state.get("mvp_result")
-if current is None or current["fingerprint"] != fingerprint:
-    st.info("Choose settings in the sidebar, then select **Find monitoring locations (SCIP)**. Nothing is solved until you run it.")
+if current is not None and not check_visible_result(instance, model, wireless_graph, current):
+    st.session_state.pop("mvp_result", None)
+    st.error("Current run could not be independently rebound to the active compiled model and evidence. Map and exports have been suppressed.")
     st.stop()
+if current is None:
+    st.info("Choose settings in the sidebar, then run the active solver. Nothing is solved until you run it. No previous map or result is shown without a current independently attested model/ZIP binding.")
+    st.stop()
+st.caption("Current result checked against an independent bounded exact mathematical oracle and active ZIP/model fingerprint. Source-data, paper parity and physical wireless validation remain separate.")
 
 metrics = current["metrics"]
 independent = current["independent"]

@@ -8,6 +8,10 @@ on:
       - "pyproject.toml"
       - "prototypes/streamlit_configurable/**"
       - "problems/evacuation_centers/**"
+      - "problems/water_quality/water_bundle_adapter.py"
+      - "problems/water_quality/__init__.py"
+      - "prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py"
+      - "docs/ISSUE_108_QUALIFIED_WATER_ADAPTER.md"
       - "problems/__init__.py"
       - "prototypes/unified_dashboard/tests/test_qualified_synthetic_imports.py"
       - "prototypes/__init__.py"
@@ -46,12 +50,14 @@ jobs:
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
             prototypes/unified_dashboard/tests/test_qualified_editor_imports.py \
-            prototypes/unified_dashboard/tests/test_qualified_synthetic_imports.py
+            prototypes/unified_dashboard/tests/test_qualified_synthetic_imports.py \
+            prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
             prototypes/unified_dashboard/tests/test_qualified_editor_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_synthetic_imports.py \
+            prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py \
             -q -s
       - name: Observe process-global import hazards without executing source science
         run: |

@@ -25,6 +25,7 @@ import numpy as np
 from model import FACTOR_NAMES, NOTEBOOK_WEIGHTS, PAPER_WEIGHTS
 from mvp_audit import EXPECTED_GEOJSON_SHA256, canonical, check_selected
 from wireless_topology import GLOBAL_MODE, LOCAL_MODE
+from scip_lp_structure import certify_emitted_scip_lp
 
 MAX_SUBSETS = 200_000
 SCHEMA = 1
@@ -241,7 +242,7 @@ def exact_selection_objective(instance, selected_indices) -> Fraction:
     )
 
 
-def inspect_archive(model: dict, mode: str, chosen, metrics: dict,
+def inspect_archive(instance, model: dict, mode: str, chosen, metrics: dict,
                     archive: bytes, csv_bytes: bytes, lp_bytes: bytes | None,
                     graph) -> str:
     """Re-read every exported byte BEFORE it becomes displayable state."""
@@ -294,7 +295,13 @@ def inspect_archive(model: dict, mode: str, chosen, metrics: dict,
                 and [int(row["master_feature_position"]) for row in rows] ==
                 [model["mapping"]["free_master_feature_positions"][i] for i in expected_sites],
                 "exported CSV station indices do not match current selected result")
-    return sha256(archive).hexdigest()
+    # Source mode: parse the ACTUAL untransformed emitted CPLEX LP, not an
+    # unattached source-like regenerated file, and check all original linear
+    # constraints/objective terms against the active compiled Instance.
+    lp_formulation = (
+        certify_emitted_scip_lp(instance, lp_bytes) if mode == LOCAL_MODE else None
+    )
+    return sha256(archive).hexdigest(), lp_formulation
 
 
 def attest_current_result(instance, model, graph, chosen, metrics, archive: bytes,
@@ -372,7 +379,7 @@ def attest_current_result(instance, model, graph, chosen, metrics, archive: byte
                     and type(metrics.get("combinations_examined")) is int
                     and 0 <= metrics["combinations_examined"] < oracle["combination_count"],
                     "time-limited global result cannot claim an exhausted search")
-    actual_zip_sha = inspect_archive(model, mode,
+    actual_zip_sha, verified_lp_formulation = inspect_archive(instance, model, mode,
                                      selected.tolist() if selected is not None else None,
                                      metrics, archive, csv_bytes, lp_bytes, graph)
     selected_bits = selected.tolist() if selected is not None else None
@@ -385,6 +392,7 @@ def attest_current_result(instance, model, graph, chosen, metrics, archive: byte
         "chosen_binary20": selected_bits,
         "solver_metrics": metrics,
         "actual_evidence_zip_sha256": actual_zip_sha,
+        "parsed_original_scip_lp_formulation": verified_lp_formulation,
         "mathematical_verifier": oracle,
         "strictly_bound_to_compiled_current_run": True,
         "source_mathematical_only_manuscript_parity": False,

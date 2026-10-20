@@ -133,7 +133,9 @@ def test_unified_global_modeswitch_invalidates_local_and_exports_no_fake_scip_lp
         "model.json", "result.json", "wireless_graph.json"
     ))
     assert model["settings"]["connectivity_mode"] == "all_stations_connected"
-    assert model["constraints"]["global_path_connectivity"] is True
+    assert model["constraints"]["global_path_connectivity"] == (
+        "all 15 existing and all K selected new stations in one component"
+    )
     assert model["model_fingerprint_sha256"] == result["model_fingerprint_sha256"]
     assert model["model_fingerprint_sha256"] == current["fingerprint"]
     assert result["optimal_proven"] is True

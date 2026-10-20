@@ -36,6 +36,8 @@ jobs:
           prototypes/streamlit_water_quality/export_scip_reexecution_reference.py
           prototypes/streamlit_water_quality/tests/test_scip_lp_reexecution.py
       - name: Independently solve original N20 LP from separate process under adversarial tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/prototypes/streamlit_water_quality
         run: >
           python -m pytest
           prototypes/streamlit_water_quality/tests/test_scip_lp_reexecution.py

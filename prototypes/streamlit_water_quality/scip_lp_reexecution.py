@@ -33,6 +33,24 @@ def _require(ok: bool, message: str) -> None:
         raise ValueError("Separate SCIP execution witness: " + message)
 
 
+def _source_local_feasible(instance, chosen: list[int]) -> bool:
+    """Recalculate one-hop feasibility for EVERY selected station, not just K.
+
+    A binary64-exact optimum score by itself is NOT an admissibility proof:
+    an infeasible selection can have the same objective as a feasible optimum,
+    especially for exact-tie or flat-objective experimental settings.
+    """
+    if len(chosen) != 20 or sum(chosen) != instance.budget:
+        return False
+    for i, selected in enumerate(chosen):
+        if selected and not (
+            bool(instance.fixed_neighbors[i])
+            or any(chosen[j] for j in instance.neighbors[i])
+        ):
+            return False
+    return True
+
+
 def check_independent_process_receipt(
     instance, lp_bytes: bytes, recorded: dict, original_selection,
     original_metrics: dict,
@@ -72,11 +90,11 @@ def check_independent_process_receipt(
     _require(source_bits.shape == (20,) and np.isin(source_bits, (0, 1)).all()
              and int(source_bits.sum()) == instance.budget,
              "upstream source selection changed or malformed")
-    if any(chosen[i] and not (
-        int(instance.fixed_neighbors[i])
-        or any(chosen[j] for j in instance.neighbors[i])
-    ) for i in range(20)):
-        _require(False, "independently replayed SCIP selection violates original local graph")
+    source_vector = [int(x) for x in source_bits]
+    _require(_source_local_feasible(instance, source_vector),
+             "upstream original SCIP selection violates source local graph")
+    _require(_source_local_feasible(instance, chosen),
+             "independent replayed SCIP selection violates source local graph")
     oracle = exact_bounded_oracle(instance, "source_local", None)
     _require(oracle["feasible_count"] > 0,
              "replay claims feasible selection for a mathematically infeasible model")
@@ -122,6 +140,8 @@ def check_independent_process_receipt(
         "independent_lp_dual_bound": dual,
         "independent_lp_relative_gap": gap,
         "independent_feasible_original_local_count": oracle["feasible_count"],
+        "upstream_selected_original_graph_feasible": True,
+        "second_process_selected_original_graph_feasible": True,
         "replay_status_source_math_crosschecked": True,
         "independent_lp_reader_reoptimized_in_separate_process_as_reported": True,
         "original_upstream_process_externally_authenticated": False,

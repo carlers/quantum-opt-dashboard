@@ -11,6 +11,8 @@ on:
       - "docs/N20_UX_RUNTIME_MATHEMATICAL_RESULT_GATE.md"
       - "prototypes/unified_dashboard/about.py"
       - "prototypes/unified_dashboard/tests/test_navigation.py"
+      - "prototypes/unified_dashboard/tests/test_water_evidence_journeys.py"
+      - "docs/UNIFIED_RELEASE_RUNTIME_DEPENDENCY_AUDIT_2026_10_20.md"
       - "docs/INTEGRATED_MVP_RELEASE_READINESS_2026_10_20.md"
   workflow_dispatch:
 permissions:

@@ -1,0 +1,29 @@
+# Runtime original N20 mathematical result gate — **UX review-only DRAFT**, 2026-10-20
+
+This branch is based on exactly the independent UX [DRAFT PR #78](https://github.com/carlers/quantum-opt-dashboard/pull/78) head `8752d17372d9d4dd544acbbfd686b4bb45e33f40`. The verified scientific research stack ends at [DRAFT PR #96](https://github.com/carlers/quantum-opt-dashboard/pull/96), based on a *different unmerged history*. **No source or science branch was merged/cherry-picked/rebased; no original notebook, 5,417-record GeoJSON, author manuscript, main or preview or production code changed.** This is the *first experimental actual UI code port*, requiring explicit independent science/UX review.
+
+## New server-side pre-render boundary
+
+`prototypes/streamlit_water_quality/runtime_attestation.py` is a self-contained scientific **independent mathematical verifier** embedded into the UX branch only. Every new UI solve invokes `attest_current_result()` *before storing a new session result*; it independently reads the actual compiled `model.Instance` and asserts that every complete source model SHA, original 20 free + all 15 fixed station master indices/coordinates, source eight factor weights/meaning, K, Dmax, binary64 `float.hex` linear/quadratic coefficients, one-hop graph and full global source graph are the same as the displayed model and solver inputs. For global mode it reconstructs each adjacency list from independent complete direct graph edge pairs and checks it matches actual model instance source neighbor flags.
+
+Separately, it enumerates up to **C(20,K)≤200,000** selected subsets with a new independently authored local-one-hop or union-find all-15-fixed global feasible graph predicate; scores with **exact integer-scaled rational values of current binary64 coefficients**, not the optimizer's float energy or its reported optimal status. `optimal` and `optimal_exhaustive` require the exact selected mathematical optimum; no tolerance permits a different near-optimal selected subset. Timeout incumbents remain **not proven optimal**, and false `infeasible` is challenged by exact enumeration. This proves a bounded mathematical statement about the *compiled* model, not measured sensor utility.
+
+It rereads the actual local or global ZIP **before** permitting output. Only original local mode can contain a real nonempty `actual_scip_model.lp` byte-identical to what was passed through the current `solve_scip()` optimizer export; global mode must contain `wireless_graph.json` and cannot fabricate a SCIP LP. Every ZIP internal `SHA256SUMS.json`, selected-site CSV index/master ID, stored active model fingerprint, current reported optimizer status and graph edge/graph fingerprint is checked. The resulting attestation record binds the ZIP SHA and original model/graph status/selected bits.
+
+The UI **does not render the selected-site map, selected-site table, solver claims or downloadable result ZIP until this attestation succeeds**. On subsequent Streamlit rerenders `check_visible_result()` verifies the currently compiled model/graph, selected bits, metrics and ZIP bytes against the stored mathematical attestation; on any mismatch the result is **removed from session state**. K, custom AHP weights, D2 meaning (still road), beta, delta, Dmax, topology or site/data changes invalidate the prior model digest and result.
+
+### Claims intentionally still prohibited
+
+- The source D2 means **road proximity**, and printed manuscript Table III/IV AHP + described WorldPop criterion are not reconciled. The original author expert comparison forms and GIS derivation are not in repository provenance; source numerical correctness is NOT manuscript parity.
+- Global graph edges are derived from the historical concave-hull/Euclidean Dmax proxy, **not** field-calibrated RF antenna/LOS/Fresnel/backhaul or a surveyed shore/island polygon. Source DO, currents, lake quality, and coverage are **not independently measured** in this code.
+- The verifier is a **new independent mathematical implementation** in the same frontend/backend Streamlit process; it does NOT independently authenticate actual SCIP binary execution logs, parse/authenticate every MILP/LP constraint, cryptographically sign a user session, or prevent an adversary who can rewrite all server-side Streamlit state. ZIP SHA is not a signature. It does not merge or install the science PR #96 source claim-gate within the UX app; separate cold original science CI must still pass before a scientific endorsement.
+- A valid *same-score objective* does not make physical scenario quality comparable. Original low-bit numerical score variants `8536a3db...` and `2b238848...` must be treated as distinct strict binary64 objective identities; this gate never replaces exact hashes with observational tolerances.
+
+## Testing and review gates
+
+- [ ] New pure backend real original N20/SCIP and all-15-fixed 860-feasible global tests, adversarial flipped-optimum/status/score/wireless/Dmax/weights/ZIP/CSV/source-ID and stale-session results.
+- [ ] Existing actual Streamlit AppTests for local/default and global mode, changed settings stale invalidation, original local SCIP LP and global exact enumeration without false SCIP LP.
+- [ ] Separate independent science reviewer compares this newly written implementation to verified source [DRAFT #96](https://github.com/carlers/quantum-opt-dashboard/pull/96) tests via an isolated dual-checkout workflow, **without combining these two unmerged histories**.
+- [ ] Owner approves any future joint integration ancestry, preview, merge or deployment; no prior permission to promote research source trees.
+
+**Next:** observe exact-head existing Streamlit pilot regression and correct actual failures in new branch only; then link findings in Issue #91/#88. Keep all existing UX/science drafts independent and unmerged.

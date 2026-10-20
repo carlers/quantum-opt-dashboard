@@ -167,7 +167,8 @@ def exact_bounded_oracle(instance, mode: str, graph) -> dict:
 
     Score coefficients are interpreted as EXACT fractions of their original
     binary64 values. Close but different solutions are NOT collapsed by a
-    score-tolerance threshold. Tie resolution uses first lexicographic subset.
+    score-tolerance threshold. The oracle retains the first lexicographic
+    witness, but any genuinely exact tied optimum can be independently proven.
     """
     n, k = len(instance.free_indices), instance.budget
     total = math.comb(n, k)
@@ -203,6 +204,22 @@ def exact_bounded_oracle(instance, mode: str, graph) -> dict:
         "exact_denominator": str(denominator) if best_score is not None else None,
         "score_approximation": best_score / denominator if best_score is not None else None,
     }
+
+
+def exact_selection_objective(instance, selected_indices) -> Fraction:
+    """Exactly score the selected subset from the ACTUAL binary64 coefficients.
+
+    This is intentionally separate from the integer-scaled search: equality of
+    exact rational values accepts genuinely tied optima, but no float score
+    tolerance can turn a slightly worse feasible selection into an optimum.
+    """
+    selected = set(selected_indices)
+    return (
+        sum((Fraction.from_float(float(instance.linear[i])) for i in selected),
+            Fraction(0))
+        + sum((Fraction.from_float(float(q)) for i, j, q in instance.quadratic
+               if i in selected and j in selected), Fraction(0))
+    )
 
 
 def inspect_archive(model: dict, mode: str, chosen, metrics: dict,
@@ -294,10 +311,11 @@ def attest_current_result(instance, model, graph, chosen, metrics, archive: byte
                 and math.isclose(metrics["energy"], observed_energy, rel_tol=0, abs_tol=1e-8),
                 "optimizer-reported energy differs from independent objective")
         if metrics["optimal"]:
+            best_exact = Fraction(
+                int(oracle["exact_numerator"]), int(oracle["exact_denominator"])
+            )
             require(metrics["status"] == ("optimal_exhaustive" if mode == GLOBAL_MODE else "optimal")
-                    and selected_ids == oracle["exact_selected_indices"]
-                    and math.isclose(observed_energy, oracle["score_approximation"],
-                                     rel_tol=0, abs_tol=1e-8),
+                    and exact_selection_objective(instance, selected_ids) == best_exact,
                     "unproved optimum or false solver status")
         else:
             require(mode == LOCAL_MODE and metrics["status"] in ("timelimit", "gaplimit")

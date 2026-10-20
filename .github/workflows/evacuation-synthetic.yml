@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - "problems/evacuation_centers/**"
+      - "pyproject.toml"
       - "framework/python/qopt/core/math_ir.py"
       - "contracts/typed_math_ir.schema.json"
       - "framework/python/qopt/core/experiment_bundle.py"
@@ -27,7 +28,10 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install Python/SciPy/SCIP and test dependencies
-        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "pyscipopt>=5,<7" "pytest>=8"
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "pyscipopt>=5,<7" "pytest>=8"
+          python -m pip install -e .
+          python -m pip check
       - name: Check synthetic-only source syntax
         run: python -m compileall -q problems/evacuation_centers framework/python/qopt/core
       - name: Execute independent toy-model science checks

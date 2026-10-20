@@ -9,6 +9,9 @@ on:
       - "prototypes/streamlit_water_quality/**"
       - ".github/workflows/ux-n20-runtime-vs-science.yml"
       - "docs/N20_UX_RUNTIME_MATHEMATICAL_RESULT_GATE.md"
+      - "prototypes/unified_dashboard/about.py"
+      - "prototypes/unified_dashboard/tests/test_navigation.py"
+      - "docs/INTEGRATED_MVP_RELEASE_READINESS_2026_10_20.md"
   workflow_dispatch:
 permissions:
   contents: read

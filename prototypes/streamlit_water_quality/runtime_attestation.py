@@ -23,7 +23,7 @@ from zipfile import ZipFile
 import numpy as np
 
 from model import FACTOR_NAMES, NOTEBOOK_WEIGHTS, PAPER_WEIGHTS
-from mvp_audit import EXPECTED_GEOJSON_SHA256, canonical, selected_csv
+from mvp_audit import EXPECTED_GEOJSON_SHA256, canonical, check_selected
 from wireless_topology import GLOBAL_MODE, LOCAL_MODE
 
 MAX_SUBSETS = 200_000
@@ -359,7 +359,20 @@ def check_visible_result(instance, model, graph, current) -> bool:
                 or proof["solver_metrics"] != current["metrics"]
                 or sha256(current["zip"]).hexdigest() != proof["actual_evidence_zip_sha256"]):
             return False
+        # The UI uses the independent audit to render objective metrics,
+        # station rows and locations; recompute it from the CURRENT compiled
+        # instance so changing these display-only fields cannot bypass proof.
+        if current["chosen"] is None:
+            if current["independent"] is not None:
+                return False
+        else:
+            fresh_audit = check_selected(
+                instance, np.asarray(current["chosen"], dtype=int),
+                current["metrics"], model,
+            )
+            if current["independent"] != fresh_audit:
+                return False
         # Any custom or topology change forces a new independent solve.
         return proof["strictly_bound_to_compiled_current_run"] is True
-    except (KeyError, ValueError, TypeError, AttributeError, IndexError):
+    except (KeyError, ValueError, TypeError, AttributeError, IndexError, AssertionError):
         return False

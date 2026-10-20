@@ -8,6 +8,7 @@ on:
       - "framework/python/qopt/core/experiment_bundle.py"
       - "framework/python/qopt/core/binary_quadratic.py"
       - "problems/evacuation_centers/bundle_runner.py"
+      - "pyproject.toml"
       - "framework/python/qopt/core/math_ir.py"
       - "contracts/typed_math_ir.schema.json"
       - "problems/water_quality/water_bundle_adapter.py"
@@ -28,7 +29,10 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install small SCIP solver, synthetic runner, Streamlit AppTest
-        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8" "streamlit>=1.43,<2"
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8" "streamlit>=1.43,<2"
+          python -m pip install -e .
+          python -m pip check
       - name: Syntax check
         run: python -m compileall -q prototypes/streamlit_configurable framework/python/qopt/core problems/evacuation_centers problems/water_quality/water_bundle_adapter.py problems/water_quality/notebook_reference_model.py
       - name: Run real headless UI interactions

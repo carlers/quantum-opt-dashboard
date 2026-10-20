@@ -74,6 +74,8 @@ jobs:
           python -m venv "$RUNNER_TEMP/currentuxenv"
           "$RUNNER_TEMP/currentuxenv/bin/python" -m pip install -r requirements.txt "pytest>=8,<10"
       - name: Current actual UX model, SCIP and global attestor adversarial tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/prototypes/streamlit_water_quality
         run: >
           "$RUNNER_TEMP/currentuxenv/bin/python" -m pytest
           prototypes/streamlit_water_quality/tests/test_runtime_attestation.py

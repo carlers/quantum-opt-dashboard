@@ -54,6 +54,30 @@ def test_unified_about_preserves_scientific_limitations():
     assert not app.exception
 
 
+def test_about_evidence_claims_distinguish_source_math_from_field_and_manuscript():
+    """The routed unified app must never display one generic validated badge."""
+    app = startup().switch_page("pages/about.py").run()
+    assert not app.exception, app.exception
+    assert any("Scientific evidence status" in x.value for x in app.subheader)
+    rendered = "\n".join(x.value for x in app.markdown)
+    assert "Computationally verified, source-only" in rendered
+    assert "1,077 feasible of 15,504" in rendered
+    assert "1, 3, 6, 7" in rendered
+    assert "Exploratory mathematical scenario" in rendered
+    assert "860 feasible of 15,504" in rendered
+    assert "all 15 existing stations" in rendered
+    assert "D2 road proximity" in rendered
+    assert "population/WorldPop" in rendered
+    assert "Not reconciled" in rendered
+    assert "Not validated" in rendered
+    assert "No confirmed field RF/backhaul" in rendered
+    assert "separate, pinned" in rendered
+    assert "unsigned" in rendered
+    assert "no quantum advantage" in rendered
+    assert not app.session_state.get("mvp_result")
+    assert not app.session_state.get("unified_sa_run")
+
+
 def test_bounded_classical_sampler_reports_seeded_original_feasibility():
     app = startup().switch_page("pages/research.py").run()
     assert not app.exception

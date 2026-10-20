@@ -6,6 +6,7 @@ on:
     paths:
       - "problems/water_quality/**"
       - "problems/evacuation_centers/bundle_runner.py"
+      - "pyproject.toml"
       - "problems/evacuation_centers/tests/test_csv_sources.py"
       - "problems/evacuation_centers/examples/*.csv"
       - "framework/python/qopt/core/experiment_bundle.py"
@@ -26,7 +27,10 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install numerical/GIS/SCIP and fast regression dependencies
-        run: python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8"
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.11,<2" "shapely>=2,<3" "pyscipopt>=5,<7" "pytest>=8"
+          python -m pip install -e .
+          python -m pip check
       - name: Check Python syntax for adapters
         run: python -m compileall -q problems/water_quality framework/python/qopt/core problems/evacuation_centers
       - name: Verify original pinned source and synthetic dataset/formula swapping

@@ -91,12 +91,15 @@ def global_run(real_source):
     return instance, model, graph, bits, metrics, archive, csv, proof
 
 
-def stored(model, bits, metrics, archive, proof):
+def stored(model, bits, metrics, archive, proof, instance=None):
     return {
         "fingerprint": model["model_fingerprint_sha256"],
         "chosen": bits.tolist(), "metrics": deepcopy(metrics),
         "zip": archive, "attestation": deepcopy(proof),
         "attestation_sha256": digest(proof),
+        "independent": (None if instance is None else __import__("mvp_audit").check_selected(
+            instance, bits, metrics, model,
+        )),
     }
 
 
@@ -107,7 +110,7 @@ def test_original_real_scip_independently_proven_before_map(local_run):
     assert proof["source_mathematical_only_manuscript_parity"] is False
     assert proof["real_radio_water_quality_validation"] is False
     assert proof["independent_scip_execution_log_or_lp_structure_authenticated"] is False
-    assert check_visible_result(inst, model, None, stored(model, bits, metrics, archive, proof))
+    assert check_visible_result(inst, model, None, stored(model, bits, metrics, archive, proof, inst))
 
 
 def test_all_15_fixed_global_real_export_is_independently_proven(global_run):
@@ -118,31 +121,44 @@ def test_all_15_fixed_global_real_export_is_independently_proven(global_run):
         "3ec652e943e26d7aa67ba71203dba6c5413a88a47dc4f24a2428a49c171bbc40"
     )
     assert oracle["exact_selected_indices"] == [0, 1, 3, 6, 7]
-    assert check_visible_result(inst, model, graph, stored(model, bits, metrics, archive, proof))
+    assert check_visible_result(inst, model, graph, stored(model, bits, metrics, archive, proof, inst))
 
 
 def test_tampered_live_result_selected_sites_hidden(local_run):
     inst, model, bits, metrics, archive, csv, lp, proof = local_run
-    state = stored(model, bits, metrics, archive, proof)
+    state = stored(model, bits, metrics, archive, proof, inst)
     state["chosen"][3] = 0
     assert not check_visible_result(inst, model, None, state)
     assert not check_visible_result(inst, model, None, {**stored(model,bits,metrics,archive,proof),
                                                       "attestation": {"bogus": True}})
 
 
+def test_tampered_independent_rendered_objective_or_master_station_hidden(local_run):
+    inst, model, bits, metrics, archive, csv, lp, proof = local_run
+    from mvp_audit import check_selected
+    state = stored(model, bits, metrics, archive, proof, inst)
+    state["independent"] = check_selected(inst, bits, metrics, model)
+    assert check_visible_result(inst, model, None, state)
+    state["independent"]["independent_original_objective"] += 200
+    assert not check_visible_result(inst, model, None, state)
+    state["independent"] = check_selected(inst, bits, metrics, model)
+    state["independent"]["selected_master_feature_positions"][0] = 999999
+    assert not check_visible_result(inst, model, None, state)
+
+
 def test_tampered_live_result_zip_or_energy_hidden(global_run):
     inst, model, graph, bits, metrics, archive, csv, proof = global_run
-    state = stored(model, bits, metrics, archive, proof)
+    state = stored(model, bits, metrics, archive, proof, inst)
     state["zip"] = state["zip"] + b"changed"
     assert not check_visible_result(inst, model, graph, state)
-    state = stored(model, bits, metrics, archive, proof)
+    state = stored(model, bits, metrics, archive, proof, inst)
     state["metrics"]["energy"] += 1.
     assert not check_visible_result(inst, model, graph, state)
 
 
 def test_changed_current_dmax_or_weights_cannot_reuse_old_result(global_run):
     inst, model, graph, bits, metrics, archive, csv, proof = global_run
-    state = stored(model, bits, metrics, archive, proof)
+    state = stored(model, bits, metrics, archive, proof, inst)
     bad = deepcopy(model)
     bad["d_max_m_float64_hex"] = float(inst.d_max + .01).hex()
     bad.pop("model_fingerprint_sha256")
@@ -215,16 +231,16 @@ def test_false_global_exhaustive_status_rejected(global_run):
 
 def test_math_oracle_claim_tampering_cannot_survive_rerender(global_run):
     inst, model, graph, bits, metrics, archive, csv, proof = global_run
-    state = stored(model, bits, metrics, archive, proof)
+    state = stored(model, bits, metrics, archive, proof, inst)
     state["attestation"]["mathematical_verifier"]["feasible_count"] = 999
     assert not check_visible_result(inst, model, graph, state)
 
 
 def test_source_site_and_graph_hash_stale_hidden(global_run):
     inst, model, graph, bits, metrics, archive, csv, proof = global_run
-    state = stored(model, bits, metrics, archive, proof)
+    state = stored(model, bits, metrics, archive, proof, inst)
     state["attestation"]["active_graph_sha256"] = "0"*64
     assert not check_visible_result(inst, model, graph, state)
-    state = stored(model, bits, metrics, archive, proof)
+    state = stored(model, bits, metrics, archive, proof, inst)
     state["fingerprint"] = "1"*64
     assert not check_visible_result(inst, model, graph, state)

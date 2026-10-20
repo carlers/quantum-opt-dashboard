@@ -6,7 +6,7 @@
 
 ## What the GitHub ancestry audit actually shows
 
-The **unified Streamlit MVP** [DRAFT PR #51](https://github.com/carlers/quantum-opt-dashboard/pull/51), commit `b9b24aa6e794d0f9bb222a4192bce1fa0ee4b8ed`, **is an ancestor of the current water UX / verified-output stack** [DRAFT PR #101](https://github.com/carlers/quantum-opt-dashboard/pull/101), commit `e5c56bb19f0cc5800af20649088b7c39f02c4715`. The GitHub commit comparison reported **ahead 103, behind 0**, with the exact merge base equal to #51 HEAD. These are NOT two histories that must be separately recombined. The 103 commits encompass UX, data visibility, graph/SCI​P checks, dedicated tests and research documentation. The current UX ancestry already contains:
+The **unified Streamlit MVP** [DRAFT PR #51](https://github.com/carlers/quantum-opt-dashboard/pull/51), commit `b9b24aa6e794d0f9bb222a4192bce1fa0ee4b8ed`, **is an ancestor of the current water UX / verified-output stack** [DRAFT PR #101](https://github.com/carlers/quantum-opt-dashboard/pull/101), commit `e5c56bb19f0cc5800af20649088b7c39f02c4715`. The GitHub commit comparison reported **ahead 103, behind 0**, with the exact merge base equal to #51 HEAD. These are NOT two histories that must be separately recombined. The 103 commits encompass UX, data visibility, graph/SCIP checks, dedicated tests and research documentation. The current UX ancestry already contains:
 
 - A single `prototypes/unified_dashboard/app.py` entrypoint routing **Water-quality placement**, **Configure another problem**, **QUBO and classical SA**, and **About the research**.
 - The original notebook-derived 15-fixed/20-free/K5 source and actual SCIP local solver, GIS site map, model/LP/evidence exports, and a second modeled **all-15-mandatory-fixed globally connected** geometric search mode. Both models share objective function identity only where coefficients actually match; connectivity is a distinct constraint.
@@ -59,7 +59,7 @@ The alternate cross-run observed original scored-objective SHA forms (`2b238848.
 
 ### Parallel gate D — credible scientific inputs and broader paper experiments
 
-- [ ] Acquire original raw expert AHP elicitation matrices/weights and the paper's QGIS/WorldPop D2 inputs (with reuse licenses), source transformations and station IDs, or explicitly declare the manuscript not independently reproduccible.
+- [ ] Acquire original raw expert AHP elicitation matrices/weights and the paper's QGIS/WorldPop D2 inputs (with reuse licenses), source transformations and station IDs, or explicitly declare the manuscript not independently reproducible.
 - [ ] Obtain authoritative LLDA waterbody/station positions and physically test radio/topology, DO/current transport and sensor-site usefulness before a field-deployment decision-support claim.
 - [ ] Preregister and execute the larger N20–N2000 SCIP/greedy/SA benchmark and sensitivity families only after source identities, numerical policy and computational budget are declared; distinguish classical SA from hardware.
 - [ ] Review custody and archive expiry for original cold experiment ZIP/JSON, independent report hash, dataset version, environment and licensing. Short-term GitHub CI artifact retention is not long-term academic provenance.

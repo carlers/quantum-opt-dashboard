@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ORIGINAL_GEOJSON = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"
 
 
-def run_original_n20_process_replay() -> dict:
+def run_original_n20_process_replay() -> tuple[dict, bytes]:
     source_digest = source_sha(ORIGINAL_GEOJSON)
     data = load_data(ORIGINAL_GEOJSON)
     instance, substituted_fixed = make_instance(
@@ -57,7 +57,7 @@ def run_original_n20_process_replay() -> dict:
     if independent["source_original_scip_lp_sha256"] != original_sha:
         raise ValueError("Fresh independent process solved a different LP")
 
-    return {
+    record = {
         "schema_version": 1,
         "scope": "original_N20_K5_one_hop_local_actual_LP_fresh_Scip_process_report",
         "dataset_sha256": source_digest,
@@ -76,16 +76,25 @@ def run_original_n20_process_replay() -> dict:
         "global_all_original_fixed_graph_scip_proven": False,
         "paper_AHP_D2_parity_or_physical_RF_DO_validity": False,
     }
+    return record, raw_lp
 
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", required=True, type=Path)
+    p.add_argument("--lp-output", required=True, type=Path)
     args = p.parse_args()
-    if args.output.exists():
-        raise FileExistsError("Refuse to replace earlier observed independent SCIP evidence")
-    record = run_original_n20_process_replay()
+    if args.output.resolve() == args.lp_output.resolve():
+        raise ValueError("The model receipt and source LP must use distinct output paths")
+    for path in (args.output, args.lp_output):
+        if path.exists():
+            raise FileExistsError("Refuse to replace earlier SCIP evidence: " + str(path))
+    record, original_lp = run_original_n20_process_replay()
+    if sha256(original_lp).hexdigest() != record["original_scip_lp_sha256"]:
+        raise ValueError("Original SCIP LP model bytes changed before evidence retention")
+    args.lp_output.parent.mkdir(parents=True, exist_ok=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.lp_output.write_bytes(original_lp)
     args.output.write_bytes(canonical(record))
     print("N20_SCIENTIFIC_SECOND_SCIP_PROCESS " + json.dumps({
         "original_status": record["original_upstream_scip_status"],

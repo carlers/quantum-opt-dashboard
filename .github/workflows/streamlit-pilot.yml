@@ -8,6 +8,9 @@ on:
       - "prototypes/streamlit_water_quality/**"
       - "prototypes/unified_dashboard/**"
       - "requirements.txt"
+      - "scripts/browser_route_concurrency.py"
+      - ".github/workflows/unified-browser-concurrency.yml"
+      - "docs/ISSUE_108_LOCAL_BROWSER_MULTISESSION.md"
       - ".github/workflows/streamlit-pilot.yml"
       - ".github/workflows/streamlit-research-evidence.yml"
   push:

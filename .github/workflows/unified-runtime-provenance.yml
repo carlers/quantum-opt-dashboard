@@ -5,6 +5,11 @@ on:
     paths:
       - "scripts/release_runtime_manifest.py"
       - "scripts/import_namespace_inventory.py"
+      - "pyproject.toml"
+      - "prototypes/streamlit_configurable/**"
+      - "prototypes/__init__.py"
+      - "prototypes/unified_dashboard/tests/test_qualified_editor_imports.py"
+      - "docs/ISSUE_108_QUALIFIED_EDITOR_IMPORT_MIGRATION.md"
       - "prototypes/unified_dashboard/tests/test_import_namespace_inventory.py"
       - "docs/ISSUE_108_IMPORT_NAMESPACE_MIGRATION_PLAN.md"
       - "prototypes/unified_dashboard/tests/test_runtime_provenance.py"
@@ -36,7 +41,8 @@ jobs:
         run: |
           python -m compileall -q scripts/release_runtime_manifest.py scripts/import_namespace_inventory.py \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
-            prototypes/unified_dashboard/tests/test_import_namespace_inventory.py
+            prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
+            prototypes/unified_dashboard/tests/test_qualified_editor_imports.py
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \

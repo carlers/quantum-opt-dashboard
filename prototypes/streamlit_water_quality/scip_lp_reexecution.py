@@ -73,6 +73,17 @@ def check_independent_process_receipt(
              and type(recorded.get("solver_time_limit_seconds")) is int
              and recorded["solver_time_limit_seconds"] == _TIME_LIMIT_SECONDS,
              "replay receipt is for a different emitted LP/variable set")
+    _require(type(original_metrics) is dict
+             and type(original_metrics.get("gap")) in (int, float)
+             and math.isfinite(original_metrics["gap"])
+             and 0 <= original_metrics["gap"] <= 1e-6
+             and original_metrics.get("feasible") is True
+             and original_metrics.get("budget_ok") is True
+             and original_metrics.get("connectivity_ok") is True
+             and type(original_metrics.get("num_selected")) is int
+             and original_metrics["num_selected"] == instance.budget
+             and original_metrics.get("isolated") == [],
+             "upstream original SCIP status, gap and feasibility labels are inconsistent")
     _require(original_metrics.get("status") == "optimal"
              and original_metrics.get("optimal") is True
              and recorded.get("status") == "optimal"
@@ -142,6 +153,8 @@ def check_independent_process_receipt(
         "independent_feasible_original_local_count": oracle["feasible_count"],
         "upstream_selected_original_graph_feasible": True,
         "second_process_selected_original_graph_feasible": True,
+        "upstream_reported_gap_checked": True,
+        "upstream_feasibility_flags_rechecked": True,
         "replay_status_source_math_crosschecked": True,
         "independent_lp_reader_reoptimized_in_separate_process_as_reported": True,
         "original_upstream_process_externally_authenticated": False,

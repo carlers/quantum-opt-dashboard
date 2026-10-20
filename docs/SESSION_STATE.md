@@ -1,3 +1,15 @@
+# Independent original N20 emitted SCIP LP structural audit — 2026-10-20
+
+**Review-only branch:** `ux-water-scip-lp-structural-evidence-review`, child of proven unmerged UX runtime mathematical gate DRAFT #97 (`f75139af2d34a759759574bd7aeb8647298e5ebb`), separate original source science DRAFT #96 unmerged. No original archived source notebook/dataset/manuscript edits, no main/preview/prod changes.
+
+**New code:** `prototypes/streamlit_water_quality/scip_lp_structure.py` independently parses original SCIP's N20/K CPLEX LP **printed from the actual untransformed PySCIPOpt model** and verifies exact decision/pair binary variables, x/p binary bounds, budget sum(x)=K, all 20 source one-hop constraints, all 3 binary-product linearization inequalities per pair, complete objective at SCIP 15-digit text precision. `runtime_attestation.inspect_archive` now calls the parser on the exact previously byte-verified local LP **before publishing result/map/ZIP** and includes LP SHA+structure in the attested session record. Global exact enumeration remains without fake SCIP LP. New adversarial **real original SCIP LP** test suite `tests/test_scip_lp_structure.py` for forged budget/neighbor/pair/objective/domain/foreign row and zero-coefficient flat objective; see `docs/N20_EMITTED_SCIP_LP_STRUCTURAL_ATTESTATION.md`.
+
+**Status:** code, 11 adversarial tests and documentation staged for DRAFT PR, **NOT YET exact-head CI verified**. Test actual SCIP writer decimal formatting, unknown LP expression, section order and real Streamlit existing app regression. LP structural compatibility ≠ authenticated SCIP solver process, independently parsed MIP dual bound or signed trusted session, and source road-D2/manuscript WorldPop/AHP parity & physical antenna/DO/current/shoreline remain blocked.
+
+**Next:** open separate DRAFT PR stacked on UX #97, run existing pilot Streamlit + full independent science checkout and fix scoped tests if needed. On verified final HEAD, update Issue #91/#88 and PR/SESSION_STATE with honest evidence, without any original data/public release/merge permission.
+
+---
+
 # Scientific verifier exact-tie and nonoptimal/error-state hardening — 2026-10-20
 
 **Review-only DRAFT PR #97**, UX child of DRAFT #78, still separate from pinned original source scientific DRAFT #96 and all other science branches. Recovered after timed-out chat: prior full head `90c5e462cf651d1ef1f1db87edb8f3227e926572` [Streamlit #39368755465](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39368755465), [unified #39368755491](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39368755491), [independent science #39368755462](https://github.com/carlers/quantum-opt-dashboard/actions/runs/39368755462) all SUCCESS. Original `main` `41cdc51097ceb98ea2f44194e3b72a0a3aebf3c` and `preview` `0fa4354c6182d70674ce46ffa68870796055ba75` unchanged at beginning of recovery.

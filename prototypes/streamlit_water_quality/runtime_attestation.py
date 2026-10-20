@@ -346,7 +346,10 @@ def check_visible_result(instance, model, graph, current) -> bool:
         if not isinstance(current, dict):
             return False
         proof = current["attestation"]
-        if (current["fingerprint"] != model["model_fingerprint_sha256"]
+        # State-local checksum detects accidental/tampered oracle verdict edits;
+        # it is NOT a signature against a user able to rewrite all state.
+        if (current["attestation_sha256"] != digest(proof)
+                or current["fingerprint"] != model["model_fingerprint_sha256"]
                 or proof["active_model_fingerprint_sha256"] != current["fingerprint"]
                 or proof["connectivity_mode"] != mode
                 or proof["active_graph_sha256"] != (

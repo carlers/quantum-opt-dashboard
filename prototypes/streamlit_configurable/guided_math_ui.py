@@ -11,7 +11,7 @@ from hashlib import sha256
 
 import streamlit as st
 
-from guided_math import apply_guided_edit, parse_components
+from prototypes.streamlit_configurable.guided_math import apply_guided_edit, parse_components
 from qopt.core.math_ir import validate_ir
 
 

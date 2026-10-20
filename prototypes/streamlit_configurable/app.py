@@ -33,7 +33,7 @@ from qopt.core.math_ir import validate_ir, render_original
 from bundle_runner import _synthetic_evacuation, execute
 from water_bundle_adapter import _parameters as _water_parameters, _validate_geojson
 from notebook_reference_model import make_instance, load_data
-from guided_math_ui import show_guided_controls
+from prototypes.streamlit_configurable.guided_math_ui import show_guided_controls
 
 
 PRESETS = {

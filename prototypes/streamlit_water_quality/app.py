@@ -31,7 +31,7 @@ from wireless_topology import (
     GLOBAL_MODE, LOCAL_MODE, graph_from_source, exact_global_search,
     fully_connected, global_evidence_zip,
 )
-from runtime_attestation import attest_current_result, check_visible_result
+from runtime_attestation import attest_current_result, check_visible_result, digest
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"
@@ -405,6 +405,7 @@ if run:
                 "independent": audit,
                 "zip": archive,
                 "attestation": attestation,
+                "attestation_sha256": digest(attestation),
             }
         except (ValueError, OSError, RuntimeError, AssertionError) as exc:
             st.session_state.pop("mvp_result", None)

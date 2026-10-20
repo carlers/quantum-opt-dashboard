@@ -298,6 +298,25 @@ def test_evidence_archive_tamper_rejected_even_if_solver_valid(global_run):
         attest_current_result(inst, model, graph, bits, metrics, out.getvalue(), csv)
 
 
+def test_compressed_zip_expansion_over_n20_limits_rejected(global_run):
+    """Highly compressible payload cannot bypass the outer ZIP size limit."""
+    inst, model, graph, bits, metrics, archive, csv, proof = global_run
+    with ZipFile(BytesIO(archive)) as source_zip:
+        files = {name: source_zip.read(name) for name in source_zip.namelist()}
+    # Roughly 1 MB uncompressed but only a few KB compressed. Fail before
+    # reading JSON/checksum declarations; this tests ZIP expansion limits.
+    files["model.json"] = b" " * 1_000_001
+    compressed = BytesIO()
+    with ZipFile(compressed, "w", ZIP_DEFLATED) as z:
+        for name in sorted(files):
+            z.writestr(name, files[name])
+    assert len(compressed.getvalue()) < 2_000_000
+    with pytest.raises(ValueError, match="uncompressed ZIP"):
+        attest_current_result(
+            inst, model, graph, bits, metrics, compressed.getvalue(), csv
+        )
+
+
 def test_false_global_exhaustive_status_rejected(global_run):
     inst, model, graph, bits, metrics, archive, csv, proof = global_run
     fake = deepcopy(metrics)

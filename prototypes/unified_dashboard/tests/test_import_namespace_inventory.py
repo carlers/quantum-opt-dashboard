@@ -22,7 +22,7 @@ def _tool():
     return module
 
 
-def test_frozen_source_audit_reports_existing_route_hazards():
+def test_source_audit_tracks_unmigrated_hazards_and_qualified_progress():
     record = _tool().inventory()
     assert record["kind"] == "READ_ONLY_IMPORT_SURFACE_AUDIT_NOT_ISOLATION_ATTESTATION"
     assert record["python_source_file_count"] >= 30
@@ -37,10 +37,13 @@ def test_frozen_source_audit_reports_existing_route_hazards():
                by_path["prototypes/unified_dashboard/research.py"]["sys_path_mutations"])
     assert any(x["module"] == "model" for x in
                by_path["prototypes/unified_dashboard/research.py"]["unqualified_local_name_edges"])
-    assert any(x["module"] == "bundle_runner" for x in
-               by_path["prototypes/streamlit_configurable/app.py"]["unqualified_local_name_edges"])
-    assert any(x["module"] == "water_bundle_adapter" for x in
-               by_path["problems/evacuation_centers/bundle_runner.py"]["unqualified_local_name_edges"])
+    # Deliberately preserve proof of progress: these two prior bare-name
+    # imports have been migrated, while page wrappers still need work.
+    assert not any(x["module"] in {"bundle_runner", "water_bundle_adapter",
+                                   "notebook_reference_model"} for x in
+                   by_path["prototypes/streamlit_configurable/app.py"]["unqualified_local_name_edges"])
+    assert not any(x["module"] == "water_bundle_adapter" for x in
+                   by_path["problems/evacuation_centers/bundle_runner.py"]["unqualified_local_name_edges"])
 
 
 def test_ast_inventory_is_deterministic_and_reports_new_sources(tmp_path):

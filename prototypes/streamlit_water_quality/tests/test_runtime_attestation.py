@@ -332,6 +332,51 @@ def test_math_oracle_claim_tampering_cannot_survive_rerender(global_run):
     assert not check_visible_result(inst, model, graph, state)
 
 
+def test_global_K0_infeasibility_cannot_impersonate_disconnected_fixed_graph(real_source):
+    """All 15 original fixed nodes ARE mutually connectable with all candidates.
+
+    K=0 has no feasible solution, but the correct proof is exhausted subset
+    search, NOT the false claim that even all free nodes cannot bridge fixeds.
+    """
+    data, source_digest, _ = real_source
+    instance, fallback = make_instance(data, NOTEBOOK_WEIGHTS, 20, 0)
+    assert not fallback
+    graph = graph_from_source(data, instance, dataset_sha256=source_digest)
+    model = compiled(instance, source_digest, graph)
+    chosen, correct = exact_global_search(instance, graph, timeout_seconds=30)
+    assert chosen is None and correct["status"] == "infeasible_certified"
+    empty_csv = b"local_position,master_feature_position,easting_m,northing_m\n"
+    correct_zip = global_evidence_zip(model, graph, correct, empty_csv)
+    proof = attest_current_result(
+        instance, model, graph, None, correct, correct_zip, empty_csv,
+    )
+    assert proof["mathematical_verifier"]["feasible_count"] == 0
+
+    invented = deepcopy(correct)
+    invented["status"] = "infeasible_certified_full_graph_disconnected"
+    invented["solver"] = "exact_graph_precheck"
+    invented["combinations_examined"] = 0
+    invented_zip = global_evidence_zip(model, graph, invented, empty_csv)
+    with pytest.raises(ValueError, match="false complete-graph disconnected"):
+        attest_current_result(
+            instance, model, graph, None, invented, invented_zip, empty_csv,
+        )
+
+    forged_timeout = deepcopy(correct)
+    forged_timeout["status"] = "time_limit_no_certified_optimum"
+    forged_timeout["solver"] = "bounded_exhaustive_enumeration"
+    # Entire only K=0 combination was examined, so a real timeout cannot
+    # masquerade as an uncompleted exact enumeration.
+    invented_timeout_zip = global_evidence_zip(
+        model, graph, forged_timeout, empty_csv,
+    )
+    with pytest.raises(ValueError, match="time-limited global"):
+        attest_current_result(
+            instance, model, graph, None, forged_timeout,
+            invented_timeout_zip, empty_csv,
+        )
+
+
 def test_source_site_and_graph_hash_stale_hidden(global_run):
     inst, model, graph, bits, metrics, archive, csv, proof = global_run
     state = stored(model, bits, metrics, archive, proof, inst)

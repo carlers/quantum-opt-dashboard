@@ -1,0 +1,108 @@
+name: N20 detached unsigned verification verdict experiment
+on:
+  pull_request:
+    paths:
+      - "prototypes/streamlit_water_quality/detached_n20_verifier.py"
+      - "prototypes/streamlit_water_quality/export_detached_n20_reference.py"
+      - "prototypes/streamlit_water_quality/tests/test_detached_n20_verifier.py"
+      - ".github/workflows/n20-detached-verdict.yml"
+      - "docs/research_protocols/N20_DETACHED_VERIFIER_V1.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bounded-detached-verification:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install original N20 SCIP pilot and test dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install "pytest>=8,<10"
+      - name: Verify detached-only source syntax
+        run: |
+          python -m compileall -q \
+            prototypes/streamlit_water_quality/detached_n20_verifier.py \
+            prototypes/streamlit_water_quality/export_detached_n20_reference.py \
+            prototypes/streamlit_water_quality/tests/test_detached_n20_verifier.py
+      - name: Hostile original N20 real SCIP/LP/challenge review test
+        env:
+          PYTHONPATH: \${{ github.workspace }}/prototypes/streamlit_water_quality
+        run: >
+          python -m pytest
+          prototypes/streamlit_water_quality/tests/test_detached_n20_verifier.py
+          prototypes/streamlit_water_quality/tests/test_scip_lp_reexecution.py
+          prototypes/streamlit_water_quality/tests/test_scip_lp_structure.py
+          -q -s
+      - name: Issue random NONCE OUTSIDE first solver/exporter code
+        run: |
+          python - <<'PY'
+          import json, os, secrets
+          from pathlib import Path
+          f=Path(os.environ["RUNNER_TEMP"])/"research-review-nonce.json"
+          if f.exists(): raise FileExistsError(f)
+          f.write_text(json.dumps({"nonce":secrets.token_hex(24)}))
+          PY
+      - name: Retain original SCIP LP and two-process unsigned evidence
+        run: >
+          python prototypes/streamlit_water_quality/export_detached_n20_reference.py
+          --challenge "$RUNNER_TEMP/research-review-nonce.json"
+          --envelope-output "$RUNNER_TEMP/original-n20-submitted-evidence.json"
+          --lp-output "$RUNNER_TEMP/original-n20-emitted.lp"
+          --commitment-output "$RUNNER_TEMP/co-generated-NOT-trusted-reference.json"
+      - name: Verify in isolated Python interpreter with OUT-OF-ENVELOPE expected values
+        run: |
+          nonce="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["nonce"])' "$RUNNER_TEMP/research-review-nonce.json")"
+          expected="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["source_sha256"])' "$RUNNER_TEMP/co-generated-NOT-trusted-reference.json")"
+          dataset="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["dataset_sha256"])' "$RUNNER_TEMP/co-generated-NOT-trusted-reference.json")"
+          python -I prototypes/streamlit_water_quality/detached_n20_verifier.py \
+            --envelope "$RUNNER_TEMP/original-n20-submitted-evidence.json" \
+            --lp "$RUNNER_TEMP/original-n20-emitted.lp" \
+            --expected-nonce "$nonce" --expected-source-sha256 "$expected" \
+            --expected-dataset-sha256 "$dataset" \
+            --output "$RUNNER_TEMP/N20-UNSIGNED-detached-verdict.json"
+      - name: Assert scientific claims still limited to original math
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          d=Path(os.environ["RUNNER_TEMP"])
+          v=json.loads((d/"N20-UNSIGNED-detached-verdict.json").read_text())
+          source=json.loads((d/"co-generated-NOT-trusted-reference.json").read_text())
+          challenge=json.loads((d/"research-review-nonce.json").read_text())
+          lp=(d/"original-n20-emitted.lp").read_bytes()
+          assert v["verdict"]=="source_local_mathematically_verified"
+          assert v["challenge_nonce"]==challenge["nonce"]
+          assert v["independently_expected_source_sha256"]==source["source_sha256"]
+          assert hashlib.sha256(lp).hexdigest()==v["emitted_original_scip_lp_sha256"]
+          assert v["feasible_n20_k5_count"]==1077
+          assert v["exact_optimum_witness"]==[0,1,3,6,7]
+          assert v["first_selected"]==v["second_selected"]==[0,1,3,6,7]
+          for key in ("signed_by_separately_governed_key",
+                      "first_solver_process_externally_authenticated",
+                      "nonce_replay_consumption_enforced_by_service",
+                      "published_manuscript_reconstructed",
+                      "physical_RF_DO_coverage_validated"):
+              assert v[key] is False, key
+          assert source["independently_authorized"] is False
+          print("N20_DETACHED_UNTRUSTED_REVIEW_DEMO", v["verdict"],v["feasible_n20_k5_count"])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: n20-unsigned-original-scip-lp-detached-verification
+          path: |
+            \${{ runner.temp }}/research-review-nonce.json
+            \${{ runner.temp }}/co-generated-NOT-trusted-reference.json
+            \${{ runner.temp }}/original-n20-submitted-evidence.json
+            \${{ runner.temp }}/original-n20-emitted.lp
+            \${{ runner.temp }}/N20-UNSIGNED-detached-verdict.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Do not promote same-host source commitment to a trusted root
+        run: |
+          echo "Detached stdlib N20 mathematical verification succeeded under CO-GENERATED source reference, NOT independently approved authority." >> "$GITHUB_STEP_SUMMARY"
+          echo "No nonce-replay ledger, signer, KMS, remotely trusted solver service, first SCIP process authenticity, paper AHP parity or field RF/DO claims." >> "$GITHUB_STEP_SUMMARY"

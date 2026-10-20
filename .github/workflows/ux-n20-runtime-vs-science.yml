@@ -13,6 +13,13 @@ on:
       - "prototypes/unified_dashboard/tests/test_navigation.py"
       - "prototypes/unified_dashboard/tests/test_water_evidence_journeys.py"
       - "docs/UNIFIED_RELEASE_RUNTIME_DEPENDENCY_AUDIT_2026_10_20.md"
+      - "prototypes/unified_dashboard/tests/test_runtime_provenance.py"
+      - "scripts/release_runtime_manifest.py"
+      - ".github/workflows/unified-runtime-provenance.yml"
+      - "docs/UNIFIED_RUNTIME_PROVENANCE_TRUST_BOUNDARY_2026_10_20.md"
+      - "requirements.txt"
+      - "prototypes/unified_dashboard/requirements.txt"
+      - "prototypes/streamlit_water_quality/requirements.txt"
       - "docs/INTEGRATED_MVP_RELEASE_READINESS_2026_10_20.md"
   workflow_dispatch:
 permissions:

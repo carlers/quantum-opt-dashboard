@@ -153,6 +153,25 @@ def _active_connected(graph, subset: tuple[int, ...], n: int) -> bool:
     return len({find(i) for i in active}) == 1
 
 
+def _mandatory_fixed_connectable_in_complete_graph(graph, n: int) -> bool:
+    """All existing fixed nodes must be mutually reachable when ALL free nodes are present.
+
+    A disconnected optional candidate does not make the mandatory fixed
+    network impossible. This is an independent union-find *fixed roots* test.
+    """
+    parent = list(range(n + graph.n_fixed))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for i, j in graph.edges:
+        parent[find(i)] = find(j)
+    return len({find(i) for i in range(n, n + graph.n_fixed)}) == 1
+
+
 def _local_connected(instance, subset: tuple[int, ...]) -> bool:
     selected = set(subset)
     return all(
@@ -335,9 +354,24 @@ def attest_current_result(instance, model, graph, chosen, metrics, archive: byte
                     and metrics.get("selected_local_positions") == selected_ids
                     and metrics.get("graph_fingerprint_sha256") == graph.fingerprint,
                     "global optimizer did not exhaustively certify active source graph")
-    if mode == GLOBAL_MODE and metrics["status"].startswith("infeasible"):
-        require(metrics.get("solver") in ("exact_graph_precheck", "exact_exhaustive_enumeration"),
-                "global infeasibility proof requires real graph or full enumeration")
+    if mode == GLOBAL_MODE and selected is None:
+        status = metrics["status"]
+        if status == "infeasible_certified_full_graph_disconnected":
+            require(metrics.get("solver") == "exact_graph_precheck"
+                    and metrics.get("combinations_examined") == 0
+                    and not _mandatory_fixed_connectable_in_complete_graph(graph, 20),
+                    "false complete-graph disconnected-fixed infeasibility proof")
+        elif status == "infeasible_certified":
+            require(metrics.get("solver") == "exact_exhaustive_enumeration"
+                    and metrics.get("combinations_examined") == oracle["combination_count"]
+                    and metrics.get("feasible_combinations") == 0,
+                    "global infeasibility must be proven by completed exact enumeration")
+        else:
+            require(status == "time_limit_no_certified_optimum"
+                    and metrics.get("solver") == "bounded_exhaustive_enumeration"
+                    and type(metrics.get("combinations_examined")) is int
+                    and 0 <= metrics["combinations_examined"] < oracle["combination_count"],
+                    "time-limited global result cannot claim an exhausted search")
     actual_zip_sha = inspect_archive(model, mode,
                                      selected.tolist() if selected is not None else None,
                                      metrics, archive, csv_bytes, lp_bytes, graph)

@@ -229,6 +229,13 @@ def inspect_archive(model: dict, mode: str, chosen, metrics: dict,
     require(type(archive) is bytes and len(archive) <= 2_000_000,
             "missing or oversized UI evidence archive")
     with ZipFile(BytesIO(archive)) as zipped:
+        # A small compressed ZIP can contain unbounded uncompressed contents.
+        # Enforce research-N20 archive limits BEFORE decompressing any member.
+        files = zipped.infolist()
+        require(len(files) == 5 and
+                all(0 <= info.file_size <= 1_000_000 for info in files) and
+                sum(info.file_size for info in files) <= 2_000_000,
+                "oversized or malformed uncompressed ZIP evidence payload")
         names = zipped.namelist()
         expected = {"model.json", "result.json", "selected_sites.csv", "SHA256SUMS.json"}
         expected.add("actual_scip_model.lp" if mode == LOCAL_MODE else "wireless_graph.json")

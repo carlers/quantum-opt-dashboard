@@ -18,7 +18,13 @@ import math
 from pathlib import Path
 import re
 from types import SimpleNamespace
+import sys
 
+# In Python -I, the script directory is deliberately absent from sys.path.
+# Permit exactly this checked-out, adjacent *pure* structural LP parser, but
+# do not import the app, original notebook, or PySCIPOpt into the verifier.
+if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 from scip_lp_structure import certify_emitted_scip_lp
 
 SCHEMA = 1

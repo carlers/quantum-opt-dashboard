@@ -260,7 +260,7 @@ fingerprint = model["model_fingerprint_sha256"]
 old = st.session_state.get("mvp_result")
 if old is not None and not check_visible_result(instance, model, wireless_graph, old):
     st.session_state.pop("mvp_result", None)
-    st.info("Inputs or attested run bytes changed. Previous result, map and evidence are hidden; rerun the solver.")
+    st.info("Inputs changed or attested run bytes no longer match. Previous result, map and evidence are hidden; rerun the solver.")
 
 is_reference = (not global_mode and k == 5 and source.startswith("Notebook")
                 and beta == 1.0 and delta == 1.0)
@@ -416,7 +416,7 @@ if current is not None and not check_visible_result(instance, model, wireless_gr
     st.error("Current run could not be independently rebound to the active compiled model and evidence. Map and exports have been suppressed.")
     st.stop()
 if current is None:
-    st.info("Choose settings in the sidebar, then run the active solver. No previous map or result is shown without a current independently attested model/ZIP binding.")
+    st.info("Choose settings in the sidebar, then run the active solver. Nothing is solved until you run it. No previous map or result is shown without a current independently attested model/ZIP binding.")
     st.stop()
 st.caption("Current result checked against an independent bounded exact mathematical oracle and active ZIP/model fingerprint. Source-data, paper parity and physical wireless validation remain separate.")
 

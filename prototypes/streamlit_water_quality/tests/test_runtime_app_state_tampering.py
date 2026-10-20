@@ -46,3 +46,20 @@ def test_global_current_optimality_status_mutation_hides_map_and_download():
     assert not [x for x in at.metric if x.label == "Original objective (min.)"]
     assert not [x for x in at.button if x.key == "mvp_download"]
     assert any("Inputs changed" in str(x.proto) for x in at.info)
+
+
+def test_mutated_independent_score_and_selected_table_are_not_rendered():
+    at = AppTest.from_file(str(APP), default_timeout=120).run()
+    assert not at.exception, at.exception
+    at.button(key="mvp_run").click().run()
+    assert not at.exception, at.exception
+    current = at.session_state["mvp_result"]
+    assert current["independent"]["selected_local_positions"] == [0, 1, 3, 6, 7]
+    current["independent"]["independent_original_objective"] -= 1000.
+    current["independent"]["selected_master_feature_positions"][0] = 999999
+    at.session_state["mvp_result"] = current
+    at.run()
+    assert not at.exception, at.exception
+    assert "mvp_result" not in at.session_state
+    assert not [x for x in at.metric if x.label == "Original objective (min.)"]
+    assert any("Inputs changed" in str(x.proto) for x in at.info)

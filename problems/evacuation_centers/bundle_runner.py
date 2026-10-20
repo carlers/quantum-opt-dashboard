@@ -146,8 +146,7 @@ def execute(manifest_path: Path, output_dir: Path) -> dict:
     elif bundle.problem_id == "water_quality.reference":
         # Import scientific GIS dependency lazily: a basic binary/evacuation
         # bundle never requires Shapely or reads the original lake GeoJSON.
-        sys.path.insert(0, str(REPO / "problems" / "water_quality"))
-        from water_bundle_adapter import run_water_bundle
+        from problems.water_quality.water_bundle_adapter import run_water_bundle
         result = run_water_bundle(bundle, output_dir)
     else:
         raise ValueError("Unknown problem adapter; registry lookup is fail-closed")

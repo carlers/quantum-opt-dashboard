@@ -114,6 +114,36 @@ def test_second_independent_process_genuinely_reads_original_lp_and_proves_bound
     assert report["physical_RF_DO_or_manuscript_validated"] is False
 
 
+@pytest.mark.parametrize("bad_gap", [0.5, -0.01, float("nan"), None])
+def test_original_first_scip_false_gap_rejected(original_verified_child, bad_gap):
+    inst, lp, first, metrics, proof = original_verified_child
+    forged_metrics = deepcopy(metrics)
+    forged_metrics["gap"] = bad_gap
+    with pytest.raises(ValueError, match="upstream original SCIP status, gap"):
+        check_independent_process_receipt(
+            inst, lp, proof["observed_child_receipt"], first, forged_metrics
+        )
+
+
+@pytest.mark.parametrize("field,changed", [
+    ("feasible", False),
+    ("budget_ok", False),
+    ("connectivity_ok", False),
+    ("num_selected", 4),
+    ("isolated", [0]),
+])
+def test_original_first_scip_false_feasible_status_rejected(
+    original_verified_child, field, changed,
+):
+    inst, lp, first, metrics, proof = original_verified_child
+    forged_metrics = deepcopy(metrics)
+    forged_metrics[field] = changed
+    with pytest.raises(ValueError, match="upstream original SCIP status, gap"):
+        check_independent_process_receipt(
+            inst, lp, proof["observed_child_receipt"], first, forged_metrics
+        )
+
+
 def test_forged_worker_lp_sha_rejected(original_verified_child):
     inst, lp, bits, metrics, report = original_verified_child
     receipt = deepcopy(report["observed_child_receipt"])

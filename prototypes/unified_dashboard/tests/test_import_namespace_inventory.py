@@ -49,8 +49,8 @@ def test_ast_inventory_is_deterministic_and_reports_new_sources(tmp_path):
         (root / part).mkdir(parents=True)
     source = root / "prototypes/unified_dashboard/page.py"
     source.parent.mkdir(parents=True)
-    source.write_text("import sys\\nfrom model import F\\nsys.path.insert(0, '/tmp')\\n")
-    (root / "problems/model.py").write_text("F = 1\\n")
+    source.write_text("import sys\nfrom model import F\nsys.path.insert(0, '/tmp')\n")
+    (root / "problems/model.py").write_text("F = 1\n")
     a = _tool().inventory(root)
     b = _tool().inventory(root)
     assert a == b

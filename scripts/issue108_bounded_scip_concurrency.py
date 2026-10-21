@@ -104,7 +104,19 @@ def _kill_group(proc: subprocess.Popen) -> None:
 
 
 def _run_two(lp: Path, digest: str, instance, chosen, metrics, folder: Path) -> list[dict]:
-    from scip_lp_reexecution import check_independent_process_receipt
+    # The original LP cross-check script is intentionally not one of the
+    # nine installed legacy source modules. Load it by verified fixed path,
+    # not by changing global sys.path or introducing a bare sys.modules alias.
+    from importlib import util
+    validator_file = (WORKER.parent / "scip_lp_reexecution.py").resolve(strict=True)
+    validator_spec = util.spec_from_file_location(
+        "issue108_existing_independent_lp_checker", validator_file
+    )
+    _require(validator_spec is not None and validator_spec.loader is not None,
+             "existing independent source checker has no import loader")
+    checker = util.module_from_spec(validator_spec)
+    validator_spec.loader.exec_module(checker)
+    check_independent_process_receipt = checker.check_independent_process_receipt
 
     gate = folder / "start-gate"
     spawned = []

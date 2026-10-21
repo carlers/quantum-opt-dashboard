@@ -1,0 +1,96 @@
+name: N20 actual SCIP LP separate-process read-and-resolve evidence
+on:
+  pull_request:
+    paths:
+      - "prototypes/streamlit_water_quality/scip_lp_reexecution*.py"
+      - "prototypes/streamlit_water_quality/export_scip_reexecution_reference.py"
+      - "prototypes/streamlit_water_quality/tests/test_scip_lp_reexecution.py"
+      - ".github/workflows/n20-scip-lp-reexecution.yml"
+      - "docs/N20_INDEPENDENT_SCIP_PROCESS_REEXECUTION.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: n20-real-scip-replay-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  independent-lp-process:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out original-source UX LP audit branch without any merges
+        uses: actions/checkout@v4
+      - name: Set Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing UX scientific runtime and test dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install "pytest>=8,<10"
+      - name: Check worker, verifier, source-LP reporter and test syntax
+        run: >
+          python -m compileall -q
+          prototypes/streamlit_water_quality/scip_lp_reexecution_worker.py
+          prototypes/streamlit_water_quality/scip_lp_reexecution.py
+          prototypes/streamlit_water_quality/export_scip_reexecution_reference.py
+          prototypes/streamlit_water_quality/tests/test_scip_lp_reexecution.py
+      - name: Independently solve original N20 LP from separate process under adversarial tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/prototypes/streamlit_water_quality
+        run: >
+          python -m pytest
+          prototypes/streamlit_water_quality/tests/test_scip_lp_reexecution.py
+          prototypes/streamlit_water_quality/tests/test_scip_lp_structure.py
+          -q -s
+      - name: Generate original SCIP LP file and second-process primal/dual receipt
+        run: >
+          python prototypes/streamlit_water_quality/export_scip_reexecution_reference.py
+          --lp-output "$RUNNER_TEMP/original-n20-first-scip-emitted.lp"
+          --output "$RUNNER_TEMP/original-n20-independent-scip-process-replay.json"
+      - name: Verify all recorded SHA, status, bounds and scientific trust exclusions
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          witness = json.loads((root / "original-n20-independent-scip-process-replay.json").read_text())
+          lp = (root / "original-n20-first-scip-emitted.lp").read_bytes()
+          child = witness["independent_second_process"]
+          assert hashlib.sha256(lp).hexdigest() == witness["original_scip_lp_sha256"]
+          assert child["source_original_scip_lp_sha256"] == witness["original_scip_lp_sha256"]
+          assert child["independent_child_status"] == witness["original_upstream_scip_status"] == "optimal"
+          assert child["independent_feasible_original_local_count"] == 1077
+          assert child["independent_lp_relative_gap"] <= 1e-6
+          assert len(child["independent_child_selected_indices"]) == 5
+          assert witness["original_scip_selected_sites"] == [0, 1, 3, 6, 7]
+          assert not child["original_upstream_process_externally_authenticated"]
+          assert not child["session_is_cryptographically_signed"]
+          assert not witness["global_all_original_fixed_graph_scip_proven"]
+          assert not witness["paper_AHP_D2_parity_or_physical_RF_DO_validity"]
+          print("N20_SEPARATE_SCIP_PROCESS_CERTIFICATE", json.dumps({
+            "model_lp_sha256": witness["original_scip_lp_sha256"],
+            "first_status": witness["original_upstream_scip_status"],
+            "second_status": child["independent_child_status"],
+            "selected": child["independent_child_selected_indices"],
+            "primal": child["independent_lp_primal_bound"],
+            "dual": child["independent_lp_dual_bound"],
+            "gap": child["independent_lp_relative_gap"],
+            "local_only": True,
+            "signed_authentication": False,
+          }, sort_keys=True))
+          PY
+      - name: Preserve original emitted LP AND separate worker receipt for independent review
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-original-scip-lp-independent-process-solver-receipt
+          path: |
+            ${{ runner.temp }}/original-n20-first-scip-emitted.lp
+            ${{ runner.temp }}/original-n20-independent-scip-process-replay.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Do not overstate local process execution observation
+        run: |
+          echo "Two independent local SCIP processes and same original LP SHA were observed, with primal/dual/gap and an exact N20 math check." >> "$GITHUB_STEP_SUMMARY"
+          echo "A file replay is not a signed prior-process log, authenticated solver implementation, mathematical branch-and-bound proof, paper reproduction, quantum advantage or field RF/DO quality validation." >> "$GITHUB_STEP_SUMMARY"
+          echo "No original source notebook, lake GeoJSON, existing UX/science PR history, main, preview or deployment was modified." >> "$GITHUB_STEP_SUMMARY"

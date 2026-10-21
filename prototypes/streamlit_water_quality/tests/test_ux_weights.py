@@ -58,3 +58,33 @@ def test_beta_delta_edits_fingerprint_invalidate_current_scip_results():
         model = json.loads(z.read("model.json"))
     assert model["settings"]["beta"] == 0.0
     assert model["settings"]["delta"] == 1.0
+
+
+def test_candidates_are_mapped_before_solve_and_after_stale_result_invalidation():
+    """First-run context must not imply that unsolved sites are selected."""
+    at = AppTest.from_file(str(APP), default_timeout=120).run()
+    assert not at.exception
+    assert "mvp_result" not in at.session_state
+    assert any(
+        x.value == "Candidate site overview (before solving)"
+        for x in at.subheader
+    )
+
+    at.button(key="mvp_run").click().run()
+    assert not at.exception
+    assert at.session_state["mvp_result"]["independent"]["original_feasible"]
+    assert not any(
+        x.value == "Candidate site overview (before solving)"
+        for x in at.subheader
+    )
+
+    next_budget = next(
+        x for x in at.number_input if x.label == "New sensors to place (K)"
+    )
+    next_budget.set_value(4).run()
+    assert not at.exception
+    assert "mvp_result" not in at.session_state
+    assert any(
+        x.value == "Candidate site overview (before solving)"
+        for x in at.subheader
+    )

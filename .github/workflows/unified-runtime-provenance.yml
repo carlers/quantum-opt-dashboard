@@ -36,6 +36,9 @@ on:
       - "prototypes/unified_dashboard/pages/**"
       - "prototypes/unified_dashboard/research.py"
       - "requirements.txt"
+      - "prototypes/isolated_water_scip.py"
+      - "prototypes/unified_dashboard/tests/test_review_bounded_scip.py"
+      - "docs/ISSUE_108_OPTIONAL_LIVE_BOUNDED_SCIP.md"
       - "scripts/issue108_bounded_scip_concurrency.py"
       - "prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py"
       - ".github/workflows/issue108-bounded-scip-workers.yml"
@@ -70,6 +73,7 @@ jobs:
           python -m pip check
       - name: Syntax and actual routed scientific module origins
         run: |
+          python -m compileall -q prototypes/isolated_water_scip.py
           python -m compileall -q scripts/release_runtime_manifest.py scripts/import_namespace_inventory.py scripts/issue108_bounded_scip_concurrency.py \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
@@ -81,6 +85,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             prototypes/unified_dashboard/tests/test_qualified_research_route.py \
             prototypes/unified_dashboard/tests/test_qualified_water_page.py \
+            prototypes/unified_dashboard/tests/test_review_bounded_scip.py \
             prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py \
             prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py \
             prototypes/research_standalone.py \
@@ -96,6 +101,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             prototypes/unified_dashboard/tests/test_qualified_research_route.py \
             prototypes/unified_dashboard/tests/test_qualified_water_page.py \
+            prototypes/unified_dashboard/tests/test_review_bounded_scip.py \
             prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py \
             prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py \
             -q -s

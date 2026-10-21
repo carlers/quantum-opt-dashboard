@@ -66,6 +66,8 @@ def test_route_water_custom_research_water_resolves_expected_scientific_modules(
     assert not app.exception, app.exception
     require_origin("model", "prototypes/streamlit_water_quality/model.py")
     require_origin("qubo", "prototypes/streamlit_water_quality/qubo.py")
+    require_origin("prototypes.unified_dashboard.research",
+                   "prototypes/unified_dashboard/research.py")
     assert "unified_sa_run" not in app.session_state
 
     app.switch_page("pages/water.py").run()

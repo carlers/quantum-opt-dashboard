@@ -38,6 +38,10 @@ def test_source_audit_tracks_unmigrated_hazards_and_qualified_progress():
     assert not custom.get("sys_path_mutations", [])
     assert not custom.get("dynamic_execution", [])
     assert not custom.get("unqualified_local_name_edges", [])
+    research_route = by_path.get("prototypes/unified_dashboard/pages/research.py", {})
+    assert not research_route.get("sys_path_mutations", [])
+    assert not research_route.get("dynamic_execution", [])
+    assert not research_route.get("unqualified_local_name_edges", [])
     assert any(x["method"] == "insert" for x in
                by_path["prototypes/unified_dashboard/research.py"]["sys_path_mutations"])
     assert any(x["module"] == "model" for x in

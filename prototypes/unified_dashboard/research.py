@@ -262,6 +262,3 @@ def render_research_page() -> None:
     else:
         st.info("QUBO inspection is available now. Sampling runs only when you press Run.")
 
-
-if __name__ == "__main__":
-    render_research_page()

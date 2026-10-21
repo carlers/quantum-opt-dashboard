@@ -20,9 +20,14 @@ already-root-installed editable setuptools distribution lists this name).
 All existing research-page UI statements beginning at the initial
 `st.title("QUBO and classical annealing")` are moved as written beneath
 `render_research_page() -> None`, with their order and numeric operations
-preserved. `research.py` still supports direct standalone
-`streamlit run prototypes/unified_dashboard/research.py` by calling
-the same function only when executed as `__main__`. The sidebar now
+preserved. a dedicated standalone entrypoint `prototypes/research_standalone.py`
+calls the same qualified rendering function under normal standalone
+`st.set_page_config` context:
+`streamlit run prototypes/research_standalone.py`. Invoking
+`prototypes/unified_dashboard/research.py` directly with Streamlit
+uses the filename `research.py` and conflicts with the existing
+`pages/research.py` automatic multipage URL slug; this is **not**
+advertised as a supported direct entrypoint. The sidebar now
 preflights the original bare water imports and then imports and calls
 `prototypes.unified_dashboard.research.render_research_page`. The page
 renders again on each actual Streamlit ScriptRunner invocation, but the

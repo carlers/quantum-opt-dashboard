@@ -139,9 +139,7 @@ def test_guard_stays_out_of_pinned_scientific_source_tree():
     )
     for text in (source, research):
         assert "require_water_import_origins()" in text
-    assert source.index("require_water_import_origins()") < source.index(
-        "sys.path.insert("
-    )
-    assert research.index("require_water_import_origins()") < research.index(
-        "sys.path.insert("
-    )
+    assert "sys.path.insert(" not in source
+    assert "sys.path.insert(" not in research
+    assert "runpy.run_path" in source  # Remains a separate open import risk
+    assert "from model import" in research  # Historical bare names remain

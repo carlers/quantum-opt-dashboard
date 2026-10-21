@@ -4,7 +4,6 @@ Use ScriptRunner-thread-scoped context, not process-global os.environ:
 overlapping browser sessions must never affect one another.
 """
 import runpy
-import sys
 import threading
 from pathlib import Path
 
@@ -12,7 +11,6 @@ from prototypes.water_import_guard import require_water_import_origins
 
 target = Path(__file__).resolve().parents[2] / "streamlit_water_quality" / "app.py"
 require_water_import_origins()
-sys.path.insert(0, str(target.parent))
 thread = threading.current_thread()
 previous = getattr(thread, "_qopt_unified_page", False)
 try:

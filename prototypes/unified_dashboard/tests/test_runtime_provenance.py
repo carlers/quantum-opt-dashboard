@@ -49,6 +49,12 @@ def test_route_water_custom_research_water_resolves_expected_scientific_modules(
                    "problems/water_quality/notebook_reference_model.py")
     require_origin("problems.evacuation_centers.bundle_runner",
                    "problems/evacuation_centers/bundle_runner.py")
+    require_origin("qopt.core.experiment_bundle",
+                   "framework/python/qopt/core/experiment_bundle.py")
+    require_origin("qopt.core.binary_quadratic",
+                   "framework/python/qopt/core/binary_quadratic.py")
+    require_origin("qopt.core.math_ir",
+                   "framework/python/qopt/core/math_ir.py")
     require_origin("prototypes.streamlit_configurable.guided_math_ui",
                    "prototypes/streamlit_configurable/guided_math_ui.py")
     assert not app.session_state.get("completed_run")

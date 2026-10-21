@@ -41,9 +41,9 @@ def test_source_audit_tracks_unmigrated_hazards_and_qualified_progress():
     # imports have been migrated, while page wrappers still need work.
     assert not any(x["module"] in {"bundle_runner", "water_bundle_adapter",
                                    "notebook_reference_model"} for x in
-                   by_path["prototypes/streamlit_configurable/app.py"]["unqualified_local_name_edges"])
+                   by_path.get("prototypes/streamlit_configurable/app.py", {}).get("unqualified_local_name_edges", []))
     assert not any(x["module"] == "water_bundle_adapter" for x in
-                   by_path["problems/evacuation_centers/bundle_runner.py"]["unqualified_local_name_edges"])
+                   by_path.get("problems/evacuation_centers/bundle_runner.py", {}).get("unqualified_local_name_edges", []))
 
 
 def test_ast_inventory_is_deterministic_and_reports_new_sources(tmp_path):

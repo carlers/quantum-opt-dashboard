@@ -6,6 +6,9 @@ on:
       - "scripts/release_runtime_manifest.py"
       - "scripts/import_namespace_inventory.py"
       - "pyproject.toml"
+      - "framework/python/qopt/core/**"
+      - "prototypes/unified_dashboard/tests/test_qualified_framework_imports.py"
+      - "docs/ISSUE_108_INSTALLED_FRAMEWORK_IMPORTS.md"
       - "prototypes/streamlit_configurable/**"
       - "problems/evacuation_centers/**"
       - "problems/water_quality/water_bundle_adapter.py"
@@ -54,13 +57,15 @@ jobs:
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
             prototypes/unified_dashboard/tests/test_qualified_editor_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_synthetic_imports.py \
-            prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py
+            prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py \
+            prototypes/unified_dashboard/tests/test_qualified_framework_imports.py
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
             prototypes/unified_dashboard/tests/test_qualified_editor_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_synthetic_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py \
+            prototypes/unified_dashboard/tests/test_qualified_framework_imports.py \
             -q -s
       - name: Observe process-global import hazards without executing source science
         run: |

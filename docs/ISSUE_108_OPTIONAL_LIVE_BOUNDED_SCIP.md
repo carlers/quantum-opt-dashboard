@@ -40,8 +40,14 @@ one 75-second wall-clock deadline, temp directory 0700, no shell,
 isolated child process group and explicit kill/reap `finally` path.
 Linux `flock` admission permits at most two opted-in child processes
 per OS user across concurrent local requests; a third is rejected
-without blocking. The parent requires a bounded JSON result, exact
-nonce/input/model source SHA, 20 binary site flags, source
+without blocking. The parent requires a bounded JSON result **from a
+separate private response file**, never from mixed solver stdout;
+PySCIPOpt/SCIP can emit C-level diagnostic lines to stdout even when
+solver output is hidden. The child's diagnostic stdout/stderr and
+response file are independently capped by the parent and original
+Linux file-size limit. The first CI run detected the mixed-stdout
+framing error; this protocol was corrected and must pass new
+exact-source-HEAD CI. It validates exact nonce/input/model source SHA, 20 binary site flags, source
 `model.evaluate` feasibility, original objective within 1e-7, finite
 solver status/gap and actual emitted SCIP LP SHA. It reruns the
 **original unchanged** `scip_lp_structure.certify_emitted_scip_lp`

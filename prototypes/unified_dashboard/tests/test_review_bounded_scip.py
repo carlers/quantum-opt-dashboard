@@ -9,6 +9,9 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import sha256
 import json
+import os
+import signal
+import time
 from pathlib import Path
 import shutil
 import subprocess
@@ -84,7 +87,8 @@ def test_bad_child_request_digest_refused_without_running_scip(tmp_path):
     response_file = tmp_path / "should-not-exist.json"
     model_request.write_bytes(b'{"schema":1,"bad":"input"}\n')
     command = _bounded_command(
-        model_request, "0" * 64, output_lp, response_file, "a" * 32
+        model_request, "0" * 64, output_lp, response_file, "a" * 32,
+        os.getpid(),
     )
     result = subprocess.run(
         command, cwd=tmp_path, capture_output=True, text=True, timeout=25,
@@ -129,3 +133,72 @@ def test_opted_in_unified_streamlit_scip_runs_out_of_process_and_retains_archive
         assert "actual_scip_model.lp" in archive.namelist()
         model = json.loads(archive.read("model.json"))
         assert model["model_fingerprint_sha256"] == result["fingerprint"]
+
+
+def test_actual_parent_sigkill_terminates_armed_kernel_child(tmp_path):
+    """Kernel PR_SET_PDEATHSIG, not Python finally, kills an orphaned child.
+
+    Deliberately no SCIP or scientific model is executed in this negative
+    control; the real original bounded SCIP runtime is separately exercised.
+    The assertion observes missing-or-zombie Linux /proc state after SIGKILL.
+    """
+    armed = tmp_path / "arm-confirmed.pid"
+    launcher_script = """
+import os
+import pathlib
+import subprocess
+import sys
+import time
+child_script = (
+    "import os, pathlib, sys, time\\n"
+    "from prototypes.isolated_water_scip import _arm_parent_death_signal\\n"
+    "_arm_parent_death_signal(int(sys.argv[1]))\\n"
+    "pathlib.Path(sys.argv[2]).write_text(str(os.getpid()))\\n"
+    "while True: time.sleep(0.1)\\n"
+)
+child = subprocess.Popen(
+    [sys.executable, "-I", "-c", child_script, str(os.getpid()), sys.argv[1]],
+    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL, close_fds=True,
+)
+while True: time.sleep(0.1)
+"""
+    launcher = subprocess.Popen(
+        [sys.executable, "-I", "-c", launcher_script, str(armed)],
+        cwd=tmp_path, stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        close_fds=True, start_new_session=True,
+    )
+    child_pid = None
+    try:
+        deadline = time.monotonic() + 12
+        while not armed.is_file():
+            assert time.monotonic() < deadline, "child did not arm parent-death signal"
+            assert launcher.poll() is None, "test parent exited before its child armed"
+            time.sleep(0.03)
+        child_pid = int(armed.read_text())
+        assert child_pid != launcher.pid
+        proc_status = Path(f"/proc/{child_pid}/status")
+        assert proc_status.exists()
+        os.kill(launcher.pid, signal.SIGKILL)
+        launcher.wait(timeout=5)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline:
+            if not proc_status.exists():
+                break
+            state = next(
+                (line for line in proc_status.read_text().splitlines()
+                 if line.startswith("State:")), ""
+            )
+            if state.split()[1:2] in (["Z"], ["X"]):
+                break
+            time.sleep(.04)
+        else:
+            pytest.fail("kernel did not stop bounded child's execution after SIGKILL parent")
+    finally:
+        # Cleanup after observing kernel action, even if an assertion fails.
+        try:
+            os.killpg(launcher.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        launcher.wait(timeout=5)

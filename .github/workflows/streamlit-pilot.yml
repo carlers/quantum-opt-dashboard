@@ -11,6 +11,7 @@ on:
       - "prototypes/isolated_water_scip.py"
       - "prototypes/unified_dashboard/tests/test_review_bounded_scip.py"
       - "docs/ISSUE_108_OPTIONAL_LIVE_BOUNDED_SCIP.md"
+      - "docs/ISSUE_108_SCIP_PARENT_DEATH.md"
       - "scripts/issue108_bounded_scip_concurrency.py"
       - "prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py"
       - ".github/workflows/issue108-bounded-scip-workers.yml"

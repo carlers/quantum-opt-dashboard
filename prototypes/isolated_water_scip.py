@@ -195,8 +195,33 @@ def _admit() -> Iterator[int]:
         os.close(chosen)
 
 
+def _arm_parent_death_signal(expected_parent_pid: int) -> None:
+    """Linux kernel kills this SCIP process if its direct launcher parent dies.
+
+    PR_SET_PDEATHSIG is scoped to the child, not the Streamlit ScriptRunner.
+    Set the signal FIRST, then recheck getppid to close the parent-exited-
+    before-prctl race. The child must fail closed on unsupported Linux hosts.
+    """
+    import ctypes
+
+    _require(sys.platform.startswith("linux") and type(expected_parent_pid) is int
+             and expected_parent_pid > 1, "no verified Linux parent for SCIP child")
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.prctl.argtypes = (
+        ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong,
+        ctypes.c_ulong, ctypes.c_ulong,
+    )
+    libc.prctl.restype = ctypes.c_int
+    PR_SET_PDEATHSIG = 1
+    outcome = libc.prctl(PR_SET_PDEATHSIG, int(signal.SIGKILL), 0, 0, 0)
+    _require(outcome == 0, "PR_SET_PDEATHSIG kernel protection unavailable")
+    _require(os.getppid() == expected_parent_pid,
+             "original launching parent died before SCIP child could arm protection")
+
+
 def _bounded_command(input_path: Path, digest: str, lp_path: Path,
-                     response_path: Path, nonce: str) -> list[str]:
+                     response_path: Path, nonce: str,
+                     expected_parent_pid: int) -> list[str]:
     binary = shutil.which("prlimit")
     _require(binary is not None and sys.platform.startswith("linux"),
              "Linux util-linux prlimit required; never run unbounded")
@@ -207,6 +232,7 @@ def _bounded_command(input_path: Path, digest: str, lp_path: Path,
         sys.executable, "-I", str(WORKER), "--child",
         "--input", str(input_path), "--digest", digest,
         "--lp", str(lp_path), "--response", str(response_path), "--nonce", nonce,
+        "--expected-ppid", str(expected_parent_pid),
     ]
 
 
@@ -251,7 +277,10 @@ def solve_scip_bounded(instance, *, time_limit: float = 30.0,
             request_file.write_bytes(raw)
             with output.open("wb") as out, error.open("wb") as err:
                 proc = subprocess.Popen(
-                    _bounded_command(request_file, request_sha, lp_file, response_file, nonce),
+                    _bounded_command(
+                        request_file, request_sha, lp_file, response_file, nonce,
+                        os.getpid(),
+                    ),
                     cwd=ROOT, stdout=out, stderr=err, start_new_session=True,
                     close_fds=True,
                     env={**os.environ, "OPENBLAS_NUM_THREADS": "1",
@@ -328,7 +357,8 @@ def solve_scip_bounded(instance, *, time_limit: float = 30.0,
 
 
 def _child(input_file: Path, digest: str, lp_file: Path,
-           response_file: Path, nonce: str) -> None:
+           response_file: Path, nonce: str, expected_parent_pid: int) -> None:
+    _arm_parent_death_signal(expected_parent_pid)
     import resource
     from prototypes.water_import_guard import require_water_import_origins
     require_water_import_origins()
@@ -387,13 +417,18 @@ def main() -> None:
     parser.add_argument("--lp", type=Path)
     parser.add_argument("--response", type=Path)
     parser.add_argument("--nonce")
+    parser.add_argument("--expected-ppid", type=int)
     args = parser.parse_args()
     _require(args.child and args.input is not None and args.lp is not None
              and args.response is not None
+             and type(args.expected_ppid) is int and args.expected_ppid > 1
              and type(args.digest) is str and len(args.digest) == 64
              and type(args.nonce) is str and len(args.nonce) == 32,
              "no standalone UI invocation allowed for this internal child")
-    _child(args.input, args.digest, args.lp, args.response, args.nonce)
+    _child(
+        args.input, args.digest, args.lp, args.response, args.nonce,
+        args.expected_ppid,
+    )
 
 
 if __name__ == "__main__":

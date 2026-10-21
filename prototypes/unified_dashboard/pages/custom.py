@@ -1,20 +1,20 @@
-"""Run a validated standalone page inside the unified Streamlit shell.
+"""Render the installed configurable app in the unified Streamlit shell.
 
-Use ScriptRunner-thread-scoped context, not process-global os.environ:
-overlapping browser sessions must never affect one another.
+Only ScriptRunner-thread-scoped route context is changed. The package is
+installed before runtime; do not mutate process-global sys.path, use runpy, or
+copy and re-execute the Python module with a different import identity.
+Standalone `streamlit run prototypes/streamlit_configurable/app.py` retains
+its own __main__ entrypoint and page-config behavior.
 """
-import runpy
-import sys
 import threading
-from pathlib import Path
 
-target = Path(__file__).resolve().parents[2] / "streamlit_configurable" / "app.py"
-sys.path.insert(0, str(target.parent))
+from prototypes.streamlit_configurable.app import main as render_configurable_workbench
+
 thread = threading.current_thread()
 previous = getattr(thread, "_qopt_unified_page", False)
 try:
     setattr(thread, "_qopt_unified_page", True)
-    runpy.run_path(str(target), run_name="__main__")
+    render_configurable_workbench()
 finally:
     if previous:
         setattr(thread, "_qopt_unified_page", True)

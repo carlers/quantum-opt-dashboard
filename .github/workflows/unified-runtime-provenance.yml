@@ -34,6 +34,10 @@ on:
       - "prototypes/unified_dashboard/pages/**"
       - "prototypes/unified_dashboard/research.py"
       - "requirements.txt"
+      - "scripts/issue108_bounded_scip_concurrency.py"
+      - "prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py"
+      - ".github/workflows/issue108-bounded-scip-workers.yml"
+      - "docs/ISSUE_108_LINUX_BOUNDED_SCIP_PROOF.md"
       - "prototypes/streamlit_water_quality/pyproject.toml"
       - "prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py"
       - "docs/ISSUE_108_INSTALLED_WATER_LEGACY_IMPORTS.md"
@@ -64,7 +68,7 @@ jobs:
           python -m pip check
       - name: Syntax and actual routed scientific module origins
         run: |
-          python -m compileall -q scripts/release_runtime_manifest.py scripts/import_namespace_inventory.py \
+          python -m compileall -q scripts/release_runtime_manifest.py scripts/import_namespace_inventory.py scripts/issue108_bounded_scip_concurrency.py \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
             prototypes/unified_dashboard/tests/test_qualified_editor_imports.py \
@@ -75,6 +79,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             prototypes/unified_dashboard/tests/test_qualified_research_route.py \
             prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py \
+            prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py \
             prototypes/research_standalone.py \
             prototypes/water_import_guard.py
           python -m pytest \
@@ -88,6 +93,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             prototypes/unified_dashboard/tests/test_qualified_research_route.py \
             prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py \
+            prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py \
             -q -s
       - name: Observe process-global import hazards without executing source science
         run: |

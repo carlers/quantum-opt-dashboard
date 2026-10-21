@@ -12,6 +12,7 @@ on:
       - "prototypes/isolated_water_scip.py"
       - "prototypes/unified_dashboard/tests/test_review_bounded_scip.py"
       - "docs/ISSUE_108_OPTIONAL_LIVE_BOUNDED_SCIP.md"
+      - "docs/ISSUE_108_SCIP_PARENT_DEATH.md"
       - "prototypes/streamlit_water_quality/pyproject.toml"
       - "prototypes/streamlit_water_quality/model.py"
       - "prototypes/streamlit_water_quality/app.py"

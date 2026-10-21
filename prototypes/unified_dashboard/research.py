@@ -12,6 +12,8 @@ import io
 import json
 import platform
 import sys
+
+from prototypes.water_import_guard import require_water_import_origins
 from hashlib import sha256
 from importlib.metadata import version
 from pathlib import Path
@@ -23,6 +25,7 @@ import pandas as pd
 import streamlit as st
 
 WATER = Path(__file__).resolve().parents[1] / "streamlit_water_quality"
+require_water_import_origins()
 if str(WATER) not in sys.path:
     sys.path.insert(0, str(WATER))
 

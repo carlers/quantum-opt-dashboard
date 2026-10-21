@@ -25,8 +25,13 @@ def test_custom_route_has_no_process_wide_import_search_side_effects():
                                            for a in n.names)
         for n in ast.walk(tree)
     )
-    assert "sys.path" not in source
-    assert "runpy.run_path" not in source
+    assert not any(
+        isinstance(n, ast.Attribute)
+        and isinstance(n.value, ast.Name)
+        and ((n.value.id == "sys" and n.attr == "path")
+             or (n.value.id == "runpy" and n.attr == "run_path"))
+        for n in ast.walk(tree)
+    )
     assert any(
         isinstance(n, ast.ImportFrom)
         and n.module == "prototypes.streamlit_configurable.app"

@@ -195,7 +195,8 @@ def _admit() -> Iterator[int]:
         os.close(chosen)
 
 
-def _bounded_command(input_path: Path, digest: str, lp_path: Path, nonce: str) -> list[str]:
+def _bounded_command(input_path: Path, digest: str, lp_path: Path,
+                     response_path: Path, nonce: str) -> list[str]:
     binary = shutil.which("prlimit")
     _require(binary is not None and sys.platform.startswith("linux"),
              "Linux util-linux prlimit required; never run unbounded")
@@ -205,7 +206,7 @@ def _bounded_command(input_path: Path, digest: str, lp_path: Path, nonce: str) -
         f"--nofile={NOFILE}:{NOFILE}", "--",
         sys.executable, "-I", str(WORKER), "--child",
         "--input", str(input_path), "--digest", digest,
-        "--lp", str(lp_path), "--nonce", nonce,
+        "--lp", str(lp_path), "--response", str(response_path), "--nonce", nonce,
     ]
 
 
@@ -245,11 +246,12 @@ def solve_scip_bounded(instance, *, time_limit: float = 30.0,
         with TemporaryDirectory(prefix="qopt_issue108_live_scip_") as location:
             directory = Path(location)
             request_file, lp_file = directory / "request.json", directory / "original.lp"
+            response_file = directory / "response.json"
             output, error = directory / "child.stdout", directory / "child.stderr"
             request_file.write_bytes(raw)
             with output.open("wb") as out, error.open("wb") as err:
                 proc = subprocess.Popen(
-                    _bounded_command(request_file, request_sha, lp_file, nonce),
+                    _bounded_command(request_file, request_sha, lp_file, response_file, nonce),
                     cwd=ROOT, stdout=out, stderr=err, start_new_session=True,
                     close_fds=True,
                     env={**os.environ, "OPENBLAS_NUM_THREADS": "1",
@@ -262,17 +264,28 @@ def solve_scip_bounded(instance, *, time_limit: float = 30.0,
                     raise RuntimeError("SCIP child exceeded 75-second wall deadline") from exc
                 _require(proc.returncode == 0, "SCIP child failed under Linux resource limits"
                          + ": " + error.read_text(encoding="utf-8", errors="replace")[:500])
-                _require(0 < output.stat().st_size <= RESPONSE_LIMIT
+                # SCIP/PySCIPOpt may print C-level diagnostics to stdout
+                # despite hideOutput(); stdout is NEVER the JSON protocol.
+                _require(output.stat().st_size <= FSIZE_BYTES
                          and error.stat().st_size <= FSIZE_BYTES,
-                         "SCIP child response exceeds bounded observation")
-                response = json.loads(output.read_text(encoding="utf-8"))
+                         "SCIP child diagnostic log exceeds bound")
+                _require(response_file.is_file() and not response_file.is_symlink()
+                         and 0 < response_file.stat().st_size <= RESPONSE_LIMIT,
+                         "dedicated bounded child JSON receipt is missing or excessive")
+                response = json.loads(response_file.read_text(encoding="utf-8"))
                 _require(type(response) is dict and response.get("schema") == SCHEMA
                          and response.get("kind") == "ORIGINAL_N20_LOCAL_SCIP_BOUNDED_CHILD"
                          and response.get("input_sha256") == request_sha
                          and response.get("nonce") == nonce
                          and response.get("model_source_sha256") == model_sha
                          and response.get("original_solver_called") is True
-                         and response.get("remote_authenticated") is False,
+                         and response.get("remote_authenticated") is False
+                         and response.get("observed_linux_rlimits") == {
+                             "cpu": [CPU_SOFT, CPU_HARD],
+                             "as": [AS_BYTES, AS_BYTES],
+                             "fsize": [FSIZE_BYTES, FSIZE_BYTES],
+                             "nofile": [NOFILE, NOFILE],
+                         },
                          "child response does not bind exact source input and process scope")
                 bits = response.get("selected")
                 _require(type(bits) is list and len(bits) == 20
@@ -314,7 +327,8 @@ def solve_scip_bounded(instance, *, time_limit: float = 30.0,
                 _kill(proc)
 
 
-def _child(input_file: Path, digest: str, lp_file: Path, nonce: str) -> None:
+def _child(input_file: Path, digest: str, lp_file: Path,
+           response_file: Path, nonce: str) -> None:
     import resource
     from prototypes.water_import_guard import require_water_import_origins
     require_water_import_origins()
@@ -356,7 +370,13 @@ def _child(input_file: Path, digest: str, lp_file: Path, nonce: str) -> None:
         "observed_linux_rlimits": limits,
         "original_solver_called": True, "remote_authenticated": False,
     }
-    print(json.dumps(response, sort_keys=True, separators=(",", ":"), allow_nan=False))
+    # Separate JSON protocol from any native solver stdout diagnostics.
+    _require(not response_file.exists() and response_file.parent == lp_file.parent,
+             "child receipt path must be unused and next to original LP")
+    encoded = (json.dumps(response, sort_keys=True, separators=(",", ":"),
+                          allow_nan=False) + "\n").encode("utf-8")
+    _require(len(encoded) <= RESPONSE_LIMIT, "child JSON receipt exceeds bound")
+    response_file.write_bytes(encoded)
 
 
 def main() -> None:
@@ -365,13 +385,15 @@ def main() -> None:
     parser.add_argument("--input", type=Path)
     parser.add_argument("--digest")
     parser.add_argument("--lp", type=Path)
+    parser.add_argument("--response", type=Path)
     parser.add_argument("--nonce")
     args = parser.parse_args()
     _require(args.child and args.input is not None and args.lp is not None
+             and args.response is not None
              and type(args.digest) is str and len(args.digest) == 64
              and type(args.nonce) is str and len(args.nonce) == 32,
              "no standalone UI invocation allowed for this internal child")
-    _child(args.input, args.digest, args.lp, args.nonce)
+    _child(args.input, args.digest, args.lp, args.response, args.nonce)
 
 
 if __name__ == "__main__":

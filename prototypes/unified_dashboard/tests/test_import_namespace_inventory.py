@@ -29,9 +29,10 @@ def test_source_audit_tracks_unmigrated_hazards_and_qualified_progress():
     assert record["counts"]["sys_path_mutations"] >= 1
     assert record["counts"]["unqualified_local_name_edges"] >= 10
     by_path = {entry["file"]: entry for entry in record["files_with_observed_edges_or_hazards"]}
-    water = by_path["prototypes/unified_dashboard/pages/water.py"]
-    assert not water["sys_path_mutations"]
-    assert any(x["kind"] == "runpy.run_path" for x in water["dynamic_execution"])
+    water = by_path.get("prototypes/unified_dashboard/pages/water.py", {})
+    assert not water.get("sys_path_mutations", [])
+    assert not water.get("dynamic_execution", [])
+    assert not water.get("unqualified_local_name_edges", [])
     # This wrapper now imports the installed configurable package directly.
     # A hazard-only inventory correctly omits the fully qualified clean file.
     custom = by_path.get("prototypes/unified_dashboard/pages/custom.py", {})

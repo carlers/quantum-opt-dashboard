@@ -34,6 +34,7 @@ on:
       - "prototypes/unified_dashboard/pages/**"
       - "prototypes/unified_dashboard/research.py"
       - "requirements.txt"
+      - "prototypes/research_standalone.py"
       - "scripts/browser_route_concurrency.py"
       - ".github/workflows/unified-browser-concurrency.yml"
       - "docs/ISSUE_108_LOCAL_BROWSER_MULTISESSION.md"
@@ -70,6 +71,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_qualified_custom_route.py \
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             prototypes/unified_dashboard/tests/test_qualified_research_route.py \
+            prototypes/research_standalone.py \
             prototypes/water_import_guard.py
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \

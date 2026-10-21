@@ -55,6 +55,8 @@ def test_route_water_custom_research_water_resolves_expected_scientific_modules(
                    "framework/python/qopt/core/binary_quadratic.py")
     require_origin("qopt.core.math_ir",
                    "framework/python/qopt/core/math_ir.py")
+    require_origin("prototypes.streamlit_configurable.app",
+                   "prototypes/streamlit_configurable/app.py")
     require_origin("prototypes.streamlit_configurable.guided_math_ui",
                    "prototypes/streamlit_configurable/guided_math_ui.py")
     assert not app.session_state.get("completed_run")

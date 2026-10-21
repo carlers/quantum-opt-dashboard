@@ -7,6 +7,7 @@ imported or executed by this read-only check.
 """
 from __future__ import annotations
 
+from importlib import util
 from pathlib import Path
 import sys
 
@@ -39,10 +40,24 @@ def require_water_import_origins() -> None:
     another ScriptRunner could still mutate process-global import state later.
     """
     for name in WATER_BARE_MODULE_NAMES:
+        expected = (WATER_SOURCE_DIR / (name + ".py")).resolve()
         if name not in sys.modules:
+            # Detect foreign path precedence BEFORE Python imports the module.
+            # This is a synchronous observation, not a lock against later races.
+            try:
+                spec = util.find_spec(name)
+                location = getattr(spec, "origin", None)
+                resolved = Path(location).resolve() if isinstance(location, str) else None
+            except (ImportError, AttributeError, ValueError, OSError, RuntimeError, TypeError):
+                resolved = None
+            if resolved != expected:
+                raise WaterImportOriginError(
+                    "Water import preflight rejected unresolved or foreign bare module "
+                    + repr(name)
+                    + ": import resolver does not target pinned installed source."
+                )
             continue
         loaded = sys.modules[name]
-        expected = (WATER_SOURCE_DIR / (name + ".py")).resolve()
         try:
             filename = getattr(loaded, "__file__", None)
             spec = getattr(loaded, "__spec__", None)

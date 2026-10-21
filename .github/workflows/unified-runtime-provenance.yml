@@ -6,6 +6,8 @@ on:
       - "scripts/release_runtime_manifest.py"
       - "scripts/import_namespace_inventory.py"
       - "pyproject.toml"
+      - "prototypes/unified_dashboard/tests/test_qualified_water_page.py"
+      - "docs/ISSUE_108_QUALIFIED_WATER_PAGE.md"
       - "prototypes/unified_dashboard/__init__.py"
       - "prototypes/unified_dashboard/tests/test_qualified_research_route.py"
       - "docs/ISSUE_108_QUALIFIED_RESEARCH_ROUTE.md"
@@ -78,6 +80,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_qualified_custom_route.py \
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             prototypes/unified_dashboard/tests/test_qualified_research_route.py \
+            prototypes/unified_dashboard/tests/test_qualified_water_page.py \
             prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py \
             prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py \
             prototypes/research_standalone.py \
@@ -92,6 +95,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_qualified_custom_route.py \
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             prototypes/unified_dashboard/tests/test_qualified_research_route.py \
+            prototypes/unified_dashboard/tests/test_qualified_water_page.py \
             prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py \
             prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py \
             -q -s

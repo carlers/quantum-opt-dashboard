@@ -136,8 +136,9 @@ async def _exercise(origin: str) -> list[tuple[bytes, str]]:
                 for page in pages:
                     _require(await page.locator('[data-testid="stException"]').count() == 0,
                              "exception before actual solver click")
-                    _require(await page.get_by_role("button", name=RUN_LABEL).count() == 1,
-                             "original local SCIP button not present")
+                    await expect(
+                        page.get_by_role("button", name=RUN_LABEL)
+                    ).to_be_visible(timeout=90000)
                 # Actions initiated concurrently in two genuinely separate browser contexts.
                 # Does not assume SCIP optimization times overlap at the OS level.
                 await asyncio.gather(*(

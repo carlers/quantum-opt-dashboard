@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[3]
 ENTRY = ROOT / "prototypes/unified_dashboard/app.py"
 ROUTE = ROOT / "prototypes/unified_dashboard/pages/research.py"
 RESEARCH = ROOT / "prototypes/unified_dashboard/research.py"
+STANDALONE = ROOT / "prototypes/research_standalone.py"
 
 
 def test_research_route_uses_qualified_reusable_rendering_without_runpy():
@@ -40,7 +41,7 @@ def test_research_route_uses_qualified_reusable_rendering_without_runpy():
         isinstance(n, ast.Call)
         and isinstance(n.func, ast.Name)
         and n.func.id == "require_water_import_origins"
-        for n in tree.body
+        for n in ast.walk(tree)
     ) == 2
     source = ast.parse(RESEARCH.read_text(encoding="utf-8"))
     assert any(
@@ -48,17 +49,17 @@ def test_research_route_uses_qualified_reusable_rendering_without_runpy():
         and n.name == "render_research_page"
         for n in source.body
     )
-    assert any(
-        isinstance(n, ast.If)
-        and isinstance(n.test, ast.Compare)
-        and isinstance(n.test.left, ast.Name)
-        and n.test.left.id == "__name__"
-        for n in source.body
+    assert not any(
+        isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute)
+        and isinstance(n.func.value, ast.Name)
+        and n.func.value.id == "runpy"
+        for n in ast.walk(source)
     )
 
 
 def test_standalone_research_entrypoint_renders_without_sampling():
-    research = AppTest.from_file(str(RESEARCH), default_timeout=120).run()
+    research = AppTest.from_file(str(STANDALONE), default_timeout=120).run()
     assert not research.exception, research.exception
     assert any("QUBO and classical annealing" in x.value for x in research.title)
     assert any(x.label == "Original binary variables" for x in research.metric)

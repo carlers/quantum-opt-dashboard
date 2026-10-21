@@ -103,3 +103,25 @@ def test_qubo_penalty_has_a_default_with_plain_language_explanation():
                     if s.label == "QUBO penalty (equal budget and connectivity penalties)")
     assert selector.value == "notebook-local-row-sum"
     assert any("not a guarantee" in str(i.proto) for i in app.info)
+
+
+def test_research_scope_notice_is_visible_on_all_four_routes_without_autorun():
+    """A restricted preview still needs honest claims in its actual UI."""
+    app = startup()
+    for route in (None, "pages/custom.py", "pages/research.py", "pages/about.py"):
+        if route is not None:
+            app.switch_page(route).run()
+        assert not app.exception, app.exception
+        notice = [x.value for x in app.warning
+                  if "Research-only computational prototype" in x.value]
+        assert len(notice) == 1, (route, [x.value for x in app.warning])
+        content = notice[0]
+        assert "NOT a reproduction" in content
+        assert "WorldPop population" in content
+        assert "D2 road-proximity" in content
+        assert "Connectivity is modeled, not measured" in content
+        assert "classical, not quantum hardware" in content
+        assert "NOT validated for physical water monitoring" in content
+        assert not app.session_state.get("mvp_result")
+        assert not app.session_state.get("unified_sa_run")
+        assert not app.session_state.get("completed_run")

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -378,9 +379,17 @@ def render_water_page() -> None:
                 else:
                     with TemporaryDirectory(prefix="qopt-water-mvp-") as folder:
                         lp_path = Path(folder) / "actual_scip_model.lp"
-                        chosen, metrics = solve_scip(
-                            instance, time_limit=SCIP_TIME_LIMIT, export_lp_path=lp_path
-                        )
+                        if os.environ.get("QOPT_REVIEW_BOUNDED_SCIP") == "1":
+                            # Review-only opt-in; no unsafe in-process fallback
+                            # when the Linux bounded child is unavailable.
+                            from prototypes.isolated_water_scip import solve_scip_bounded
+                            chosen, metrics = solve_scip_bounded(
+                                instance, time_limit=SCIP_TIME_LIMIT, export_lp_path=lp_path
+                            )
+                        else:
+                            chosen, metrics = solve_scip(
+                                instance, time_limit=SCIP_TIME_LIMIT, export_lp_path=lp_path
+                            )
                         audit = check_selected(instance, chosen, metrics, model)
                         if is_reference and metrics["optimal"]:
                             if (abs(audit["independent_original_objective"] -

@@ -11,12 +11,9 @@ from dataclasses import replace
 from hashlib import sha256
 import json
 from pathlib import Path
-import sys
 
 from pyscipopt import Model, quicksum
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "framework" / "python"))
 from qopt.core.experiment_bundle import canonical, load_bundle
 from qopt.core.binary_quadratic import run_binary_quadratic
 from problems.evacuation_centers.synthetic_reference import (

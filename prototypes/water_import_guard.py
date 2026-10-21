@@ -39,9 +39,9 @@ def require_water_import_origins() -> None:
     another ScriptRunner could still mutate process-global import state later.
     """
     for name in WATER_BARE_MODULE_NAMES:
-        loaded = sys.modules.get(name)
-        if loaded is None:
+        if name not in sys.modules:
             continue
+        loaded = sys.modules[name]
         expected = (WATER_SOURCE_DIR / (name + ".py")).resolve()
         try:
             filename = getattr(loaded, "__file__", None)

@@ -26,11 +26,11 @@ def test_source_audit_tracks_unmigrated_hazards_and_qualified_progress():
     record = _tool().inventory()
     assert record["kind"] == "READ_ONLY_IMPORT_SURFACE_AUDIT_NOT_ISOLATION_ATTESTATION"
     assert record["python_source_file_count"] >= 30
-    assert record["counts"]["sys_path_mutations"] >= 5
+    assert record["counts"]["sys_path_mutations"] >= 1
     assert record["counts"]["unqualified_local_name_edges"] >= 10
     by_path = {entry["file"]: entry for entry in record["files_with_observed_edges_or_hazards"]}
     water = by_path["prototypes/unified_dashboard/pages/water.py"]
-    assert any(x["method"] == "insert" for x in water["sys_path_mutations"])
+    assert not water["sys_path_mutations"]
     assert any(x["kind"] == "runpy.run_path" for x in water["dynamic_execution"])
     # This wrapper now imports the installed configurable package directly.
     # A hazard-only inventory correctly omits the fully qualified clean file.
@@ -42,8 +42,7 @@ def test_source_audit_tracks_unmigrated_hazards_and_qualified_progress():
     assert not research_route.get("sys_path_mutations", [])
     assert not research_route.get("dynamic_execution", [])
     assert not research_route.get("unqualified_local_name_edges", [])
-    assert any(x["method"] == "insert" for x in
-               by_path["prototypes/unified_dashboard/research.py"]["sys_path_mutations"])
+    assert not by_path["prototypes/unified_dashboard/research.py"]["sys_path_mutations"]
     assert any(x["module"] == "model" for x in
                by_path["prototypes/unified_dashboard/research.py"]["unqualified_local_name_edges"])
     # Deliberately preserve proof of progress: these two prior bare-name

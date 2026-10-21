@@ -12,6 +12,9 @@ on:
       - "problems/water_quality/water_bundle_adapter.py"
       - "pyproject.toml"
       - "requirements.txt"
+      - "prototypes/water_import_guard.py"
+      - "prototypes/unified_dashboard/tests/test_water_import_origin_guard.py"
+      - "docs/ISSUE_108_WATER_ORIGIN_PREFLIGHT.md"
       - "docs/ISSUE_108_LOCAL_BROWSER_MULTISESSION.md"
   workflow_dispatch:
 

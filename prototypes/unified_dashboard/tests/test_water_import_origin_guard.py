@@ -58,6 +58,16 @@ for name in WATER_BARE_MODULE_NAMES:
         assert sys.modules[name] is fake
         assert sys.path == before
         del sys.modules[name]
+# Even a negative import-cache slot is rejected rather than silently ignored.
+sys.modules['model'] = None
+try:
+    require_water_import_origins()
+except WaterImportOriginError:
+    pass
+else:
+    raise AssertionError('Negative model cache entry not rejected')
+assert sys.modules['model'] is None
+del sys.modules['model']
 """
     _isolated(script, tmp_path)
 

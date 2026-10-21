@@ -19,6 +19,8 @@ on:
       - "scripts/browser_bounded_scip_download.py"
       - ".github/workflows/issue108-browser-bounded-scip-download.yml"
       - "docs/ISSUE_108_BROWSER_BOUNDED_SCIP_DOWNLOAD.md"
+      - ".github/workflows/issue108-browser-distinct-budgets.yml"
+      - "docs/ISSUE_108_BROWSER_DISTINCT_BUDGETS.md"
       - "scripts/issue108_bounded_scip_concurrency.py"
       - "prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py"
       - ".github/workflows/issue108-bounded-scip-workers.yml"

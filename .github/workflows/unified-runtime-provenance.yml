@@ -6,6 +6,9 @@ on:
       - "scripts/release_runtime_manifest.py"
       - "scripts/import_namespace_inventory.py"
       - "pyproject.toml"
+      - "prototypes/unified_dashboard/__init__.py"
+      - "prototypes/unified_dashboard/tests/test_qualified_research_route.py"
+      - "docs/ISSUE_108_QUALIFIED_RESEARCH_ROUTE.md"
       - "framework/python/qopt/core/**"
       - "prototypes/unified_dashboard/tests/test_qualified_framework_imports.py"
       - "prototypes/unified_dashboard/tests/test_qualified_custom_route.py"
@@ -66,6 +69,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_qualified_framework_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_custom_route.py \
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
+            prototypes/unified_dashboard/tests/test_qualified_research_route.py \
             prototypes/water_import_guard.py
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
@@ -76,6 +80,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_qualified_framework_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_custom_route.py \
             prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
+            prototypes/unified_dashboard/tests/test_qualified_research_route.py \
             -q -s
       - name: Observe process-global import hazards without executing source science
         run: |

@@ -9,6 +9,9 @@ on:
       - "framework/python/qopt/core/**"
       - "prototypes/unified_dashboard/tests/test_qualified_framework_imports.py"
       - "prototypes/unified_dashboard/tests/test_qualified_custom_route.py"
+      - "prototypes/water_import_guard.py"
+      - "prototypes/unified_dashboard/tests/test_water_import_origin_guard.py"
+      - "docs/ISSUE_108_WATER_ORIGIN_PREFLIGHT.md"
       - "docs/ISSUE_108_QUALIFIED_CUSTOM_ROUTE.md"
       - "docs/ISSUE_108_INSTALLED_FRAMEWORK_IMPORTS.md"
       - "prototypes/streamlit_configurable/**"
@@ -61,7 +64,9 @@ jobs:
             prototypes/unified_dashboard/tests/test_qualified_synthetic_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_framework_imports.py \
-            prototypes/unified_dashboard/tests/test_qualified_custom_route.py
+            prototypes/unified_dashboard/tests/test_qualified_custom_route.py \
+            prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
+            prototypes/water_import_guard.py
           python -m pytest \
             prototypes/unified_dashboard/tests/test_runtime_provenance.py \
             prototypes/unified_dashboard/tests/test_import_namespace_inventory.py \
@@ -70,6 +75,7 @@ jobs:
             prototypes/unified_dashboard/tests/test_qualified_water_adapter_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_framework_imports.py \
             prototypes/unified_dashboard/tests/test_qualified_custom_route.py \
+            prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
             -q -s
       - name: Observe process-global import hazards without executing source science
         run: |

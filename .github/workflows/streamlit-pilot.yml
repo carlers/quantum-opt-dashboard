@@ -8,6 +8,7 @@ on:
       - "prototypes/streamlit_water_quality/**"
       - "prototypes/unified_dashboard/**"
       - "requirements.txt"
+      - "prototypes/research_standalone.py"
       - "prototypes/water_import_guard.py"
       - "prototypes/unified_dashboard/tests/test_water_import_origin_guard.py"
       - "docs/ISSUE_108_WATER_ORIGIN_PREFLIGHT.md"

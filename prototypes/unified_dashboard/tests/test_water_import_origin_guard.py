@@ -141,5 +141,6 @@ def test_guard_stays_out_of_pinned_scientific_source_tree():
         assert "require_water_import_origins()" in text
     assert "sys.path.insert(" not in source
     assert "sys.path.insert(" not in research
-    assert "runpy.run_path" in source  # Remains a separate open import risk
+    assert "runpy.run_path" not in source  # Water route now renders qualified module
+    assert "from prototypes.streamlit_water_quality.app import render_water_page" in source
     assert "from model import" in research  # Historical bare names remain

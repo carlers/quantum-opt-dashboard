@@ -13,6 +13,8 @@ on:
       - "prototypes/streamlit_water_quality/mvp_audit.py"
       - "prototypes/streamlit_water_quality/scip_lp_structure.py"
       - "docs/ISSUE_108_BROWSER_BOUNDED_SCIP_DOWNLOAD.md"
+      - ".github/workflows/issue108-browser-distinct-budgets.yml"
+      - "docs/ISSUE_108_BROWSER_DISTINCT_BUDGETS.md"
       - "requirements.txt"
   workflow_dispatch:
 

@@ -73,6 +73,8 @@ def test_route_water_custom_research_water_resolves_expected_scientific_modules(
     app.switch_page("pages/water.py").run()
     assert not app.exception, app.exception
     require_origin("model", "prototypes/streamlit_water_quality/model.py")
+    require_origin("prototypes.streamlit_water_quality.app",
+                   "prototypes/streamlit_water_quality/app.py")
     assert "mvp_result" not in app.session_state
     assert any("Water-quality sensor placement" in x.value for x in app.title)
 

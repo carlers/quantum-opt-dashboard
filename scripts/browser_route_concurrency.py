@@ -57,6 +57,11 @@ async def _await_title(page, route: str) -> None:
     await expect(page.get_by_role("heading", name=label, exact=True)).to_be_visible(
         timeout=60000
     )
+    # The global entrypoint notice must remain visible on every page for
+    # genuine separate WebSocket/Chromium sessions, not just in AppTest.
+    await expect(
+        page.get_by_text("Research-only computational prototype", exact=False)
+    ).to_be_visible(timeout=60000)
     # Streamlit exception element is an application error, not a friendly error
     # page or transient blank WebSocket screen.
     assert await page.locator('[data-testid="stException"]').count() == 0

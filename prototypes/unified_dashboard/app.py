@@ -12,6 +12,18 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+# This notice belongs to the shared navigation entrypoint so it appears on
+# ALL four routed research pages, not only the About page.
+# It is a scientific-scope notice, NOT authentication or access restriction.
+st.warning(
+    "Research-only computational prototype — NOT a reproduction of the "
+    "published manuscript and NOT validated for physical water monitoring, "
+    "emergency decisions, or sensor deployment. The source notebook uses a "
+    "different AHP weight set and D2 road-proximity factor than the "
+    "manuscript's WorldPop population description. Connectivity is modeled, "
+    "not measured; OpenJij simulated annealing is classical, not quantum hardware."
+)
+
 pages = [
     st.Page("pages/water.py", title="Water-quality placement", icon="🌊", default=True),
     st.Page("pages/custom.py", title="Configure another problem", icon="🧮"),

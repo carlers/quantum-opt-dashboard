@@ -1,6 +1,14 @@
-"""Navigate to bounded QUBO and classical OpenJij experiments."""
-import runpy
-from pathlib import Path
+"""Navigate to the source-pinned classical QUBO research experiment.
 
-target = Path(__file__).resolve().parents[1] / "research.py"
-runpy.run_path(str(target), run_name="__main__")
+Use the installed page's stable module identity. Preflight bare water module
+origins before importing the research page or its transitive scientific modules;
+normal Streamlit widgets are rendered explicitly on every page navigation.
+"""
+from prototypes.water_import_guard import require_water_import_origins
+
+require_water_import_origins()
+
+from prototypes.unified_dashboard.research import render_research_page
+
+require_water_import_origins()
+render_research_page()

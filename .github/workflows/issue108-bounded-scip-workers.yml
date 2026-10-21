@@ -11,6 +11,11 @@ on:
       - "requirements.txt"
       - "prototypes/streamlit_water_quality/pyproject.toml"
       - "prototypes/streamlit_water_quality/model.py"
+      - "prototypes/streamlit_water_quality/app.py"
+      - "prototypes/streamlit_water_quality/__init__.py"
+      - "prototypes/unified_dashboard/pages/water.py"
+      - "pyproject.toml"
+      - "docs/ISSUE_108_QUALIFIED_WATER_PAGE.md"
       - "prototypes/streamlit_water_quality/scip_lp_reexecution_worker.py"
   workflow_dispatch:
 

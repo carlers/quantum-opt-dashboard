@@ -13,7 +13,6 @@ import json
 import threading
 from math import comb
 from pathlib import Path
-import sys
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -22,7 +21,6 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = ROOT / "problems" / "evacuation_centers" / "examples"
 WATER_EXAMPLES = ROOT / "problems" / "water_quality" / "examples"
-sys.path.insert(0, str(ROOT / "framework" / "python"))
 
 from qopt.core.experiment_bundle import canonical, load_bundle
 from qopt.core.binary_quadratic import validate_binary_problem

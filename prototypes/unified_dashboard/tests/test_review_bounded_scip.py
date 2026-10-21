@@ -81,15 +81,17 @@ def test_original_source_solver_actual_bounded_child_lp_and_evidence(tmp_path, s
 def test_bad_child_request_digest_refused_without_running_scip(tmp_path):
     model_request = tmp_path / "request.json"
     output_lp = tmp_path / "should-not-exist.lp"
+    response_file = tmp_path / "should-not-exist.json"
     model_request.write_bytes(b'{"schema":1,"bad":"input"}\n')
     command = _bounded_command(
-        model_request, "0" * 64, output_lp, "a" * 32
+        model_request, "0" * 64, output_lp, response_file, "a" * 32
     )
     result = subprocess.run(
         command, cwd=tmp_path, capture_output=True, text=True, timeout=25,
     )
     assert result.returncode != 0
     assert not output_lp.exists()
+    assert not response_file.exists()
     assert "digest mismatch" in result.stderr
 
 

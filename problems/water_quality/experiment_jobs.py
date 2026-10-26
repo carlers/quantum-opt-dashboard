@@ -185,8 +185,9 @@ def launch_job(spec: Spec, *, root=None):
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         try:
             jobs = list_jobs(root=root)
-            if any(j["status"] in ("queued", "running") for j in jobs):
-                raise JobError("A local research job is already running or queued")
+            from problems.water_quality.experiment_sweeps import active_sweep_exists
+            if any(j["status"] in ("queued", "running") for j in jobs) or active_sweep_exists(root=root):
+                raise JobError("A local research job or classical sweep is already active")
             job_id = create_job(spec, root=root)
             folder = job_dir(root, job_id)
             env = os.environ.copy()

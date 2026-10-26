@@ -29,6 +29,7 @@ jobs:
           python -m pytest problems/water_quality/tests/test_independent_penalty_grid.py problems/water_quality/tests/test_nested_resolution.py -q
       - name: Run 3 by 3 grid with two seed blocks and four one-read samples each
         run: |
+          export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
           python -m problems.water_quality.independent_penalty_grid --out "$RUNNER_TEMP/M2-grid" --parents 270010001,270010002 --reads 4 --sweeps 40
           python - <<'PY'
           import csv, hashlib, json, os

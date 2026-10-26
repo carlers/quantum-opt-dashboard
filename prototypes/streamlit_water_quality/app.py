@@ -33,7 +33,7 @@ from wireless_topology import (
     fully_connected, global_evidence_zip,
 )
 from runtime_attestation import attest_current_result, check_visible_result, digest
-from resolution_explorer import render_nested_candidate_explorer
+from prototypes.streamlit_water_quality.resolution_explorer import render_nested_candidate_explorer
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"

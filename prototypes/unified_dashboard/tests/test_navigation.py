@@ -54,6 +54,30 @@ def test_unified_about_preserves_scientific_limitations():
     assert not app.exception
 
 
+def test_about_evidence_claims_distinguish_source_math_from_field_and_manuscript():
+    """The routed unified app must never display one generic validated badge."""
+    app = startup().switch_page("pages/about.py").run()
+    assert not app.exception, app.exception
+    assert any("Scientific evidence status" in x.value for x in app.subheader)
+    rendered = "\n".join(x.value for x in app.markdown)
+    assert "Computationally verified, source-only" in rendered
+    assert "1,077 feasible of 15,504" in rendered
+    assert "1, 3, 6, 7" in rendered
+    assert "Exploratory mathematical scenario" in rendered
+    assert "860 feasible of 15,504" in rendered
+    assert "all 15 existing stations" in rendered
+    assert "D2 road proximity" in rendered
+    assert "population/WorldPop" in rendered
+    assert "Not reconciled" in rendered
+    assert "Not validated" in rendered
+    assert "No confirmed field RF/backhaul" in rendered
+    assert "separate, pinned" in rendered
+    assert "unsigned" in rendered
+    assert "no quantum advantage" in rendered
+    assert not app.session_state.get("mvp_result")
+    assert not app.session_state.get("unified_sa_run")
+
+
 def test_bounded_classical_sampler_reports_seeded_original_feasibility():
     app = startup().switch_page("pages/research.py").run()
     assert not app.exception
@@ -79,3 +103,29 @@ def test_qubo_penalty_has_a_default_with_plain_language_explanation():
                     if s.label == "QUBO penalty (equal budget and connectivity penalties)")
     assert selector.value == "notebook-local-row-sum"
     assert any("not a guarantee" in str(i.proto) for i in app.info)
+
+
+def test_research_scope_notice_is_at_real_unified_entrypoint_and_routes_do_not_autorun():
+    """AppTest sees the entrypoint on startup, but switch_page runs the page only.
+
+    Separate real Chromium/WebSocket route tests assert the shared entrypoint
+    banner on ALL four pages; never fake this unsupported AppTest behavior.
+    """
+    app = startup()
+    assert not app.exception, app.exception
+    notice = [x.value for x in app.warning
+              if "Research-only computational prototype" in x.value]
+    assert len(notice) == 1, [x.value for x in app.warning]
+    content = notice[0]
+    assert "NOT a reproduction" in content
+    assert "WorldPop population" in content
+    assert "D2 road-proximity" in content
+    assert "Connectivity is modeled, not measured" in content
+    assert "classical, not quantum hardware" in content
+    assert "NOT validated for physical water monitoring" in content
+    for route in ("pages/custom.py", "pages/research.py", "pages/about.py"):
+        app.switch_page(route).run()
+        assert not app.exception, app.exception
+        assert not app.session_state.get("mvp_result")
+        assert not app.session_state.get("unified_sa_run")
+        assert not app.session_state.get("completed_run")

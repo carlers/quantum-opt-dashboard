@@ -1,0 +1,37 @@
+# Issue #105 — actual Python 3.12 runtime provenance and import-origin risk
+
+**2026-10-20; review-only research release audit.** Child branch of verified [DRAFT PR #104](https://github.com/carlers/quantum-opt-dashboard/pull/104), which is descended from unified MVP #51. Original archived N20 science [DRAFT #96](https://github.com/carlers/quantum-opt-dashboard/pull/96) remains a separate pinned cold-checkout scientific proof. No original notebook, 5,417-source-GeoJSON, manuscript, compiler, Streamlit mathematical solver, current main, preview or production is changed.
+
+## Reproducibility: installed means observed, not promised
+
+The root runtime installation follows `requirements.txt` → `prototypes/unified_dashboard/requirements.txt` → `prototypes/streamlit_water_quality/requirements.txt`. Currently, Python **3.12** is configured in CI. The main packages are Streamlit >=1.43,<2; NumPy >=2,<3; SciPy >=1.11,<2; Shapely >=2,<3; pandas >=2,<3; pyproj >=3.6,<4; pydeck >=0.9,<1; PySCIPOpt >=5,<7; PyYAML >=6,<7; OpenJij **==0.12.2**. This is **not** a version lock: transitive build/wheel/platform/BLAS/GEOS/libscip differences are meaningful, especially because the original source has produced different strict binary64 objective-coefficient SHA-256 identities in real verified CI (observed `8536a3db...` and `2b238848...` variants). A 12-digit rounded equivalence, convergent site choices, or minor ULP drift is NOT a valid strict original model-cache identity replacement.
+
+New `scripts/release_runtime_manifest.py` is a read-only independent version observation command. It can be invoked with `python -I`; it imports no original research notebook, Streamlit page or app compiler. It checks the pinned raw original 5,417-feature GeoJSON file SHA, records exact observed installed Python, ten top-level scientific packages, architecture/system, imported GEOS, PROJ and available SCIP runtime version methods, root unified app SHA, actual checkout commit and PR head commit, and exact SHA of an **actual pip freeze --all** file. The matching workflow `.github/workflows/unified-runtime-provenance.yml` uses ubuntu-24.04 + Python 3.12, clean root runtime install, `pip check`, actual routed module-origin AppTests and separate manifest CLI, then uploads BOTH the complete freeze bytes and canonical machine-readable JSON for **14 days**. Each JSON explicitly marks paper-input parity, physical RF/DO/current, quantum hardware/advantage and externally signed solver execution as **false**.
+
+This evidence proves only what that one GitHub worker imported and installed. It is **not** a cryptographically authenticated SCM build, a security-hardened Software Bill of Materials, a reproducible package lock, a pinned Linux container image, a portable exact arithmetic guarantee or a license compliance report. A signed external source endorsement, if ever required, is a separate governance decision.
+
+## Import-path provenance: concrete observed concern, not a speculative fix
+
+Unified routes `pages/water.py` and `pages/custom.py` use per-ScriptRunner thread `_qopt_unified_page` instead of changing global environment variables—good. But they prepend directories into **process-global** `sys.path` and never undo them; the configured synthetic page also prepends framework, evacuation, water reference and its own directories; the classical research page conditionally adds the water module folder. Python also caches bare module names in process-global `sys.modules`.
+
+The new `tests/test_runtime_provenance.py` starts at the *canonical unified* Streamlit router, switches **water → custom → research → water**, asserts no unrequested solve result, and confirms that `model`, `wireless_topology`, `runtime_attestation`, `notebook_reference_model`, `bundle_runner`, `guided_math_ui`, and `qubo` actually resolve to the **specific expected on-disk modules**, not a similarly named imported package. These are observable module-origin and route regressions. They do **not** prove malicious concurrent Session A/B import isolation.
+
+**Do not "fix" the process-global problem by replacing `sys.path[:]` with a captured snapshot in a page-finally block:** under overlapping browser sessions, one ScriptRunner could erase import entries that another ScriptRunner needs. Even selectively removing an import directory while another session imports dynamically can race. Locking all scripts through a global lock for a full 30-second SCIP solve could serialize users and create a new denial-of-service hazard. The eventual architectural fix should be stable qualified Python package namespaces or a properly imported package graph (or true worker/process isolation) without mutating process-global import search paths per request, supported by concurrent isolation tests. **No such refactor, lock or potentially unsafe "cleanup" is slipped into this draft.**
+
+## Resource and release caveats
+
+- Original local SCIP `time_limit=30` and all-15-fixed global enumeration `timeout_seconds=30` are algorithmic deadlines, **not** OS CPU/memory limits or cancellation guarantees. Overlapping sessions need a reviewed compute budget and real Cloud load tests.
+- Configurable page restricts synthetic input to 1 MB, synthetic water <=200 GIS features, <=12 free candidates and <=200,000 enumerations. These positive bounds do not establish safe untrusted multipart parsing, compressed archive DOS protection or full synthetic solver resource ceilings.
+- Real current UI source/model/LP and network ZIP bytes are checked before a new result becomes renderable, and rerenders independently verify current fingerprint/status. Streamlit `AppTest` cannot click its `st.download_button`; this is NOT actual browser-download acceptance.
+- Original source local N20/K5 has 1,077 valid/15,504 total subsets and optimum [0,1,3,6,7]; the separate exploratory full-15-existing-station global graph has 860/15,504 and membership SHA `3ec652e943e26d7aa67ba71203dba6c5413a88a47dc4f24a2428a49c171bbc40`. Both are bounded mathematical proofs under source geometry assumptions, not field-deployable antenna or measured DO/current outcomes.
+- Keep the historical source science checkout [#96](https://github.com/carlers/quantum-opt-dashboard/pull/96) **pinned and separate**; compare source and UX engine/graph identities in its own required cold CI, do not silently import a new AHP/WorldPop data source.
+
+## Exit checklist
+
+- [ ] The **new** exact-head Python 3.12 runtime-provenance CI green, actual pip freeze/JSON artifact both present and readable, actual native scientific versions and true source SHA checked; no guessed lock or fake signer.
+- [ ] Full unified AppTests + pilot regression and separate pinned original notebook/SCIP/GeoJSON/S4/global graph science proof remain green on exact same PR HEAD. Counts/digests recorded honestly after actual runs.
+- [ ] Actual module origin checks do not claim concurrent OS isolation or require changing original source mathematical code.
+- [ ] Next independently scoped review: namespaced import migration design and staged clean cold-dependency constraints **based on these observed versions**, with Cloud Python 3.12 browser concurrency/download acceptance only after a separately approved preview deployment.
+- [ ] No PR merge, main, preview, production, notebook, historical GeoJSON/manuscript edit, signed service, physical claims or undocumented update.
+
+**Approval still required** to promote any draft code to permanent Streamlit preview, merge it to main or deploy production.

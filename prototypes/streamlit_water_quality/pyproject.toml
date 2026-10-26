@@ -1,0 +1,24 @@
+# Install the unchanged historical bare-module import surface at environment startup.
+# This package is a compatibility layer, not a new scientific model or solver.
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantum-opt-dashboard-legacy-water-imports"
+version = "0.1.0"
+description = "Unchanged historical water prototype modules for stable startup-time imports"
+requires-python = ">=3.12"
+
+[tool.setuptools]
+py-modules = [
+  "model",
+  "mvp_audit",
+  "wireless_topology",
+  "runtime_attestation",
+  "scip_lp_structure",
+  "evidence",
+  "qubo",
+  "sa_benchmark",
+  "formulation_audit",
+]

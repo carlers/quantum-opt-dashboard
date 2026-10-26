@@ -20,6 +20,7 @@ No real evacuation routing, user authorization, data rights clearance, domain-ge
 
 ```bash
 python -m pip install 'numpy>=2,<3' 'scipy>=1.11,<2' 'shapely>=2,<3' 'pyscipopt>=5,<7' 'pytest>=8' 'streamlit>=1.43,<2'
+python -m pip install -e .  # install qualified UI, problem, and existing qopt.core namespaces
 streamlit run prototypes/streamlit_configurable/app.py
 ```
 

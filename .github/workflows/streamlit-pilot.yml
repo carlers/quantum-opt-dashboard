@@ -8,6 +8,29 @@ on:
       - "prototypes/streamlit_water_quality/**"
       - "prototypes/unified_dashboard/**"
       - "requirements.txt"
+      - "prototypes/isolated_water_scip.py"
+      - "prototypes/unified_dashboard/tests/test_review_bounded_scip.py"
+      - "docs/ISSUE_108_OPTIONAL_LIVE_BOUNDED_SCIP.md"
+      - "docs/ISSUE_108_SCIP_PARENT_DEATH.md"
+      - "scripts/browser_bounded_scip_download.py"
+      - ".github/workflows/issue108-browser-bounded-scip-download.yml"
+      - "docs/ISSUE_108_BROWSER_BOUNDED_SCIP_DOWNLOAD.md"
+      - ".github/workflows/issue108-browser-distinct-budgets.yml"
+      - "docs/ISSUE_108_BROWSER_DISTINCT_BUDGETS.md"
+      - "scripts/issue108_bounded_scip_concurrency.py"
+      - "prototypes/unified_dashboard/tests/test_issue108_bounded_scip_workers.py"
+      - ".github/workflows/issue108-bounded-scip-workers.yml"
+      - "docs/ISSUE_108_LINUX_BOUNDED_SCIP_PROOF.md"
+      - "prototypes/streamlit_water_quality/pyproject.toml"
+      - "prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py"
+      - "docs/ISSUE_108_INSTALLED_WATER_LEGACY_IMPORTS.md"
+      - "prototypes/research_standalone.py"
+      - "prototypes/water_import_guard.py"
+      - "prototypes/unified_dashboard/tests/test_water_import_origin_guard.py"
+      - "docs/ISSUE_108_WATER_ORIGIN_PREFLIGHT.md"
+      - "scripts/browser_route_concurrency.py"
+      - ".github/workflows/unified-browser-concurrency.yml"
+      - "docs/ISSUE_108_LOCAL_BROWSER_MULTISESSION.md"
       - ".github/workflows/streamlit-pilot.yml"
       - ".github/workflows/streamlit-research-evidence.yml"
   push:
@@ -42,3 +65,14 @@ jobs:
         run: python -m compileall -q prototypes/streamlit_water_quality prototypes/unified_dashboard
       - name: Run all model, QUBO, SCIP, replay and Streamlit UI tests
         run: python -m pytest prototypes/streamlit_water_quality/tests prototypes/unified_dashboard/tests -q -s
+      - name: Independently archive K5 all-15-fixed wireless graph source certificate
+        run: >
+          python prototypes/streamlit_water_quality/export_global_reference.py
+          --output "$RUNNER_TEMP/n20-all-original-stations-global-network.json"
+      - name: Archive bounded all-stations network evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: n20-original-source-all-15-fixed-global-network
+          path: ${{ runner.temp }}/n20-all-original-stations-global-network.json
+          if-no-files-found: error
+          retention-days: 14

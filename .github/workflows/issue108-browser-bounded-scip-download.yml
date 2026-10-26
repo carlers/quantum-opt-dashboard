@@ -1,0 +1,97 @@
+# LOCAL-only two real Chromium browser ZIP downloads via opted-in original SCIP.
+# This does not stage/deploy Cloud preview, enable default worker or sign results.
+name: Issue108 local two-browser bounded SCIP evidence ZIP proof
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/issue108-browser-bounded-scip-download.yml"
+      - "scripts/browser_bounded_scip_download.py"
+      - "prototypes/isolated_water_scip.py"
+      - "prototypes/streamlit_water_quality/app.py"
+      - "prototypes/unified_dashboard/pages/water.py"
+      - "prototypes/streamlit_water_quality/model.py"
+      - "prototypes/streamlit_water_quality/mvp_audit.py"
+      - "prototypes/streamlit_water_quality/scip_lp_structure.py"
+      - "docs/ISSUE_108_BROWSER_BOUNDED_SCIP_DOWNLOAD.md"
+      - ".github/workflows/issue108-browser-distinct-budgets.yml"
+      - "docs/ISSUE_108_BROWSER_DISTINCT_BUDGETS.md"
+      - "requirements.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue108-two-browser-optin-zip-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  two-genuine-browser-bounded-scip-downloads:
+    name: Two local independent browser sessions click original SCIP and verify downloaded ZIP/LP
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install actual original Streamlit/SCIP runtime and test-only Playwright
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install "playwright>=1.55,<2"
+          python -m pip check
+          command -v prlimit
+      - name: Install test-only Chromium on local runner
+        run: python -m playwright install --with-deps chromium
+      - name: Compile actual concurrent-click script
+        run: python -m compileall -q scripts/browser_bounded_scip_download.py
+      - name: Two independent local Chromium sessions download actual opt-in SCIP original LP ZIPs
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python -I scripts/browser_bounded_scip_download.py \
+            --output "$RUNNER_TEMP/issue108-two-browser-original-bounded-scip-zip.json"
+      - name: Fail closed unless both actual local browser ZIP downloads were mathematically inspected
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, re
+          report=json.loads(
+              (pathlib.Path(os.environ["RUNNER_TEMP"])/
+               "issue108-two-browser-original-bounded-scip-zip.json").read_text())
+          assert report["schema_version"]==1
+          assert report["kind"]=="LOCAL_TWO_BROWSER_CLICKS_OPTIN_BOUNDED_ORIGINAL_SCIP_ZIP"
+          assert report["source_pr_head_sha"]==os.environ["PR_HEAD_SHA"]
+          assert re.fullmatch(r"[0-9a-f]{40}",report["actual_git_checkout_sha"])
+          assert report["contexts"]==2
+          assert report["separate_live_websocket_contexts"] is True
+          assert report["two_browser_solve_buttons_clicked_concurrently"] is True
+          assert report["local_ephemeral_streamlit_worker_env_review_only"] is True
+          assert report["successful_actual_browser_zip_download_count"]==2
+          assert len(report["receipts"])==2
+          for receipt in report["receipts"]:
+              for key in ("downloaded_zip_sha256","original_lp_sha256",
+                          "fingerprint_sha256","original_source_sha256"):
+                  assert re.fullmatch(r"[0-9a-f]{64}",receipt[key])
+              assert receipt["selected_local_indices"]==[0,1,3,6,7]
+              assert receipt["independent_source_lp_structure_verified"] is True
+              assert receipt["browser_receipt_from_actual_click"] is True
+          assert any("Not the deployed Streamlit Cloud" in s for s in report["limitations"])
+          assert any("simultaneous OS optimization not established" in s
+                     for s in report["limitations"])
+          print("TWO_ACTUAL_LOCAL_BROWSER_OPTIN_ORIGINAL_SCIP_ZIPS_VERIFIED")
+          PY
+      - name: Retain ONLY unsigned bounded browser/ZIP hashes and local server logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: two-local-browser-optin-original-scip-zip-SHA-UNSIGNED
+          path: |
+            ${{ runner.temp }}/issue108-two-browser-original-bounded-scip-zip.json
+            ${{ runner.temp }}/local-bounded-browser-streamlit-server.log
+          retention-days: 14
+          if-no-files-found: error
+      - name: Keep release boundaries explicit
+        run: |
+          echo "Two local Chromium contexts clicked original opt-in bounded SCIP and downloaded LP ZIPs. No original archive/dataset redistributed." >> "$GITHUB_STEP_SUMMARY"
+          echo "NOT permanent Cloud preview acceptance, verified simultaneous OS optimization, signed attestation, paper AHP D2 parity, physical water data or quantum advantage." >> "$GITHUB_STEP_SUMMARY"

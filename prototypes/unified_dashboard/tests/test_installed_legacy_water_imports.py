@@ -98,9 +98,20 @@ def test_unified_water_routes_do_not_modify_sys_path():
         )
 
 
-def test_root_contract_explicitly_installs_legacy_water_sources():
-    requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-    assert "-e prototypes/streamlit_water_quality" in requirements
+def test_cloud_selected_requirements_and_root_ci_use_same_local_installs():
+    """Cloud chooses entrypoint-directory requirements, NOT repository root."""
+    root = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+    cloud = (ROOT / "prototypes/unified_dashboard/requirements.txt").read_text(
+        encoding="utf-8"
+    )
+    assert "-r prototypes/unified_dashboard/requirements.txt" in root
+    # No circular -r; one source of truth for packages, including Cloud.
+    assert "-e ." not in root and "-e prototypes/streamlit_water_quality" not in root
+    assert "-r ../streamlit_water_quality/requirements.txt" in cloud
+    assert "-e ." in cloud.splitlines()
+    assert "-e prototypes/streamlit_water_quality" in cloud.splitlines()
+    assert "-r ../../requirements.txt" not in cloud
+    assert metadata.version("quantum-opt-dashboard-ui-imports") == "0.1.0"
     assert metadata.version("quantum-opt-dashboard-legacy-water-imports") == "0.1.0"
     project = (WATER / "pyproject.toml").read_text(encoding="utf-8")
     for name in ("model", "mvp_audit", "qubo", "sa_benchmark",

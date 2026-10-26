@@ -1,0 +1,85 @@
+name: Offline N50-N100 SCIP bounded research smoke
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/offline_scip_batch.py"
+      - "problems/water_quality/tests/test_offline_scip_batch.py"
+      - ".github/workflows/offline-scip-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-source-scip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install explicit scientific runtime, without random samplers
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "PySCIPOpt>=6,<7" "pytest>=8,<10"
+      - name: Compile and test fail-closed result verifier
+        run: |
+          python -m compileall -q problems/water_quality/offline_scip_batch.py problems/water_quality/tests/test_offline_scip_batch.py
+          python -m pytest problems/water_quality/tests/test_offline_scip_batch.py problems/water_quality/tests/test_nested_resolution.py -q
+      - name: Run bounded real N50/N100 classical SCIP research smoke
+        run: |
+          python -m problems.water_quality.offline_scip_batch --tiers 50 100 --time-limit 12 --wall-timeout 75 --out "${RUNNER_TEMP}/offline-scip"
+          python - <<'PY'
+          import json, os, pathlib, hashlib
+          from problems.water_quality.offline_scip_batch import verify_bundle, verify_cross_tier_embedding
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "offline-scip"
+          ledger = json.loads((root / "index.json").read_text())
+          assert [t["N_free"] for t in ledger["tiers"]] == [50, 100]
+          runs = {}
+          for tier in ledger["tiers"]:
+              blob = (root / tier["archive"]).read_bytes()
+              assert hashlib.sha256(blob).hexdigest() == tier["archive_sha256"]
+              verdict = verify_bundle(blob)
+              assert verdict["classification"] == tier["classification"]
+              assert tier["verified_feasible_witness"] == (verdict["independent_audit"] is not None)
+              with __import__("zipfile").ZipFile(__import__("io").BytesIO(blob)) as z:
+                  model = json.loads(z.read("model.json"))
+                  runs[tier["N_free"]] = (model, verdict)
+              print(json.dumps({
+                  "N": tier["N_free"], "status": verdict["solver_status"],
+                  "classification": verdict["classification"],
+                  "original_objective": verdict.get("solver_objective"),
+                  "gap": verdict.get("solver_gap"),
+                  "selected_master_positions": (
+                      verdict["independent_audit"]["selected_master_positions"]
+                      if verdict.get("independent_audit") else None
+                  ),
+                  "time_scopes_seconds": {
+                      "cold_model_build": verdict.get("model_build_seconds"),
+                      "SCIP_call_including_LP_export": verdict.get("solve_call_seconds"),
+                      "worker_total_wall": verdict.get("worker_wall_seconds"),
+                  },
+              }, sort_keys=True))
+          small_model, small_result = runs[50]
+          large_model, large_result = runs[100]
+          if all(r["classification"] in ("optimal", "feasible_not_proven_optimal")
+                 for r in (small_result, large_result)):
+              comparison = verify_cross_tier_embedding(
+                  small_model, small_result, large_model, large_result
+              )
+              (root / "nested-common-tier-verification.json").write_text(
+                  json.dumps(comparison, sort_keys=True, indent=2) + chr(10)
+              )
+              print("Independent nested-tier embedding:", json.dumps(comparison, sort_keys=True))
+          else:
+              print("Common-tier objective comparison omitted: at least one run has no verified witness")
+          PY
+      - name: Archive source-attached experimental outcomes, including failures
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: n50-n100-scip-bounded-source-evidence
+          path: ${{ runner.temp }}/offline-scip/
+          if-no-files-found: warn
+          retention-days: 14

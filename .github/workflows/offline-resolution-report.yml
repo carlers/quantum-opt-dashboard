@@ -1,0 +1,77 @@
+name: M3 source-linked offline cross-resolution figures
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/offline_resolution_report.py"
+      - "problems/water_quality/tests/test_offline_resolution_report.py"
+      - ".github/workflows/offline-resolution-report.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independently-validated-offline-n50-n100-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install provenance and bounded plotting dependencies
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "PySCIPOpt>=6,<7" "matplotlib>=3.9,<4" "pytest>=8,<10"
+      - name: Run M3 tamper tests, upstream LP and source regressions
+        run: |
+          python -m compileall -q problems/water_quality/offline_resolution_report.py
+          python -m pytest problems/water_quality/tests/test_offline_resolution_report.py problems/water_quality/tests/test_independent_lp_bounds.py problems/water_quality/tests/test_offline_scip_batch.py problems/water_quality/tests/test_nested_resolution.py -q
+      - name: Reconstruct and independently certify SCIP and HiGHS evidence
+        run: |
+          python -m problems.water_quality.offline_scip_batch --tiers 50 100 --time-limit 12 --wall-timeout 75 --out "$RUNNER_TEMP/resolution-source"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+          directory = Path(os.environ["RUNNER_TEMP"]) / "resolution-source"
+          with ZipFile(directory / "source-execution.zip", "w") as z:
+              for p in directory.iterdir():
+                  if p.suffix == ".zip" or p.name == "index.json":
+                      z.write(p, p.name)
+          PY
+          python -m problems.water_quality.independent_lp_bounds "$RUNNER_TEMP/resolution-source/source-execution.zip" --seconds 20 --output "$RUNNER_TEMP/resolution-source/highs-bound-receipt.json"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+          root = Path(os.environ["RUNNER_TEMP"]) / "resolution-source"
+          with ZipFile(root / "paired-provenance.zip", "w") as z:
+              for name in ("source-execution.zip", "highs-bound-receipt.json"):
+                  z.write(root / name, name)
+          PY
+      - name: Produce read-only two-tier CSV JSON and figure from independently audited bytes
+        run: |
+          python -m problems.water_quality.offline_resolution_report "$RUNNER_TEMP/resolution-source/paired-provenance.zip" --seconds 20 --output "$RUNNER_TEMP/source-verified-charts"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "source-verified-charts"
+          content = json.loads((root / "verified_comparison.json").read_text())
+          assert [row["N_free"] for row in content["observations"]] == [50, 100]
+          assert content["cross_tier_embedding"]["exact_binary64_overlap_coefficients"]
+          assert content["SCIP_and_HiGHS_independently_optimal_for_exported_models"]
+          assert content["runtime_scaling_inference_permitted"] is False
+          assert content["paper_data_parity_proven"] is False
+          assert (root / "original_objective_by_resolution.csv").stat().st_size > 200
+          assert (root / "original_objective_by_resolution.png").stat().st_size > 5_000
+          print("Only genuinely verified source-linked N50/N100 values were graphed.")
+          PY
+      - name: Upload source-linked figures plus solver receipts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m3-n50-n100-verified-source-figures-and-LP-evidence
+          path: ${{ runner.temp }}/
+          retention-days: 14
+          if-no-files-found: warn

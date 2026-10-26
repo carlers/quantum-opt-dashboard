@@ -1,0 +1,29 @@
+name: Nested source-cohort scientific gate
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/nested_resolution.py"
+      - "problems/water_quality/tests/test_nested_resolution.py"
+      - ".github/workflows/nested-resolution-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nested-source-cohorts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install numerical test prerequisites (no stochastic solvers)
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "pytest>=8,<10"
+      - name: Check exact added research modules
+        run: |
+          python -m compileall -q problems/water_quality/nested_resolution.py problems/water_quality/tests/test_nested_resolution.py
+          python -m pytest problems/water_quality/tests/test_nested_resolution.py -q

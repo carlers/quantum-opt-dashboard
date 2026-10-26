@@ -1,0 +1,70 @@
+name: M2 exact source and classical SA replay gate
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/bitwise_penalty_replay.py"
+      - "problems/water_quality/tests/test_bitwise_penalty_replay.py"
+      - ".github/workflows/m2-bitwise-replay.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  same-frozen-source-same-child-seeds-same-full-72-bitstrings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install original numerical-model and CLASSICAL OpenJij dependencies
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "openjij==0.12.2" "pytest>=8,<10"
+      - name: Test adversarial source identity and replay mutations
+        run: |
+          python -m compileall -q problems/water_quality/bitwise_penalty_replay.py
+          python -m pytest problems/water_quality/tests/test_bitwise_penalty_replay.py problems/water_quality/tests/test_independent_penalty_grid.py problems/water_quality/tests/test_nested_resolution.py -q
+      - name: Create first 72-draw full-source classical SA execution
+        run: |
+          export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+          timeout --signal=TERM --kill-after=5s 75s python -u -m problems.water_quality.independent_penalty_grid --out "$RUNNER_TEMP/first" --parents 270010001,270010002 --reads 4 --sweeps 40
+      - name: Create SECOND 72-draw execution with same original parent seeds
+        run: |
+          export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+          timeout --signal=TERM --kill-after=5s 75s python -u -m problems.water_quality.independent_penalty_grid --out "$RUNNER_TEMP/second" --parents 270010001,270010002 --reads 4 --sweeps 40
+      - name: Demand byte-identical frozen source and all 72 full selected+slack samples
+        run: |
+          python -m problems.water_quality.bitwise_penalty_replay "$RUNNER_TEMP/first" "$RUNNER_TEMP/second" --output "$RUNNER_TEMP/bitwise-evidence/verified-replay.json"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          a = root/"first"
+          b = root/"second"
+          for name in ("compiled_source_model.json", "samples.csv"):
+              raw_a=(a/name).read_bytes()
+              raw_b=(b/name).read_bytes()
+              assert raw_a == raw_b
+              print("Exact SHA256 identical", name, hashlib.sha256(raw_a).hexdigest())
+          note=json.loads((root/"bitwise-evidence/verified-replay.json").read_text())
+          assert note["sample_count_per_execution"] == 72
+          assert note["sample_CSV_bytes_identical"]
+          assert note["source_model_bytes_identical"]
+          assert note["executions_are_replays_not_independent_parent_block_samples"]
+          assert not note["winner_or_statistical_inference_permitted"]
+          print("Confirmed identical source and every one of 72 original+slack sampler bitstrings")
+          PY
+      - name: Retain both complete experiment runs plus reviewed replay proof scope
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: M2-two-exact-source-and-full-samples-replay-evidence
+          path: |
+            ${{ runner.temp }}/first/
+            ${{ runner.temp }}/second/
+            ${{ runner.temp }}/bitwise-evidence/
+          retention-days: 14
+          if-no-files-found: warn

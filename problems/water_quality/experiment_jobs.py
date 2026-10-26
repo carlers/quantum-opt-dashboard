@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from dataclasses import dataclass, replace
 from hashlib import sha256
 import io
+from importlib.metadata import PackageNotFoundError, version
 import json
 import math
 import os
@@ -132,6 +133,13 @@ def write_json(path, data):
 
 def utc_now():
     return datetime.now(timezone.utc).isoformat()
+
+
+def package_version(name):
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return "not-installed"
 
 
 def load_json(path):
@@ -457,6 +465,16 @@ def execute_job(job_id, *, root=None):
             "result": solver_record,
             "total_worker_wall_seconds": time.perf_counter() - start,
             "python_version": sys.version.split()[0],
+            "software_versions": {
+                package: package_version(package) for package in (
+                    "numpy", "scipy", "shapely", "pyscipopt", "openjij", "streamlit",
+                )
+            },
+            "numerical_thread_environment": {
+                var: os.environ.get(var) for var in (
+                    "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OMP_NUM_THREADS"
+                )
+            },
             "not_manuscript_parity_or_field_validated": True,
             "not_general_experimental_inference": True,
         }

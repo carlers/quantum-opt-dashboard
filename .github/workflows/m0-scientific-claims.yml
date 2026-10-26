@@ -1,0 +1,46 @@
+name: M0 original source and scientific claim boundary gate
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/scientific_claim_registry.json"
+      - "problems/water_quality/tests/test_scientific_claim_registry.py"
+      - "docs/M0_SOURCE_CLAIM_REGISTRY.md"
+      - "docs/M0_RESEARCH_SOFTWARE_AND_ARCHIVE_CHECKLIST.md"
+      - ".github/workflows/m0-scientific-claims.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-input-claim-boundaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deterministic source model tests
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "pytest>=8,<10"
+      - name: Verify source checksum, separate local/global comparator and forbidden publication claims
+        run: |
+          python -m pytest problems/water_quality/tests/test_scientific_claim_registry.py problems/water_quality/tests/test_nested_resolution.py -q
+      - name: Confirm source manuscript/data neither edited nor silently licensed
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          reference = Path("problems/water_quality/scientific_claim_registry.json")
+          ledger = json.loads(reference.read_text())
+          path = Path(ledger["original_inputs"]["geojson"]["path"])
+          assert hashlib.sha256(path.read_bytes()).hexdigest() == ledger["original_inputs"]["geojson"]["sha256"]
+          assert not ledger["experiment_boundary"]["public_distribution_approved"]
+          assert not ledger["experiment_boundary"]["data_license_checked"]
+          assert not ledger["experiment_boundary"]["doi_assigned"]
+          assert not ledger["model_scope"]["paper_input_reproduced"]
+          assert all(not flag["allowed"] for flag in ledger["prohibited_claims"])
+          print("Source-only claim gates passed; no manuscript, quantum, DOI or field validation asserted.")
+          PY

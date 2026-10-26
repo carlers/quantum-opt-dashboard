@@ -12,7 +12,7 @@ import io
 import json
 import math
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import ZipFile, is_zipfile
 
 from problems.water_quality.independent_lp_bounds import inspect_archive
 from problems.water_quality.offline_scip_batch import (
@@ -57,6 +57,8 @@ def extract_verified_rows(artifact: bytes, *, independent_seconds: int = 20) -> 
     """Revalidate uploaded CI evidence against fresh independent MILP bounds."""
     if not isinstance(artifact, bytes) or not 0 < len(artifact) <= MAX_WORKFLOW_ARTIFACT_BYTES:
         fail("workflow evidence ZIP missing or too large")
+    if not is_zipfile(io.BytesIO(artifact)):
+        fail("invalid workflow source ZIP")
     with ZipFile(io.BytesIO(artifact)) as outer:
         entries = outer.namelist()
         if len(set(entries)) != len(entries):

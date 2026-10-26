@@ -14,7 +14,7 @@ import json
 import math
 from pathlib import Path
 from types import SimpleNamespace
-from zipfile import ZipFile
+from zipfile import ZipFile, is_zipfile
 
 import numpy as np
 
@@ -44,6 +44,8 @@ def _read_csv(raw):
 def inspect_archive(raw: bytes):
     if not isinstance(raw, bytes) or not 0 < len(raw) <= 3_000_000:
         fail("research evidence is missing or exceeds review size bound")
+    if not is_zipfile(io.BytesIO(raw)):
+        fail("not a valid source research ZIP")
     with ZipFile(io.BytesIO(raw)) as archive:
         expected = {"summary.json", "trials.csv", "samples.csv", "SHA256SUMS.json"}
         if set(archive.namelist()) != expected or len(archive.namelist()) != 4:

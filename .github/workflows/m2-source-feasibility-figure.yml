@@ -96,7 +96,8 @@ jobs:
         if: always()
         with:
           name: m2-complete-source-samples-and-descriptive-grid-figure
-          path: ${{ runner.temp }}/M2-evidence/
+          path: |
+            ${{ runner.temp }}/M2-evidence/
             ${{ runner.temp }}/M2-verified-figure/
           retention-days: 14
           if-no-files-found: warn

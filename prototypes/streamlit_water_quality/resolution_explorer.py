@@ -162,7 +162,8 @@ def render_nested_candidate_explorer(n_free: int, source_sha256: str) -> None:
         key="nested_manifest_json",
     )
     st.info(
-        "To run the existing independently attested local N20 SCIP experiment, "
-        "select N=20. N50/N100 optimization and a cross-N result dashboard "
-        "require separately reviewed solver and artifact protocols."
+        "To run the original independently attested N20 SCIP experiment, "
+        "select N=20. The separate 'Verified source results' page displays "
+        "ONE archived and externally reviewed N50/N100 SCIP + HiGHS CI execution. "
+        "This candidate explorer still does not solve or claim optimized sites."
     )

@@ -33,6 +33,7 @@ from wireless_topology import (
     fully_connected, global_evidence_zip,
 )
 from runtime_attestation import attest_current_result, check_visible_result, digest
+from prototypes.streamlit_water_quality.resolution_explorer import render_nested_candidate_explorer
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT / "problems/water_quality/data/LDB_centroids_clean.geojson"
@@ -133,6 +134,22 @@ def render_water_page() -> None:
             raise ValueError("Pinned source must contain exactly 5,417 sites.")
     except (ValueError, OSError, KeyError) as exc:
         st.error("Could not verify the original source dataset: " + str(exc))
+        st.stop()
+
+    # Keep the existing independently attested N20 solver path completely
+    # isolated from higher-N candidate-only research views.
+    resolution_n = st.sidebar.selectbox(
+        "Research resolution (free candidates N)",
+        options=(20, 50, 100), index=0, key="water_resolution_n",
+        help="N20 uses the original interactive solver. N50 and N100 show "
+             "source-backed candidate geometry only; neither is solved here.",
+    )
+    if resolution_n != N_FREE:
+        st.session_state.pop("mvp_result", None)
+        try:
+            render_nested_candidate_explorer(int(resolution_n), dataset_sha)
+        except (ValueError, AssertionError, OSError, RuntimeError) as exc:
+            st.error("Could not verify the nested source candidates: " + str(exc))
         st.stop()
 
     with st.sidebar:

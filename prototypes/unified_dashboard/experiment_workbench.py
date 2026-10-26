@@ -39,12 +39,14 @@ def render_experiment_page():
         "quotas and a durable isolated worker backend."
     )
     st.subheader("1 · Configure your experiment")
+    # This selector MUST sit outside st.form: Streamlit form fields do not
+    # trigger conditional rerenders until Submit, hiding SA-specific controls.
+    method = st.selectbox(
+        "Solver", ["SCIP — classical exact MILP", "OpenJij — classical SA"],
+        help="SCIP reports optimality/gap. Classical SA does not prove optimality.",
+    )
+    solver = "scip" if method.startswith("SCIP") else "classical_sa"
     with st.form("local_research_job_config", clear_on_submit=False):
-        method = st.selectbox(
-            "Solver", ["SCIP — classical exact MILP", "OpenJij — classical SA"],
-            help="SCIP reports optimality/gap. Classical SA does not prove optimality.",
-        )
-        solver = "scip" if method.startswith("SCIP") else "classical_sa"
         n = st.selectbox(
             "Free candidate sites (N)", [20, 50, 100] if solver == "scip" else [20],
             help="Source-validated nested tiers. SA beyond N20 needs another gate.",
@@ -118,7 +120,7 @@ def render_experiment_page():
             "N": spec.n_free, "K": spec.k_new, "Status": job["status"],
             "Progress": f"{state['completed_reads']}/{state['total_reads']}",
         })
-    st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
+    st.dataframe(pd.DataFrame(records), hide_index=True, width="stretch")
     ids = [j["job_id"] for j in jobs]
     previous = st.session_state.get("local_selected_experiment")
     index = ids.index(previous) if previous in ids else 0
@@ -164,7 +166,7 @@ def render_experiment_page():
             st.dataframe(pd.DataFrame({
                 "Local candidate position": sites["selected_local_positions"],
                 "Original GeoJSON feature position": sites["selected_source_master_positions"],
-            }), hide_index=True, use_container_width=True)
+            }), hide_index=True, width="stretch")
         else:
             a, b, c = st.columns(3)
             a.metric("Original-feasible draws",

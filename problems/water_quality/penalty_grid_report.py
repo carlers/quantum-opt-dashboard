@@ -47,8 +47,8 @@ def inspect_archive(raw: bytes):
     if not is_zipfile(io.BytesIO(raw)):
         fail("not a valid source research ZIP")
     with ZipFile(io.BytesIO(raw)) as archive:
-        expected = {"summary.json", "trials.csv", "samples.csv", "SHA256SUMS.json"}
-        if set(archive.namelist()) != expected or len(archive.namelist()) != 4:
+        expected = {"summary.json", "trials.csv", "samples.csv", "compiled_source_model.json", "SHA256SUMS.json"}
+        if set(archive.namelist()) != expected or len(archive.namelist()) != 5:
             fail("unexpected/incomplete source research evidence files")
         checksums = json.loads(archive.read("SHA256SUMS.json"))
         if checksums.get("schema") != SCHEMA or checksums.get("source_sha256") != SOURCE_SHA256:
@@ -57,6 +57,7 @@ def inspect_archive(raw: bytes):
                     for name in expected - {"SHA256SUMS.json"}}
         if computed != checksums.get("file_sha256"):
             fail("original source samples and trials checksum mismatch")
+        compiled = json.loads(archive.read("compiled_source_model.json"))
         summary = json.loads(archive.read("summary.json"))
         trials = _read_csv(archive.read("trials.csv"))
         samples = _read_csv(archive.read("samples.csv"))
@@ -84,9 +85,10 @@ def inspect_archive(raw: bytes):
     if study.source_sha256 != SOURCE_SHA256 or len(study.fixed_master_positions) != 15:
         fail("historical lake source identity differs")
     instance = study.tier_instances[0].instance
-    if (sha256(canonical(model_record(instance))).hexdigest()
-            != summary["original_model_sha256"]):
-        fail("source model objective or original feature ordering drifted")
+    recomputed = model_record(instance)
+    if (compiled != recomputed
+            or sha256(canonical(compiled)).hexdigest() != summary["original_model_sha256"]):
+        fail("archived IEEE-754 source model differs from the current source or its digest")
     points = grid(instance)
     if summary["grid_points"] != list(points):
         fail("grid point geometry/penalty levels did not reproduce")

@@ -38,3 +38,6 @@ Thumbs.db
 
 # pyenv
 .python-version
+
+# Local research workbench job database; never commit research output or logs
+.qopt_experiments/

@@ -11,6 +11,7 @@ from problems.water_quality.independent_penalty_grid import (
     FROZEN_N20_OPTIMUM, SOURCE_SHA256, LEVEL_NAMES,
     notebook_single_flip_bound, penalty_levels, grid,
     child_seeds, inspect_one_read, qubo_digest, model_record,
+    frozen_source_instance, FROZEN_PROFILE_SHA256, canonical,
 )
 from prototypes.streamlit_water_quality.qubo import (
     make_qubo, best_slack_assignment, decoded_penalty_energy,
@@ -20,11 +21,12 @@ from prototypes.streamlit_water_quality.qubo import (
 
 @pytest.fixture(scope="module")
 def instance():
-    study = build_nested_instances(tiers=(20,))
+    study, source = frozen_source_instance()
     assert study.source_sha256 == SOURCE_SHA256
     assert not study.fixed_simulated
     assert len(study.fixed_master_positions) == 15
-    return study.tier_instances[0].instance
+    assert __import__("hashlib").sha256(canonical(model_record(source))).hexdigest() == FROZEN_PROFILE_SHA256
+    return source
 
 
 def fake_response(qubo, bits, *, energy_shift=0., corrupt_missing=False):

@@ -39,6 +39,60 @@ MAX_PARENT_BLOCKS = 8
 MAX_SWEEPS = 500
 
 
+FROZEN_PROFILE_PATH = Path(__file__).resolve().parent / "data/n20_frozen_classical_penalty_profile_v1.json"
+FROZEN_PROFILE_SHA256 = "add84856f0f933eecd4a82b615c239430a85e524d7f00d796c4753f7b4ba4101"
+MAX_ORIGINAL_NUMERICAL_DRIFT = 1e-12
+
+
+def frozen_source_instance():
+    """Use *one* bitwise frozen, separately labeled SA experiment profile.
+
+    Preserve the unmodified historical generator and verify its source
+    candidates, graph, and coefficients agree within a recorded tight
+    numerical tolerance. Do not imply regenerated IEEE754 bytes are equal
+    on every CPU; only this experiment's QUBO coefficients are frozen.
+    """
+    from dataclasses import replace
+    raw = FROZEN_PROFILE_PATH.read_bytes()
+    _require(sha256(raw).hexdigest() == FROZEN_PROFILE_SHA256,
+             "reviewed binary64 numerical profile changed")
+    record = json.loads(raw)
+    study = build_nested_instances(tiers=(20,))
+    _require(study.source_sha256 == SOURCE_SHA256
+             and not study.fixed_simulated
+             and len(study.fixed_master_positions) == 15,
+             "original source dataset or fixed-site markers changed")
+    source = study.tier_instances[0].instance
+    regenerated = model_record(source)
+    for key in (
+        "source", "N_free", "K", "free_master_feature_positions",
+        "fixed_master_feature_positions", "free_neighbors",
+        "fixed_neighbors",
+    ):
+        _require(regenerated[key] == record[key],
+                 "source identity or original topology changed: " + key)
+    frozen_linear = np.array([float.fromhex(x) for x in record["linear_hex"]],
+                             dtype=np.float64)
+    _require(frozen_linear.shape == np.asarray(source.linear).shape
+             and np.all(np.isfinite(frozen_linear))
+             and np.allclose(frozen_linear, source.linear, rtol=0,
+                             atol=MAX_ORIGINAL_NUMERICAL_DRIFT),
+             "regenerated source linear coefficients exceed numerical drift policy")
+    frozen_quad = tuple((int(i), int(j), float.fromhex(q))
+                        for i, j, q in record["quadratic_hex"])
+    _require(len(frozen_quad) == len(source.quadratic)
+             and all(
+                 (i, j) == (source.quadratic[k][0], source.quadratic[k][1])
+                 and abs(q - float(source.quadratic[k][2]))
+                     <= MAX_ORIGINAL_NUMERICAL_DRIFT
+                 for k, (i, j, q) in enumerate(frozen_quad)
+             ), "quadratic source coefficients or ordering changed")
+    frozen = replace(source, linear=frozen_linear, quadratic=frozen_quad)
+    _require(canonical(model_record(frozen)) == raw,
+             "frozen source record cannot be exactly reconstructed")
+    return study, frozen
+
+
 def canonical(x):
     return (json.dumps(x, sort_keys=True, separators=(",", ":"),
                        allow_nan=False) + "\n").encode("utf-8")
@@ -216,11 +270,9 @@ def run_grid(*, parents: tuple[int, ...] = PARENT_SEEDS, reads: int = 4,
     _require(type(sweeps) is int and 10 <= sweeps <= MAX_SWEEPS,
              "invalid number of classical SA sweeps")
     import openjij as oj
-    study = build_nested_instances(tiers=(20,))
-    if (study.source_sha256 != SOURCE_SHA256 or study.fixed_simulated
-            or len(study.fixed_master_positions) != 15):
+    study, instance = frozen_source_instance()
+    if len(study.fixed_master_positions) != 15:
         raise AssertionError("N20 pinned historical source/fixed stations changed")
-    instance = study.tier_instances[0].instance
     if instance.budget != 5:
         raise AssertionError("N20 exact budget changed")
     checksum = sha256(canonical(model_record(instance))).hexdigest()
@@ -295,6 +347,8 @@ def run_grid(*, parents: tuple[int, ...] = PARENT_SEEDS, reads: int = 4,
         "schema": SCHEMA, "source_sha256": study.source_sha256,
         "N_free": 20, "K": 5, "fixed_station_count": 15,
         "original_model_sha256": checksum,
+        "numerical_profile": "separate reviewed frozen float64 coefficients; regenerated notebook source checked within 1e-12",
+        "numerical_profile_sha256": FROZEN_PROFILE_SHA256,
         "original_N20_proven_scip_optimum": FROZEN_N20_OPTIMUM,
         "source_model": "historical notebook weights, road D2 and local one-hop",
         "algorithm": "classical OpenJij SASampler one independent child-seeded read per call",
@@ -335,8 +389,8 @@ def write_bundle(out: Path, *, parents: tuple[int, ...] = PARENT_SEEDS,
     out.mkdir(parents=True, exist_ok=True)
     # Preserve exact IEEE-754 source coefficients, not just a nonreplayable hash.
     # Rebuild independently within this same process and fail on bit drift.
-    verified_source = build_nested_instances(tiers=(20,))
-    source_record = canonical(model_record(verified_source.tier_instances[0].instance))
+    verified_source, frozen_instance = frozen_source_instance()
+    source_record = canonical(model_record(frozen_instance))
     _require(verified_source.source_sha256 == SOURCE_SHA256
              and sha256(source_record).hexdigest() == summary["original_model_sha256"],
              "compiled source coefficients changed within one experiment")

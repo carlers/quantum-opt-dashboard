@@ -121,6 +121,72 @@ def independent_witness(model: dict, chosen: object, energy: object) -> dict:
     }
 
 
+
+def verify_cross_tier_embedding(small: dict, small_result: dict,
+                                large: dict, large_result: dict) -> dict:
+    """Verify a smaller feasible run embeds unchanged in a larger model.
+
+    N100 is a *common resolution-tier model*, not the GeoJSON 5417-site master
+    objective and not an independent proof of solver dual bounds.
+    """
+    n, m = small["N_free"], large["N_free"]
+    if type(n) is not int or type(m) is not int or not (0 < n < m <= 100):
+        raise ValueError("Expected strictly nested source-tier sizes")
+    for field in ("schema", "source_sha256", "K", "graph", "weights",
+                  "source_coordinates_crs", "fixed_master_positions",
+                  "d_max_float64_hex", "solver_encoding"):
+        if small.get(field) != large.get(field):
+            raise ValueError("Cross-tier mathematical specification changed: " + field)
+    if large["free_master_positions"][:n] != small["free_master_positions"]:
+        raise ValueError("Candidate master positions are not nested prefixes")
+    if large["linear_float64_hex"][:n] != small["linear_float64_hex"]:
+        raise ValueError("Common-tier linear source coefficients changed")
+    restricted = [
+        row for row in large["quadratic_float64_hex"]
+        if row[0] < n and row[1] < n
+    ]
+    if restricted != small["quadratic_float64_hex"]:
+        raise ValueError("Common-tier pair coefficients changed")
+    if large["fixed_neighbors"][:n] != small["fixed_neighbors"]:
+        raise ValueError("Fixed-station graph changed across resolutions")
+    for i in range(n):
+        if [j for j in large["free_neighbors"][i] if j < n] != small["free_neighbors"][i]:
+            raise ValueError("Local one-hop graph changed across resolutions")
+    if small_result.get("classification") not in ("optimal", "feasible_not_proven_optimal"):
+        raise ValueError("Small tier has no checked witness")
+    if large_result.get("classification") not in ("optimal", "feasible_not_proven_optimal"):
+        raise ValueError("Large tier has no checked witness")
+    small_bits = small_result["binary_solution"]
+    small_audit = independent_witness(small, small_bits, small_result["solver_objective"])
+    embedded_audit = independent_witness(
+        large, small_bits + [0] * (m - n), small_result["solver_objective"]
+    )
+    large_audit = independent_witness(
+        large, large_result["binary_solution"], large_result["solver_objective"]
+    )
+    if not math.isclose(small_audit["original_objective"],
+                        embedded_audit["original_objective"], rel_tol=0, abs_tol=1e-10):
+        raise ValueError("Nested objective is not conserved in larger-tier model")
+    both_reported_optimal = (small_result["classification"] == "optimal"
+                             and large_result["classification"] == "optimal")
+    if both_reported_optimal and large_audit["original_objective"] > embedded_audit["original_objective"] + 1e-7:
+        raise ValueError("Larger declared optimal objective exceeds a known feasible embedded incumbent")
+    return {
+        "schema": "nested-common-tier-embedding-v1",
+        "smaller_N": n, "larger_N": m, "K": small["K"],
+        "source_sha256": small["source_sha256"],
+        "exact_binary64_overlap_coefficients": True,
+        "same_fixed_stations_and_local_graph": True,
+        "small_solution_feasible_in_large_tier": True,
+        "small_native_original_objective": small_audit["original_objective"],
+        "small_solution_in_large_tier_original_objective": embedded_audit["original_objective"],
+        "large_native_original_objective": large_audit["original_objective"],
+        "both_scip_runs_reported_optimal": both_reported_optimal,
+        "independent_global_optimality_proof_performed": False,
+        "full_geojson_master_objective_evaluated": False,
+    }
+
+
 def archive_bundle(model: dict, result: dict, lp: bytes | None) -> bytes:
     files = {"model.json": canonical(model), "result.json": canonical(result)}
     if lp is not None:

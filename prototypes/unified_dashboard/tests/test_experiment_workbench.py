@@ -197,5 +197,6 @@ def test_completed_classical_samples_are_explorable_on_original_lake_map(monkeyp
                   if x.label == "View selected source sites for one recorded sample")
     picker.set_value(1).run()
     assert not app.exception, app.exception
-    assert any(x.label == "Download immutable model, configuration, samples and evidence ZIP"
-               for x in app.button)
+    # Streamlit AppTest does not expose download_button as a regular button;
+    # the exported ZIP and immutable checksum chain are tested directly above.
+    assert read_job(ident, root=store)["result"]["result"]["total_samples"] == 2

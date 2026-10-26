@@ -178,3 +178,24 @@ def test_enabled_ui_switches_from_exact_scip_to_classical_sa_without_launch(monk
     assert any(x.label == "Parent seed" for x in app.number_input)
     assert any(x.label == "Individually seeded samples" for x in app.slider)
     assert not (tmp_path / "operator").exists()
+
+def test_completed_classical_samples_are_explorable_on_original_lake_map(monkeypatch, store):
+    spec = Spec(solver="classical_sa", reads=2, sweeps=50)
+    ident = create_job(spec, root=store)
+    done = execute_job(ident, root=store)
+    assert done["status"] == "completed", done
+    monkeypatch.setenv("QOPT_LOCAL_EXPERIMENTS", "1")
+    monkeypatch.setenv("QOPT_EXPERIMENT_STORE", str(store))
+    app = AppTest.from_file(str(APP), default_timeout=120).run()
+    app.switch_page("pages/experiments.py").run()
+    assert not app.exception, app.exception
+    assert any("Inspect all sampled original placements" in x.value
+               for x in app.subheader)
+    assert any(x.label == "View selected source sites for one recorded sample"
+               for x in app.selectbox)
+    picker = next(x for x in app.selectbox
+                  if x.label == "View selected source sites for one recorded sample")
+    picker.set_value(1).run()
+    assert not app.exception, app.exception
+    assert any(x.label == "Download immutable model, configuration, samples and evidence ZIP"
+               for x in app.button)

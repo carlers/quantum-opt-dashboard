@@ -1,0 +1,67 @@
+name: Independent N50-N100 emitted-LP HiGHS bound gate
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/independent_lp_bounds.py"
+      - "problems/water_quality/tests/test_independent_lp_bounds.py"
+      - ".github/workflows/independent-lp-highs-bounds.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-solver-lp-bounds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install original sources and two independent MILP solvers
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "PySCIPOpt>=6,<7" "pytest>=8,<10"
+      - name: Check parsers and fail-closed forged-source tests
+        run: |
+          python -m compileall -q problems/water_quality/independent_lp_bounds.py
+          python -m pytest problems/water_quality/tests/test_independent_lp_bounds.py problems/water_quality/tests/test_offline_scip_batch.py problems/water_quality/tests/test_nested_resolution.py -q
+      - name: Reconstruct fresh N50/N100 and run bounded SCIP into emitted LP evidence
+        run: |
+          python -m problems.water_quality.offline_scip_batch --tiers 50 100 --time-limit 12 --wall-timeout 75 --out "$RUNNER_TEMP/independent"
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import os
+          directory = Path(os.environ["RUNNER_TEMP"]) / "independent"
+          with ZipFile(directory / "source-execution.zip", "w") as archive:
+              for path in directory.iterdir():
+                  if path.name == "index.json" or path.suffix == ".zip":
+                      archive.write(path, path.name)
+          PY
+      - name: Verify every LP constraint and independently prove HiGHS primal dual bounds
+        run: |
+          python -m problems.water_quality.independent_lp_bounds "$RUNNER_TEMP/independent/source-execution.zip" --seconds 20 --output "$RUNNER_TEMP/independent/highs-bound-receipt.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          record = json.loads((Path(os.environ["RUNNER_TEMP"]) / "independent/highs-bound-receipt.json").read_text())
+          rows = record["runs"]
+          assert [row["N_free"] for row in rows] == [50, 100]
+          for row in rows:
+              assert row["highs_status"] == 0
+              assert row["highs_relative_gap"] == 0
+              assert row["independent_computational_optimality_corroboration"] is True
+              assert row["formal_proof_certificate"] is False
+              assert row["paper_input_parity_claimed"] is False
+          print("Independent source-LP/HiGHS bound verification passed for N50 and N100.")
+          PY
+      - name: Upload review receipts, including failed/inconclusive runs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n50-n100-source-lp-independent-highs-bounds
+          path: ${{ runner.temp }}/independent/
+          retention-days: 14
+          if-no-files-found: warn

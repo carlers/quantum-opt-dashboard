@@ -307,6 +307,11 @@ def run_grid(*, parents: tuple[int, ...] = PARENT_SEEDS, reads: int = 4,
         "sampling_seed_protocol": "numpy SeedSequence([parent_seed, grid_index]).spawn(reads), one OpenJij call each",
         "sampled_source_states": len(samples),
         "parent_cell_trials": len(trials),
+        "numerical_thread_environment": {
+            name: os.environ.get(name) for name in (
+                "OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"
+            )
+        },
         "predeclared_exploratory_CI_smoke_not_preregistered_population_study": True,
         "inference_or_optimal_penalty_grid_claimed": False,
         "nonquantum_classical_only": True,
@@ -328,7 +333,15 @@ def write_bundle(out: Path, *, parents: tuple[int, ...] = PARENT_SEEDS,
                  reads: int = 4, sweeps: int = 40) -> dict:
     summary, trials, samples = run_grid(parents=parents, reads=reads, sweeps=sweeps)
     out.mkdir(parents=True, exist_ok=True)
-    files = {"summary.json": canonical(summary)}
+    # Preserve exact IEEE-754 source coefficients, not just a nonreplayable hash.
+    # Rebuild independently within this same process and fail on bit drift.
+    verified_source = build_nested_instances(tiers=(20,))
+    source_record = canonical(model_record(verified_source.tier_instances[0].instance))
+    _require(verified_source.source_sha256 == SOURCE_SHA256
+             and sha256(source_record).hexdigest() == summary["original_model_sha256"],
+             "compiled source coefficients changed within one experiment")
+    files = {"summary.json": canonical(summary),
+             "compiled_source_model.json": source_record}
     for name, rows in (("trials.csv", trials), ("samples.csv", samples)):
         memory = __import__("io").StringIO()
         writer = csv.DictWriter(memory, fieldnames=list(rows[0]), lineterminator="\n")

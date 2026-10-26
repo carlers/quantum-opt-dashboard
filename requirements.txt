@@ -1,6 +1,5 @@
-# Streamlit Cloud root dependency discovery for integrated app.
+# Canonical local and CI installation; Streamlit Cloud picks the file next to
+# prototypes/unified_dashboard/app.py before this one, so the nested file MUST
+# install our local Python packages as well as third-party requirements.
+# No second installation of the same editable distributions here.
 -r prototypes/unified_dashboard/requirements.txt
-# Install the reviewed UI import package for consistent qualified module origins.
--e .
-# Install the unchanged historical bare-name source modules at environment startup.
--e prototypes/streamlit_water_quality

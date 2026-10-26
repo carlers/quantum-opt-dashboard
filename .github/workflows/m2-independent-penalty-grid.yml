@@ -1,0 +1,61 @@
+name: M2 bounded independent two-penalty OpenJij SA smoke
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/independent_penalty_grid.py"
+      - "problems/water_quality/tests/test_independent_penalty_grid.py"
+      - ".github/workflows/m2-independent-penalty-grid.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-budget-connectivity-penalty-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install numerical source model and CLASSICAL OpenJij SA
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "openjij==0.12.2" "pytest>=8,<10"
+      - name: Check frozen source and independent polynomial/slack-grid tests
+        run: |
+          python -m compileall -q problems/water_quality/independent_penalty_grid.py
+          python -m pytest problems/water_quality/tests/test_independent_penalty_grid.py problems/water_quality/tests/test_nested_resolution.py -q
+      - name: Run 3 by 3 grid with two seed blocks and four one-read samples each
+        run: |
+          python -m problems.water_quality.independent_penalty_grid --out "$RUNNER_TEMP/M2-grid" --parents 270010001,270010002 --reads 4 --sweeps 40
+          python - <<'PY'
+          import csv, hashlib, json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "M2-grid"
+          summary = json.loads((root / "summary.json").read_text())
+          trials = list(csv.DictReader((root / "trials.csv").open()))
+          samples = list(csv.DictReader((root / "samples.csv").open()))
+          sums = json.loads((root / "SHA256SUMS.json").read_text())
+          for name, expected in sums["file_sha256"].items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == expected
+          assert summary["grid_shape"] == [3, 3]
+          assert summary["sampled_source_states"] == 72
+          assert summary["inference_or_optimal_penalty_grid_claimed"] is False
+          assert summary["nonquantum_classical_only"] is True
+          assert len(trials) == 18 and len(samples) == 72
+          assert len({(row["grid_index"],row["parent_seed"],row["read_index"]) for row in samples}) == 72
+          assert len({row["child_seed"] for row in samples}) == 72
+          assert {row["original_feasible"] for row in samples} <= {"True", "False"}
+          assert {row["grid_index"] for row in samples} == {str(i) for i in range(9)}
+          print("All 72 actual one-read classical samples and 18 trial summaries archived.")
+          PY
+      - name: Upload all infeasible as well as feasible samples and checksum records
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: n20-M2-classical-two-independent-penalty-smoke
+          path: ${{ runner.temp }}/M2-grid/
+          retention-days: 14
+          if-no-files-found: warn

@@ -1,0 +1,75 @@
+# Replicate Streamlit Community Cloud's ACTUAL dependency-file selection.
+# Cloud prioritizes requirements.txt beside prototypes/unified_dashboard/app.py.
+name: Cloud unified app-directory dependency provenance
+on:
+  pull_request:
+    paths:
+      - "requirements.txt"
+      - "prototypes/unified_dashboard/requirements.txt"
+      - "prototypes/streamlit_water_quality/requirements.txt"
+      - "pyproject.toml"
+      - "prototypes/streamlit_water_quality/pyproject.toml"
+      - "prototypes/__init__.py"
+      - "prototypes/water_import_guard.py"
+      - "prototypes/unified_dashboard/pages/**"
+      - "prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py"
+      - ".github/workflows/cloud-entrypoint-dependencies.yml"
+  push:
+    branches:
+      - preview
+    paths:
+      - "requirements.txt"
+      - "prototypes/unified_dashboard/requirements.txt"
+      - "prototypes/streamlit_water_quality/requirements.txt"
+      - "pyproject.toml"
+      - "prototypes/streamlit_water_quality/pyproject.toml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cloud-selected-requirements:
+    name: Cloud-selected file installs local namespaces with isolated Python and routed AppTest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install EXACT app-directory Streamlit Cloud requirements, not root
+        run: |
+          python -m pip install -r prototypes/unified_dashboard/requirements.txt
+          python -m pip install "pytest>=8,<10"
+          python -m pip check
+      - name: Foreign-CWD isolated import test (does not inherit repo sys.path)
+        run: |
+          cd /tmp
+          python -I - <<'PY'
+          from importlib import metadata, util
+          from pathlib import Path
+          from prototypes.water_import_guard import WATER_BARE_MODULE_NAMES, WATER_SOURCE_DIR, require_water_import_origins
+          root = Path(__import__('os').environ['GITHUB_WORKSPACE']).resolve()
+          assert metadata.version('quantum-opt-dashboard-ui-imports') == '0.1.0'
+          assert metadata.version('quantum-opt-dashboard-legacy-water-imports') == '0.1.0'
+          assert Path(util.find_spec('prototypes.water_import_guard').origin).resolve() == root/'prototypes/water_import_guard.py'
+          assert WATER_SOURCE_DIR == root/'prototypes/streamlit_water_quality'
+          for name in WATER_BARE_MODULE_NAMES:
+              spec = util.find_spec(name)
+              assert spec is not None, name
+              assert Path(spec.origin).resolve() == WATER_SOURCE_DIR/(name + '.py'), name
+          require_water_import_origins()
+          from prototypes.streamlit_water_quality.app import render_water_page
+          assert callable(render_water_page)
+          print('CLOUD_APP_DIRECTORY_REQUIREMENTS_INSTALL_VERIFIED')
+          PY
+      - name: Actual Streamlit water navigation plus installation-contract tests
+        run: |
+          python -m pytest \
+            prototypes/unified_dashboard/tests/test_installed_legacy_water_imports.py \
+            prototypes/unified_dashboard/tests/test_qualified_water_page.py \
+            prototypes/unified_dashboard/tests/test_water_import_origin_guard.py \
+            prototypes/unified_dashboard/tests/test_navigation.py -q -s
+      - name: Delineate Cloud from CI verification
+        run: |
+          echo "Cloud-selected app-directory dependency file installed both original root qualified prototypes and nine legacy scientific bare modules." >> "$GITHUB_STEP_SUMMARY"
+          echo "Proof uses Linux Python 3.12, foreign-CWD python -I, real AppTest; NOT a signed Debian Streamlit Cloud remote runtime or proof of successful authenticated private app hosting." >> "$GITHUB_STEP_SUMMARY"

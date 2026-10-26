@@ -72,8 +72,13 @@ assert version('quantum-opt-dashboard-ui-imports') == '0.1.0'
     assert outcome.returncode == 0, outcome.stdout + outcome.stderr
 
 
-def test_root_uses_explicit_install_contract():
-    requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-    assert "-r prototypes/unified_dashboard/requirements.txt" in requirements
-    assert "-e ." in requirements
+def test_cloud_and_root_share_explicit_qualified_install_contract():
+    root = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+    cloud = (ROOT / "prototypes/unified_dashboard/requirements.txt").read_text(
+        encoding="utf-8"
+    )
+    assert "-r prototypes/unified_dashboard/requirements.txt" in root
+    assert "-e ." not in root
+    assert "-e ." in cloud.splitlines()
+    assert "-e prototypes/streamlit_water_quality" in cloud.splitlines()
     assert version("quantum-opt-dashboard-ui-imports") == "0.1.0"

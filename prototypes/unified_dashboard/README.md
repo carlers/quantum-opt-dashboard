@@ -13,9 +13,20 @@ python -m pip install -r requirements.txt
 streamlit run prototypes/unified_dashboard/app.py
 ```
 
-Or for Streamlit Community Cloud, choose
-`prototypes/unified_dashboard/app.py` as the main application path and
-use the root requirements file, including the local qualified editor namespace. Configure Python 3.12.
+For Streamlit Community Cloud, choose
+`prototypes/unified_dashboard/app.py` as the main application path, and
+configure Python 3.12. **Community Cloud prioritizes the `requirements.txt`
+next to that entrypoint**, so `prototypes/unified_dashboard/requirements.txt`
+is the canonical Cloud and local package-install manifest. It installs
+both editable source distributions (`-e .` and
+`-e prototypes/streamlit_water_quality`) from the repository working
+directory, plus Streamlit, SCIP and the other research dependencies.
+Root `requirements.txt` includes that same canonical manifest for CI/local
+runs. The `cloud-entrypoint-dependencies.yml` workflow installs the exact
+entrypoint-adjacent file in a separate job and tests import origins with
+`python -I` in a foreign working directory. This is a deployment
+*installation* check, not live Cloud proof; see
+[`docs/ISSUE_129_CLOUD_REQUIREMENTS_PRECEDENCE.md`](../../docs/ISSUE_129_CLOUD_REQUIREMENTS_PRECEDENCE.md).
 
 ### Navigation
 

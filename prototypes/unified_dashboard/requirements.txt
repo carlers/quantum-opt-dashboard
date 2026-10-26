@@ -1,4 +1,12 @@
-# One environment for all preserved MVP and bounded research plugins.
+# Canonical dependencies for the unified Streamlit Cloud entrypoint.
+# Community Cloud selects THIS file before the repository-root requirements.txt.
+# Streamlit runs with the repository root as its working directory.
+# See https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies
 -r ../streamlit_water_quality/requirements.txt
 openjij==0.12.2
 PyYAML>=6,<7
+
+# Install the unchanged root namespace and original bare scientific modules.
+# The root requirements.txt includes this file rather than repeating these.
+-e .
+-e prototypes/streamlit_water_quality

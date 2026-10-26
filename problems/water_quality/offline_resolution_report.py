@@ -174,10 +174,12 @@ def write_outputs(raw: bytes, output: Path, *, independent_seconds: int = 20):
     fig, ax = plt.subplots(figsize=(7.3, 4.8))
     ns = [row["N_free"] for row in rows]
     objective = [row["native_original_objective"] for row in rows]
-    ax.plot(ns, objective, marker="o", linewidth=1.5)
+    ax.scatter(ns, objective, s=65)
+    ax.set_ylim(min(objective) - 0.035, max(objective) + 0.045)
+    ax.set_xlim(min(ns) - 10, max(ns) + 10)
     ax.set_xticks(ns, [f"N={n}" for n in ns])
     ax.set_ylabel("Original local-model objective (minimize)")
-    ax.set_xlabel("Unselected or selected free candidate decisions (N)")
+    ax.set_xlabel("Free candidate decisions (N)")
     ax.set_title("Source-pinned N50/N100 • one CI execution")
     ax.grid(True, axis="y", alpha=0.3)
     for n, score in zip(ns, objective):

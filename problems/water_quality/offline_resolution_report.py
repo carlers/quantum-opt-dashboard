@@ -123,7 +123,7 @@ def extract_verified_rows(artifact: bytes, *, independent_seconds: int = 20) -> 
                 "child_process_wall_seconds": result["worker_wall_seconds"],
                 "source_model_rebuild_seconds": result["model_build_seconds"],
                 "selected_source_positions": json.dumps(
-                    witness["selected_master_positions"], separators=(",", ":"
+                    witness["selected_master_positions"], separators=(",", ":")
                 ),
                 "model_sha256": fresh["model_sha256"],
                 "emitted_LP_sha256": fresh["actual_exported_LP_sha256"],

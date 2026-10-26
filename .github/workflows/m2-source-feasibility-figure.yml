@@ -1,0 +1,102 @@
+name: M2/M3 source-bound descriptive 3x3 SA feasibility figure
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/penalty_grid_report.py"
+      - "problems/water_quality/tests/test_penalty_grid_report.py"
+      - ".github/workflows/m2-source-feasibility-figure.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  true-samples-before-descriptive-feasibility-chart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install original source and classical SA sample/chart dependencies
+        run: |
+          python -m pip install "numpy>=2,<3" "scipy>=1.13" "shapely>=2" "openjij==0.12.2" "matplotlib>=3.9,<4" "pytest>=8,<10"
+      - name: Compile and test independent grid, energy decoder and source chart schema
+        run: |
+          python -m compileall -q problems/water_quality/penalty_grid_report.py
+          python -m pytest problems/water_quality/tests/test_independent_penalty_grid.py problems/water_quality/tests/test_penalty_grid_report.py problems/water_quality/tests/test_nested_resolution.py -q
+      - name: Regenerate all 72 original and auxiliary bitstrings with separate child seeds
+        run: |
+          export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+          timeout --signal=TERM --kill-after=5s 90s python -u -m problems.water_quality.independent_penalty_grid --out "$RUNNER_TEMP/M2-evidence" --parents 270010001,270010002 --reads 4 --sweeps 40
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+          d = Path(os.environ["RUNNER_TEMP"]) / "M2-evidence"
+          with ZipFile(d / "original-research-samples.zip", "w") as archive:
+              for name in ("summary.json", "trials.csv", "samples.csv", "SHA256SUMS.json"):
+                  archive.write(d / name, name)
+          PY
+      - name: Recompute all numerical source/slack/seed records before making heatmap
+        run: |
+          export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+          timeout --signal=TERM --kill-after=5s 90s python -u -m problems.water_quality.penalty_grid_report "$RUNNER_TEMP/M2-evidence/original-research-samples.zip" --out "$RUNNER_TEMP/M2-verified-figure"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"]) / "M2-verified-figure"
+          report=json.loads((root / "verified_penalty_grid.json").read_text())
+          assert report["one_read_sampler_calls"] == 72
+          assert [r["total_draws"] for r in report["panel_counts"]] == [8]*9
+          assert report["confidence_intervals_computed"] is False
+          assert report["best_penalty_or_statistical_ranking_claimed"] is False
+          assert report["quantum_hardware_used"] is False
+          assert (root / "verified_feasibility_counts.csv").stat().st_size > 100
+          assert (root / "descriptive_feasible_counts.png").stat().st_size > 5000
+          print("All 72 original/classical-SA draws were rechecked before chart generation")
+          PY
+      - name: Detect a forged feasible/infeasible flag even after rehashing source files
+        run: |
+          python - <<'PY'
+          import csv, hashlib, io, json, os
+          from pathlib import Path
+          from zipfile import ZipFile
+          from problems.water_quality.penalty_grid_report import inspect_archive
+          root=Path(os.environ["RUNNER_TEMP"]) / "M2-evidence"
+          names=("summary.json","trials.csv","samples.csv")
+          data={name:(root / name).read_bytes() for name in names}
+          text=data["samples.csv"].decode()
+          rows=list(csv.DictReader(io.StringIO(text)))
+          rows[0]["original_feasible"]="False" if rows[0]["original_feasible"]=="True" else "True"
+          buf=io.StringIO()
+          writer=csv.DictWriter(buf,fieldnames=list(rows[0]),lineterminator="\n")
+          writer.writeheader()
+          writer.writerows(rows)
+          data["samples.csv"]=buf.getvalue().encode()
+          checksum={"schema":"two-independent-penalty-N20-classical-SA-smoke-v1",
+                    "source_sha256":"e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7",
+                    "file_sha256":{name:hashlib.sha256(blob).hexdigest()
+                                   for name,blob in data.items()}}
+          data["SHA256SUMS.json"]=json.dumps(checksum).encode()
+          out=io.BytesIO()
+          with ZipFile(out,"w") as z:
+              for name,blob in data.items():z.writestr(name,blob)
+          try:
+              inspect_archive(out.getvalue())
+          except ValueError:
+              print("Forged feasibility rejected even with internally consistent checksums")
+          else:
+              raise AssertionError("Changed per-sample feasibility was accepted")
+          PY
+      - name: Retain complete sources, all infeasible trials and descriptive figure
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m2-complete-source-samples-and-descriptive-grid-figure
+          path: ${{ runner.temp }}/M2-evidence/
+            ${{ runner.temp }}/M2-verified-figure/
+          retention-days: 14
+          if-no-files-found: warn

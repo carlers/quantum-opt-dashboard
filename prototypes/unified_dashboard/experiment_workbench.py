@@ -6,12 +6,13 @@ multiuser cloud queue and not a published manuscript reproduction.
 """
 from __future__ import annotations
 
-import io
-import json
-from zipfile import ZipFile
 
 import pandas as pd
 import streamlit as st
+
+from prototypes.unified_dashboard.experiment_analysis import (
+    compare_completed_jobs, load_verified_samples,
+)
 
 from problems.water_quality.experiment_jobs import (
     JobError, Spec, export_bundle, job_root, launch_job,
@@ -171,6 +172,11 @@ def render_experiment_page():
     with st.expander("Original submitted configuration and limitations"):
         st.json(job["config"])
     if job["result"]:
+        try:
+            payload = export_bundle(chosen)
+        except (JobError, OSError, ValueError) as exc:
+            st.error("Experiment evidence failed integrity checks: " + str(exc))
+            st.stop()
         result = job["result"]
         st.subheader("3 · Analyze original-source results")
         st.caption(
@@ -211,44 +217,83 @@ def render_experiment_page():
             f"{result['model_sha256']} · worker elapsed: "
             f"{result['total_worker_wall_seconds']:.2f} seconds."
         )
-        try:
-            payload = export_bundle(chosen)
-            if spec.solver == "classical_sa":
-                with ZipFile(io.BytesIO(payload)) as evidence:
-                    samples = pd.read_csv(io.BytesIO(evidence.read("samples.csv")))
-                st.subheader("Inspect all sampled original placements")
-                st.caption(
-                    "ALL classical draws, including infeasible ones. Augmented QUBO "
-                    "energies are not comparable original feasible objectives."
-                )
-                st.dataframe(samples[[
-                    "read_index", "child_seed", "original_feasible",
-                    "original_selected_count", "original_objective",
-                    "expanded_qubo_augmented_energy",
-                ]], hide_index=True, width="stretch")
-                st.scatter_chart(samples, x="read_index", y="original_objective",
-                                 height=230)
-                sample_index = st.selectbox(
-                    "View selected source sites for one recorded sample",
-                    [int(v) for v in samples["read_index"]],
-                    key="local_experiment_sample_index",
-                )
-                sample_row = samples.loc[
-                    samples["read_index"] == sample_index
-                ].iloc[0]
-                st.write(
-                    "Original feasibility: " +
-                    ("feasible" if str(sample_row["original_feasible"]).lower()
-                     == "true" else "INFEASIBLE")
-                )
-                selected_sites = json.loads(sample_row["selected_local_positions"])
-                show_source_site_map(spec.n_free, selected_sites)
-            st.download_button(
-                "Download immutable model, configuration, samples and evidence ZIP",
-                payload, file_name=f"lake-research-run-{chosen[:12]}.zip",
-                mime="application/zip", key="local_job_export",
+        if spec.solver == "classical_sa":
+            try:
+                checked = load_verified_samples(chosen)
+            except (JobError, ValueError, OSError) as exc:
+                st.error("Individual source samples failed scientific validation: " + str(exc))
+                st.stop()
+            samples = pd.DataFrame(checked)
+            st.subheader("Inspect all sampled original placements")
+            st.caption(
+                "ALL classical draws, including infeasible ones. The source weights, "
+                "site mapping, K, one-hop feasibility and raw original objective "
+                "have been recomputed from the archived exact binary64 model."
             )
-        except (JobError, OSError) as exc:
-            st.error("Evidence failed immutable checksum verification: " + str(exc))
+            st.dataframe(samples[[
+                "Read", "Child seed", "Feasible", "Selected count",
+                "Original objective", "Augmented QUBO energy",
+            ]], hide_index=True, width="stretch")
+            st.scatter_chart(samples, x="Read", y="Original objective", height=230)
+            sample_index = st.selectbox(
+                "View selected source sites for one recorded sample",
+                [int(v) for v in samples["Read"]],
+                key="local_experiment_sample_index",
+            )
+            sample_row = next(r for r in checked if r["Read"] == sample_index)
+            st.write(
+                "Original feasibility: " +
+                ("feasible" if sample_row["Feasible"] else "INFEASIBLE")
+            )
+            show_source_site_map(spec.n_free, sample_row["Selected local positions"])
+        st.download_button(
+            "Download immutable model, configuration, samples and evidence ZIP",
+            payload, file_name=f"lake-research-run-{chosen[:12]}.zip",
+            mime="application/zip", key="local_job_export",
+        )
     else:
         st.info("Results will appear here after this local worker finishes.")
+
+    if st.button("Rerun saved settings as a NEW experiment", key="local_job_rerun"):
+        try:
+            new_id = launch_job(spec)
+            st.session_state["local_selected_experiment"] = new_id
+            st.success("Launched new, separately recorded experiment: " + new_id[:12])
+        except (JobError, OSError) as exc:
+            st.error("Re-run not launched: " + str(exc))
+
+    complete = [run for run in jobs if run["status"] == "completed"]
+    if len(complete) >= 2:
+        st.subheader("4 · Compare completed source-model runs")
+        st.caption(
+            "Choose 2–12 finished experiments. A direct comparison requires the "
+            "same original K, site identities AND exact source coefficients. "
+            "Matching seeds alone are not sufficient; no statistical inference."
+        )
+        choices = [run["job_id"] for run in complete]
+        selected_runs = st.multiselect(
+            "Compare completed job IDs", choices,
+            default=choices[:2], max_selections=12,
+            format_func=lambda item: item[:12],
+            key="local_comparison_ids",
+        )
+        if len(selected_runs) >= 2:
+            try:
+                compared = compare_completed_jobs(selected_runs)
+                table = pd.DataFrame(compared["observations"])
+                st.caption("Identical original model SHA-256: " + compared["model_sha256"])
+                st.dataframe(table, hide_index=True, width="stretch")
+                st.caption(compared["scope"])
+                sa_only = table.loc[table["Solver"] == "classical_sa"]
+                if len(sa_only) > 1:
+                    st.scatter_chart(
+                        sa_only, x="Job ID", y="Original-feasible fraction",
+                        height=240,
+                    )
+                    st.caption(
+                        "Each mark is ONE user-run classical experiment. "
+                        "This is descriptive only, not a significance test or "
+                        "optimized two-penalty recommendation."
+                    )
+            except (JobError, ValueError, OSError) as exc:
+                st.warning("Selected runs cannot be compared directly: " + str(exc))

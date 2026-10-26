@@ -21,7 +21,7 @@ import numpy as np
 from problems.water_quality.nested_resolution import build_nested_instances
 from problems.water_quality.independent_penalty_grid import (
     SCHEMA, SOURCE_SHA256, FROZEN_N20_OPTIMUM, canonical, child_seeds,
-    grid, inspect_one_read, model_record, qubo_digest,
+    grid, inspect_one_read, model_record, qubo_digest, frozen_source_instance,
 )
 from prototypes.streamlit_water_quality.qubo import make_qubo
 
@@ -81,13 +81,13 @@ def inspect_archive(raw: bytes):
             or len(trials) != 9 * len(parents)
             or summary["sampled_source_states"] != number):
         fail("dropped or duplicated source samples")
-    study = build_nested_instances(tiers=(20,))
+    study, instance = frozen_source_instance()
     if study.source_sha256 != SOURCE_SHA256 or len(study.fixed_master_positions) != 15:
         fail("historical lake source identity differs")
-    instance = study.tier_instances[0].instance
     recomputed = model_record(instance)
     if (compiled != recomputed
-            or sha256(canonical(compiled)).hexdigest() != summary["original_model_sha256"]):
+            or sha256(canonical(compiled)).hexdigest() != summary["original_model_sha256"]
+            or summary.get("numerical_profile_sha256") != summary["original_model_sha256"]):
         fail("archived IEEE-754 source model differs from the current source or its digest")
     points = grid(instance)
     if summary["grid_points"] != list(points):

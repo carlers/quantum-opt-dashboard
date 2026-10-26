@@ -94,7 +94,12 @@ def test_real_original_source_n20_scip_worker_and_hash_checked_zip(store):
         manifest = json.loads(bundle.read("manifest.json"))
         for name, digest in manifest["sha256"].items():
             assert sha256(bundle.read(name)).hexdigest() == digest
-        assert len(bundle.read("emitted_scip_model.lp")) > 5000
+        exported_lp = bundle.read("emitted_scip_model.lp")
+        assert len(exported_lp) > 1000
+        assert b"Minimize" in exported_lp
+        assert b"Subject to" in exported_lp
+        assert b"Binaries" in exported_lp
+        assert b"budget:" in exported_lp
     path = store / ident / "result.json"
     path.write_text(path.read_text() + "changed")
     with pytest.raises(JobError, match="changed"):

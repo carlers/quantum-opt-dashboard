@@ -33,6 +33,7 @@ def test_bad_source_schema_is_rejected_before_looking_up_sample_rows():
         "summary.json": b"{}",
         "trials.csv": b"grid_index\n",
         "samples.csv": b"grid_index\n",
+        "compiled_source_model.json": b"{}",
         "SHA256SUMS.json": json.dumps({
             "schema": SCHEMA, "source_sha256": "NOT-the-original-source",
             "file_sha256": {},
@@ -47,6 +48,7 @@ def test_changed_archive_member_fails_sha256_chain():
         "summary.json": b'{"source_sha256":"historical"}\n',
         "trials.csv": b"grid_index\n",
         "samples.csv": b"grid_index\n",
+        "compiled_source_model.json": b"{}",
     }
     hashes = {name: __import__("hashlib").sha256(raw).hexdigest()
               for name, raw in content.items()}

@@ -162,3 +162,19 @@ def test_page_disabled_by_default_never_starts_unbounded_background_worker(monke
     assert any("disabled by default" in str(i.proto) for i in app.info)
     assert not any("Launch bounded experiment" in x.label for x in app.button)
     assert "local_selected_experiment" not in app.session_state
+
+def test_enabled_ui_switches_from_exact_scip_to_classical_sa_without_launch(monkeypatch, tmp_path):
+    monkeypatch.setenv("QOPT_LOCAL_EXPERIMENTS", "1")
+    monkeypatch.setenv("QOPT_EXPERIMENT_STORE", str(tmp_path / "operator"))
+    app = AppTest.from_file(str(APP), default_timeout=120).run()
+    app.switch_page("pages/experiments.py").run()
+    assert not app.exception, app.exception
+    assert any(b.label == "Launch bounded experiment" for b in app.button)
+    method = next(x for x in app.selectbox if x.label == "Solver")
+    method.set_value("OpenJij — classical SA").run()
+    assert not app.exception, app.exception
+    assert any(x.label == "Budget penalty (λb)" for x in app.number_input)
+    assert any(x.label == "Connectivity penalty (λc)" for x in app.number_input)
+    assert any(x.label == "Parent seed" for x in app.number_input)
+    assert any(x.label == "Individually seeded samples" for x in app.slider)
+    assert not (tmp_path / "operator").exists()

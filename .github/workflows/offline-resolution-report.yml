@@ -72,6 +72,8 @@ jobs:
         if: always()
         with:
           name: m3-n50-n100-verified-source-figures-and-LP-evidence
-          path: ${{ runner.temp }}/
+          path: |
+            ${{ runner.temp }}/resolution-source/
+            ${{ runner.temp }}/source-verified-charts/
           retention-days: 14
           if-no-files-found: warn

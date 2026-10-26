@@ -1,0 +1,42 @@
+name: User-launched bounded 2x2 classical sweep acceptance
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/experiment_jobs.py"
+      - "problems/water_quality/experiment_sweeps.py"
+      - "prototypes/unified_dashboard/sweep_workbench.py"
+      - "prototypes/unified_dashboard/experiment_workbench.py"
+      - "prototypes/unified_dashboard/tests/test_sweep_workbench.py"
+      - ".github/workflows/local-2x2-sweeps.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  one-user-four-source-verified-sample-cells:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install user workbench and actual bounded classical sampler
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install "pytest>=8,<10"
+      - name: Run real single-cell and four-cell scientific worker tests
+        run: |
+          python -m compileall -q problems/water_quality/experiment_sweeps.py prototypes/unified_dashboard/sweep_workbench.py
+          python -m pytest prototypes/unified_dashboard/tests/test_sweep_workbench.py prototypes/unified_dashboard/tests/test_experiment_analysis.py prototypes/unified_dashboard/tests/test_experiment_workbench.py -q
+      - name: Confirm hosted/shared execution is still disabled by default
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from problems.water_quality.experiment_jobs import local_opt_in
+          assert not local_opt_in()
+          assert not Path(".qopt_experiments").exists()
+          print("CI exercised local test fixtures only; hosted user compute remains opt-in disabled.")
+          PY

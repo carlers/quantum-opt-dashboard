@@ -108,7 +108,7 @@ def test_genuine_four_cell_experiment_keeps_every_state_and_full_child_zip(store
 def test_one_local_lock_blocks_standalone_job_while_sweep_is_active(monkeypatch, store):
     monkeypatch.setenv("QOPT_LOCAL_EXPERIMENTS", "1")
     queued = create_sweep(SweepSpec(), root=store)
-    with pytest.raises(JobError, match="already active"):
+    with pytest.raises(JobError, match="sweep is active"):
         launch_job(Spec(), root=store)
     assert cancel_sweep(queued, root=store)
     assert execute_sweep(queued, root=store)["status"] == "cancelled"

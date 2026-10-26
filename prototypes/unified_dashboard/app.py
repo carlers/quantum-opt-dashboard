@@ -26,6 +26,7 @@ st.warning(
 
 pages = [
     st.Page("pages/water.py", title="Water-quality placement", icon="🌊", default=True),
+    st.Page("pages/verified_results.py", title="Verified source results", icon="📊"),
     st.Page("pages/custom.py", title="Configure another problem", icon="🧮"),
     st.Page("pages/research.py", title="QUBO and classical SA", icon="📈"),
     st.Page("pages/about.py", title="About the research", icon="📋"),

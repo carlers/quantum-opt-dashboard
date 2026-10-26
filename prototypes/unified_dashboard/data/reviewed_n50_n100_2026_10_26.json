@@ -1,0 +1,87 @@
+{
+  "schema": "reviewed-n50-n100-one-ci-execution-v1",
+  "review_scope": "One archived GitHub Actions execution. Source-only, not a publication or field deployment.",
+  "source_geojson_sha256": "e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7",
+  "reference_profile": "original historical source notebook weights, road-based D2, local one-hop, K5, 15 fixed marked stations",
+  "source_execution_date_utc": "2026-10-26",
+  "source_workflow_run_id": 40305459517,
+  "source_artifact_id": 12642311053,
+  "source_artifact_url": "https://github.com/carlers/quantum-opt-dashboard/actions/runs/40305459517/artifacts/12642311053",
+  "original_artifact_zip_sha256": "c0fff39780dc21a42e1de14c126cde7adda16e28ca37d25a38b156497800deb2",
+  "archived_data_retention_days": 14,
+  "reported_status": "SCIP optimal and independently HiGHS corroborated in source workflow",
+  "observations": [
+    {
+      "n_free": 50,
+      "new_sensor_budget": 5,
+      "scip_status": "optimal",
+      "scip_gap": 0,
+      "highs_status": 0,
+      "highs_gap": 0,
+      "original_objective": -3.3012934918564643,
+      "highs_dual_bound": -3.301293491856464,
+      "linear_component": -3.3908728641214054,
+      "quadratic_component": 0.08957937226494117,
+      "selected_local_positions": [
+        0,
+        1,
+        3,
+        6,
+        7
+      ],
+      "selected_source_master_positions": [
+        5253,
+        2394,
+        1557,
+        47,
+        5409
+      ],
+      "model_sha256": "b4d283af994838e37a8c3f42d3887eafaf5ddd0468e0654602abfbf9e16ace3a",
+      "emitted_lp_sha256": "eb0a4b0555d26a253ba4c264725f894b0dba3ca667908d367f1f62ba854dfa2a",
+      "model_rebuild_seconds": 0.3685922429999948,
+      "scip_call_including_lp_export_seconds": 0.024613651000009895,
+      "child_wall_seconds": 0.7834851839999999
+    },
+    {
+      "n_free": 100,
+      "new_sensor_budget": 5,
+      "scip_status": "optimal",
+      "scip_gap": 0,
+      "highs_status": 0,
+      "highs_gap": 0,
+      "original_objective": -3.4910546048016684,
+      "highs_dual_bound": -3.491054604801668,
+      "linear_component": -3.4910546048016684,
+      "quadratic_component": 0,
+      "selected_local_positions": [
+        0,
+        3,
+        6,
+        52,
+        54
+      ],
+      "selected_source_master_positions": [
+        5253,
+        1557,
+        47,
+        5328,
+        2530
+      ],
+      "model_sha256": "eaafe089a8f9956f5d67123aac810b3f4ead5a98c0d008e04329617eb5bfc8d9",
+      "emitted_lp_sha256": "8b5c3c757a58f7f34d6394a7fe6f4e5437f16709a684fa1be61b5bd85e867067",
+      "model_rebuild_seconds": 0.47029596400000173,
+      "scip_call_including_lp_export_seconds": 0.08258352600000762,
+      "child_wall_seconds": 0.9308301879999874
+    }
+  ],
+  "verified_cross_tier_small_embeds_unchanged_in_large": true,
+  "scientific_limitations": {
+    "manuscript_AHP_and_D2_parity": false,
+    "formal_external_signed_optimality_certificate": false,
+    "original_5417_site_master_objective_evaluated": false,
+    "independent_statistical_repetitions": 0,
+    "physical_monitoring_validated": false,
+    "quantum_hardware_executed": false,
+    "runtime_scaling_inference_permitted": false
+  }
+}

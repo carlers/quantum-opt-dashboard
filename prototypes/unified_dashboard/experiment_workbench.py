@@ -6,6 +6,10 @@ multiuser cloud queue and not a published manuscript reproduction.
 """
 from __future__ import annotations
 
+import io
+import json
+from zipfile import ZipFile
+
 import pandas as pd
 import streamlit as st
 
@@ -13,6 +17,25 @@ from problems.water_quality.experiment_jobs import (
     JobError, Spec, export_bundle, job_root, launch_job,
     list_jobs, local_opt_in, read_job, request_cancel,
 )
+
+
+def show_source_site_map(n_free: int, selected_local: list[int]) -> None:
+    """Use the existing verified lake map renderer, never call an optimizer."""
+    from problems.water_quality.nested_resolution import build_nested_instances
+    from prototypes.unified_dashboard.verified_results import selected_site_map
+
+    study = build_nested_instances(tiers=(n_free,))
+    st.pydeck_chart(
+        selected_site_map(study, {
+            "n_free": n_free,
+            "selected_local_positions": selected_local,
+        }),
+        width="stretch",
+    )
+    st.caption(
+        "Blue: selected sample positions · Red: 15 original fixed stations · "
+        "Gray: unselected candidate sites. Source map only; not field-validated."
+    )
 
 
 def render_experiment_page():
@@ -167,6 +190,8 @@ def render_experiment_page():
                 "Local candidate position": sites["selected_local_positions"],
                 "Original GeoJSON feature position": sites["selected_source_master_positions"],
             }), hide_index=True, width="stretch")
+            with st.expander("Map this independently checked SCIP placement", expanded=True):
+                show_source_site_map(spec.n_free, sites["selected_local_positions"])
         else:
             a, b, c = st.columns(3)
             a.metric("Original-feasible draws",
@@ -188,6 +213,36 @@ def render_experiment_page():
         )
         try:
             payload = export_bundle(chosen)
+            if spec.solver == "classical_sa":
+                with ZipFile(io.BytesIO(payload)) as evidence:
+                    samples = pd.read_csv(io.BytesIO(evidence.read("samples.csv")))
+                st.subheader("Inspect all sampled original placements")
+                st.caption(
+                    "ALL classical draws, including infeasible ones. Augmented QUBO "
+                    "energies are not comparable original feasible objectives."
+                )
+                st.dataframe(samples[[
+                    "read_index", "child_seed", "original_feasible",
+                    "original_selected_count", "original_objective",
+                    "expanded_qubo_augmented_energy",
+                ]], hide_index=True, width="stretch")
+                st.scatter_chart(samples, x="read_index", y="original_objective",
+                                 height=230)
+                sample_index = st.selectbox(
+                    "View selected source sites for one recorded sample",
+                    [int(v) for v in samples["read_index"]],
+                    key="local_experiment_sample_index",
+                )
+                sample_row = samples.loc[
+                    samples["read_index"] == sample_index
+                ].iloc[0]
+                st.write(
+                    "Original feasibility: " +
+                    ("feasible" if str(sample_row["original_feasible"]).lower()
+                     == "true" else "INFEASIBLE")
+                )
+                selected_sites = json.loads(sample_row["selected_local_positions"])
+                show_source_site_map(spec.n_free, selected_sites)
             st.download_button(
                 "Download immutable model, configuration, samples and evidence ZIP",
                 payload, file_name=f"lake-research-run-{chosen[:12]}.zip",

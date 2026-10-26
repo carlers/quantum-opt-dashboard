@@ -1,0 +1,168 @@
+{
+  "schema": "water-quality-source-claim-registry-v1",
+  "status": "draft-scientific-review-no-publication-or-release-approval",
+  "original_inputs": {
+    "geojson": {
+      "path": "problems/water_quality/data/LDB_centroids_clean.geojson",
+      "sha256": "e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7",
+      "feature_count": 5417,
+      "flagged_fixed_stations": 15,
+      "crs": "EPSG:32651",
+      "d2_factor_in_committed_source": "road_proximity"
+    },
+    "notebook": {
+      "path": "problems/water_quality/notebooks/experiment9 grid search copy.ipynb",
+      "git_blob_sha1": "a554f4f37957e924c0ed417e53af2dab04e45ffa",
+      "code_cell_count": 25,
+      "preserve_original": true
+    },
+    "uploaded_manuscript": {
+      "title": "QUBO-Based Sensor Placement Framework for Water Quality Monitoring in Laguna de Bay",
+      "source_data_parity_proven": false,
+      "d2_description": "population_exposure_WorldPop_reported_by_manuscript",
+      "exact_AHP_weight_parity_proven": false
+    },
+    "coordinates_semantics": "local candidate index != original GeoJSON feature array position != GeoJSON property id"
+  },
+  "model_scope": {
+    "free_tiers_initial": [
+      20,
+      50,
+      100
+    ],
+    "new_station_budget_k": 5,
+    "fixed_station_count": 15,
+    "graph": "historical local one-hop (not global connected network)",
+    "original_objective": "source linear and source free-free interaction terms; no QUBO penalty",
+    "factor_profile": "committed notebook AHP weights, historical road-based D2",
+    "paper_input_reproduced": false,
+    "small_scale_exact_reference": {
+      "tier_n": 20,
+      "selected_local_positions": [
+        0,
+        1,
+        3,
+        6,
+        7
+      ],
+      "source_objective": -3.3012934918564643,
+      "n_free_k_combinations": 15504,
+      "feasible_local_one_hop_subsets": 1077
+    },
+    "distinct_global_counterfactual": {
+      "feasible_subsets": 860,
+      "same_total_combinations": 15504,
+      "do_not_pool_with_local": true
+    }
+  },
+  "evidence_claims": [
+    {
+      "id": "E-N20-L",
+      "claim": "N20/K5 historical local model has independently checked feasible optimum",
+      "tier_n": 20,
+      "verification": "independent enumerated witness plus SCIP",
+      "status": "source-computational-verified",
+      "source_url": "https://github.com/carlers/quantum-opt-dashboard/pull/131",
+      "not_physical_deployment": true
+    },
+    {
+      "id": "E-M1-COHORTS",
+      "claim": "N20/N50/N100 are source-backed fixed-seeded nested free-candidate cohorts",
+      "tier_n": [
+        20,
+        50,
+        100
+      ],
+      "verification": "independent raw-GeoJSON FPS reconstruction tests",
+      "status": "source-computational-verified",
+      "source_url": "https://github.com/carlers/quantum-opt-dashboard/pull/131",
+      "not_physical_deployment": true
+    },
+    {
+      "id": "E-N50-SCIP-HIGHS",
+      "claim": "N50/K5 source-tier objective is -3.3012934918564643 with SCIP and independently audited HiGHS LP computational optimality",
+      "tier_n": 50,
+      "verification": "bounded SCIP + emitted LP reconstruction + HiGHS primal and dual bound",
+      "status": "reviewed-single-ci-execution",
+      "source_url": "https://github.com/carlers/quantum-opt-dashboard/pull/141",
+      "not_physical_deployment": true
+    },
+    {
+      "id": "E-N100-SCIP-HIGHS",
+      "claim": "N100/K5 source-tier objective is -3.4910546048016684 with SCIP and independently audited HiGHS LP computational optimality",
+      "tier_n": 100,
+      "verification": "bounded SCIP + emitted LP reconstruction + HiGHS primal and dual bound",
+      "status": "reviewed-single-ci-execution",
+      "source_url": "https://github.com/carlers/quantum-opt-dashboard/pull/141",
+      "not_physical_deployment": true
+    },
+    {
+      "id": "E-M2-PILOT",
+      "claim": "A two-parent-block 3x3 classical OpenJij penalty pilot yielded 72 individually seeded draws; two frozen-profile replays matched byte-for-byte",
+      "tier_n": 20,
+      "verification": "complete original plus auxiliary bitstrings, original model hash, SHA256, independent bitwise replay CI",
+      "status": "pilot-engineering-observation-not-inferential",
+      "source_url": "https://github.com/carlers/quantum-opt-dashboard/pull/147",
+      "not_physical_deployment": true
+    }
+  ],
+  "prohibited_claims": [
+    {
+      "id": "PAPER-PARITY",
+      "claim": "Exact reproduction of published manuscript's numerical inputs or solver results",
+      "allowed": false,
+      "reason": "Historical notebook weights and road-based D2 differ from manuscript AHP and WorldPop D2; published N50 penalty arithmetic needs reconciliation"
+    },
+    {
+      "id": "WIRELESS-FIELD",
+      "claim": "Validated physical or wireless sensor network deployment at Laguna de Bay",
+      "allowed": false,
+      "reason": "Candidate adjacency is modeled; telemetry, field water quality and backhaul not independently measured"
+    },
+    {
+      "id": "QUANTUM-SPEEDUP",
+      "claim": "Quantum optimization, QAOA hardware execution or quantum advantage achieved",
+      "allowed": false,
+      "reason": "Available experimental sampling here is classical OpenJij simulated annealing; SQA notebook setting is placeholder"
+    },
+    {
+      "id": "STAT-SCALING",
+      "claim": "Two N50/N100 SCIP observations or two exact N20 SA replays prove runtime scaling, stochastic significance or best lambda parameters",
+      "allowed": false,
+      "reason": "Insufficient statistical study, identical replay parents, heterogeneous solver/time scope"
+    },
+    {
+      "id": "MASTER-OPT",
+      "claim": "N100 source-model optimality establishes global optimum of all 5,417 candidate sites",
+      "allowed": false,
+      "reason": "Each tier is a distinct restricted candidate set; only the source-tier objective optimized"
+    }
+  ],
+  "experiment_boundary": {
+    "sampled_source_model_float64_profile": "immutable compared against original geometry and original source within declared numerical tolerance",
+    "experiment_manifest_required": [
+      "original source hashes",
+      "git tree commit/ref",
+      "local+source feature identity",
+      "factor semantics",
+      "crs",
+      "fixed stations",
+      "objective coefficient SHA256 exact float64 hex",
+      "full graph",
+      "K and beta/delta",
+      "independent lambda budget/connectivity",
+      "classical/quantum actual solver identity",
+      "solver status/optimality gap",
+      "parent and child seeds",
+      "full original and auxiliary samples incl. infeasible",
+      "three timing scopes",
+      "tool/OS/BLAS versions",
+      "evidence artifact hashes",
+      "license and archive identifier when approved"
+    ],
+    "data_license_checked": false,
+    "public_distribution_approved": false,
+    "durable_repository_selected": false,
+    "doi_assigned": false
+  }
+}

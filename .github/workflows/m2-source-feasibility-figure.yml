@@ -37,7 +37,7 @@ jobs:
           from zipfile import ZipFile
           d = Path(os.environ["RUNNER_TEMP"]) / "M2-evidence"
           with ZipFile(d / "original-research-samples.zip", "w") as archive:
-              for name in ("summary.json", "trials.csv", "samples.csv", "SHA256SUMS.json"):
+              for name in ("summary.json", "compiled_source_model.json", "trials.csv", "samples.csv", "SHA256SUMS.json"):
                   archive.write(d / name, name)
           PY
       - name: Recompute all numerical source/slack/seed records before making heatmap
@@ -66,7 +66,7 @@ jobs:
           from zipfile import ZipFile
           from problems.water_quality.penalty_grid_report import inspect_archive
           root=Path(os.environ["RUNNER_TEMP"]) / "M2-evidence"
-          names=("summary.json","trials.csv","samples.csv")
+          names=("summary.json","compiled_source_model.json","trials.csv","samples.csv")
           data={name:(root / name).read_bytes() for name in names}
           text=data["samples.csv"].decode()
           rows=list(csv.DictReader(io.StringIO(text)))

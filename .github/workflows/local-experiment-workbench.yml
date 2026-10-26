@@ -1,0 +1,49 @@
+name: User-controlled local research workbench acceptance
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/experiment_jobs.py"
+      - "prototypes/unified_dashboard/experiment_workbench.py"
+      - "prototypes/unified_dashboard/experiment_analysis.py"
+      - "prototypes/unified_dashboard/pages/experiments.py"
+      - "prototypes/unified_dashboard/tests/test_experiment_workbench.py"
+      - "prototypes/unified_dashboard/tests/test_experiment_analysis.py"
+      - "prototypes/unified_dashboard/app.py"
+      - ".github/workflows/local-experiment-workbench.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-operator-only-source-model-real-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install actual unified source solver and local UI dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install "pytest>=8,<10"
+      - name: Verify source workers compile and evidence archive path cannot escape
+        run: |
+          python -m compileall -q problems/water_quality/experiment_jobs.py prototypes/unified_dashboard/experiment_workbench.py prototypes/unified_dashboard/experiment_analysis.py
+          python -m pytest prototypes/unified_dashboard/tests/test_experiment_workbench.py prototypes/unified_dashboard/tests/test_experiment_analysis.py -q
+      - name: Verify source-validated original N20, nested cohorts and prior UI routes remain unchanged
+        run: |
+          python -m pytest problems/water_quality/tests/test_nested_resolution.py prototypes/unified_dashboard/tests/test_verified_results.py -q
+      - name: Confirm CI did not create unapproved scientific study or local researcher store
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          assert os.environ.get("QOPT_LOCAL_EXPERIMENTS") != "1"
+          assert not Path(".qopt_experiments").exists()
+          from problems.water_quality.experiment_jobs import local_opt_in
+          assert not local_opt_in()
+          print("No shared-host research worker was enabled by CI")
+          PY

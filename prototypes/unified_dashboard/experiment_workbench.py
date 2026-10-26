@@ -1,0 +1,299 @@
+"""Local user-controlled experiment run configuration, history and evidence.
+
+Only starts workers after an explicit button click on a trusted, private
+operator's local host. No auto-solve on rerender. Not an authenticated
+multiuser cloud queue and not a published manuscript reproduction.
+"""
+from __future__ import annotations
+
+
+import pandas as pd
+import streamlit as st
+
+from prototypes.unified_dashboard.experiment_analysis import (
+    compare_completed_jobs, load_verified_samples,
+)
+
+from problems.water_quality.experiment_jobs import (
+    JobError, Spec, export_bundle, job_root, launch_job,
+    list_jobs, local_opt_in, read_job, request_cancel,
+)
+
+
+def show_source_site_map(n_free: int, selected_local: list[int]) -> None:
+    """Use the existing verified lake map renderer, never call an optimizer."""
+    from problems.water_quality.nested_resolution import build_nested_instances
+    from prototypes.unified_dashboard.verified_results import selected_site_map
+
+    study = build_nested_instances(tiers=(n_free,))
+    st.pydeck_chart(
+        selected_site_map(study, {
+            "n_free": n_free,
+            "selected_local_positions": selected_local,
+        }),
+        width="stretch",
+    )
+    st.caption(
+        "Blue: selected sample positions · Red: 15 original fixed stations · "
+        "Gray: unselected candidate sites. Source map only; not field-validated."
+    )
+
+
+def render_experiment_page():
+    st.title("Experiment workbench")
+    st.caption("Explicit user-run computational research · source-pinned Laguna de Bay")
+    st.warning(
+        "Trusted local single-operator MVP ONLY. No user authentication or tenant "
+        "isolation: never expose this enabled worker on a public Streamlit deployment. "
+        "SCIP is classical exact MILP; OpenJij is classical simulated annealing, "
+        "NOT QAOA or quantum hardware. Historical source notebook weights, road D2 "
+        "and local one-hop do not reproduce all manuscript inputs."
+    )
+    if not local_opt_in():
+        st.info(
+            "Execution is disabled by default. On a private machine only, "
+            "set QOPT_LOCAL_EXPERIMENTS=1 before starting Streamlit. "
+            "The existing hosted preview should remain read-only."
+        )
+        return
+
+    st.caption(
+        f"Local evidence directory: {job_root()} — persistent on this machine "
+        "only. Do not use a shared/public instance without authentication, "
+        "quotas and a durable isolated worker backend."
+    )
+    st.subheader("1 · Configure your experiment")
+    # This selector MUST sit outside st.form: Streamlit form fields do not
+    # trigger conditional rerenders until Submit, hiding SA-specific controls.
+    method = st.selectbox(
+        "Solver", ["SCIP — classical exact MILP", "OpenJij — classical SA"],
+        help="SCIP reports optimality/gap. Classical SA does not prove optimality.",
+    )
+    solver = "scip" if method.startswith("SCIP") else "classical_sa"
+    with st.form("local_research_job_config", clear_on_submit=False):
+        n = st.selectbox(
+            "Free candidate sites (N)", [20, 50, 100] if solver == "scip" else [20],
+            help="Source-validated nested tiers. SA beyond N20 needs another gate.",
+        )
+        k = st.number_input(
+            "New sensors (K)", min_value=1, max_value=10, value=5, step=1,
+            help="K affects the constraint model. N20/K5 alone has a pinned exact enumeration.",
+        )
+        if solver == "scip":
+            seconds = st.slider("SCIP time limit (seconds)", 1, 30, 15, 1)
+            reads, sweeps, seed, pb, pc = 4, 300, 20261026, 12.9, 12.9
+        else:
+            seconds = 15
+            left, right = st.columns(2)
+            with left:
+                pb = st.number_input(
+                    "Budget penalty (λb)", min_value=0.01,
+                    max_value=1000.0, value=12.9, step=0.1,
+                )
+                reads = st.slider("Individually seeded samples", 1, 32, 4)
+            with right:
+                pc = st.number_input(
+                    "Connectivity penalty (λc)", min_value=0.01,
+                    max_value=1000.0, value=12.9, step=0.1,
+                )
+                sweeps = st.slider("Sweeps per sample", 10, 500, 300, 10)
+            seed = st.number_input(
+                "Parent seed", min_value=0, max_value=4294967295,
+                value=20261026, step=1,
+            )
+            st.caption(
+                "Each sample is separately seeded, in one OpenJij call. "
+                "Changing λ changes the augmented QUBO, not the original objective. "
+                "Infeasible states are always retained."
+            )
+        submitted = st.form_submit_button(
+            "Launch bounded experiment", type="primary",
+        )
+    if submitted:
+        try:
+            spec = Spec(
+                solver=solver, n_free=int(n), k_new=int(k),
+                time_limit_seconds=int(seconds), reads=int(reads),
+                sweeps=int(sweeps), parent_seed=int(seed),
+                lambda_budget=float(pb), lambda_connectivity=float(pc),
+            )
+            job_id = launch_job(spec)
+            st.session_state["local_selected_experiment"] = job_id
+            st.success("Local worker launched: " + job_id[:12] + ". Refresh below to inspect.")
+        except (JobError, OSError, ValueError) as exc:
+            st.error("Experiment not launched: " + str(exc))
+
+    st.subheader("2 · Saved experiment history")
+    st.caption(
+        "Persistent disk records are independent of Streamlit session state. "
+        "Refresh manually; page navigation never schedules another experiment."
+    )
+    st.button("Refresh job statuses", key="local_job_refresh")
+    jobs = list_jobs()
+    if not jobs:
+        st.info("No saved experiments yet. Submit a configuration explicitly above.")
+        return
+    records = []
+    for job in jobs:
+        spec = job["spec"]
+        state = job["state"]
+        records.append({
+            "Job": job["job_id"][:12],
+            "Created (UTC)": job["config"]["created_at"],
+            "Method": "SCIP" if spec.solver == "scip" else "Classical SA",
+            "N": spec.n_free, "K": spec.k_new, "Status": job["status"],
+            "Progress": f"{state['completed_reads']}/{state['total_reads']}",
+        })
+    st.dataframe(pd.DataFrame(records), hide_index=True, width="stretch")
+    ids = [j["job_id"] for j in jobs]
+    previous = st.session_state.get("local_selected_experiment")
+    index = ids.index(previous) if previous in ids else 0
+    chosen = st.selectbox(
+        "Inspect saved experiment", ids, index=index,
+        format_func=lambda job_id: job_id[:12],
+        key="local_experiment_viewer",
+    )
+    st.session_state["local_selected_experiment"] = chosen
+    job = read_job(chosen)
+    state = job["state"]
+    spec = job["spec"]
+    st.caption(f"Full experiment ID: {chosen}")
+    st.progress(min(1.0, max(0.0, state["completed_reads"] / max(1, state["total_reads"]))))
+    st.write(f"**Status:** {job['status']} · last updated: {state.get('updated_at', 'unknown')}")
+    if job["status"] in ("queued", "running"):
+        if st.button("Request cancellation", key="local_job_cancel"):
+            if request_cancel(chosen):
+                st.warning(
+                    "Cancellation requested. SA stops after the current single-read call. "
+                    "SCIP may finish its at-most-30-second solver call first."
+                )
+    if job["status"] in ("failed", "cancelled"):
+        st.error(state.get("error") or "Worker ended without complete results.")
+    with st.expander("Original submitted configuration and limitations"):
+        st.json(job["config"])
+    if job["result"]:
+        try:
+            payload = export_bundle(chosen)
+        except (JobError, OSError, ValueError) as exc:
+            st.error("Experiment evidence failed integrity checks: " + str(exc))
+            st.stop()
+        result = job["result"]
+        st.subheader("3 · Analyze original-source results")
+        st.caption(
+            "Original constrained objective, not arbitrary augmented QUBO energy. "
+            "No manuscript input parity, physical field validation, or inferential claim."
+        )
+        record = result["result"]
+        if spec.solver == "scip":
+            sites = record["source_selection"]
+            a, b, c = st.columns(3)
+            a.metric("Original objective", f"{sites['energy']:.8f}")
+            b.metric("Selected sensors", str(sites["num_selected"]))
+            c.metric("SCIP status", record["scip_status"])
+            st.caption(f"Reported SCIP gap: {record['scip_gap']:.6g}; "
+                       "only explicit optimal status counts as solver-proven optimal.")
+            st.dataframe(pd.DataFrame({
+                "Local candidate position": sites["selected_local_positions"],
+                "Original GeoJSON feature position": sites["selected_source_master_positions"],
+            }), hide_index=True, width="stretch")
+            with st.expander("Map this independently checked SCIP placement", expanded=True):
+                show_source_site_map(spec.n_free, sites["selected_local_positions"])
+        else:
+            a, b, c = st.columns(3)
+            a.metric("Original-feasible draws",
+                     f"{record['feasible_count']}/{record['total_samples']}")
+            b.metric("Feasibility rate", f"{record['feasible_fraction']:.1%}")
+            best = record["best_feasible_original_objective"]
+            c.metric("Best feasible original objective",
+                     f"{best:.7f}" if best is not None else "None")
+            st.caption(
+                "The N20/K5 original SCIP optimum is −3.3012934918564643. "
+                "Only one submitted parent seed is used; this exploratory run "
+                "is not a confirmatory statistical study."
+            )
+            st.json(record)
+        st.caption(
+            f"Source/model SHA-256: {result['source_sha256']} / "
+            f"{result['model_sha256']} · worker elapsed: "
+            f"{result['total_worker_wall_seconds']:.2f} seconds."
+        )
+        if spec.solver == "classical_sa":
+            try:
+                checked = load_verified_samples(chosen)
+            except (JobError, ValueError, OSError) as exc:
+                st.error("Individual source samples failed scientific validation: " + str(exc))
+                st.stop()
+            samples = pd.DataFrame(checked)
+            st.subheader("Inspect all sampled original placements")
+            st.caption(
+                "ALL classical draws, including infeasible ones. The source weights, "
+                "site mapping, K, one-hop feasibility and raw original objective "
+                "have been recomputed from the archived exact binary64 model."
+            )
+            st.dataframe(samples[[
+                "Read", "Child seed", "Feasible", "Selected count",
+                "Original objective", "Augmented QUBO energy",
+            ]], hide_index=True, width="stretch")
+            st.scatter_chart(samples, x="Read", y="Original objective", height=230)
+            sample_index = st.selectbox(
+                "View selected source sites for one recorded sample",
+                [int(v) for v in samples["Read"]],
+                key="local_experiment_sample_index",
+            )
+            sample_row = next(r for r in checked if r["Read"] == sample_index)
+            st.write(
+                "Original feasibility: " +
+                ("feasible" if sample_row["Feasible"] else "INFEASIBLE")
+            )
+            show_source_site_map(spec.n_free, sample_row["Selected local positions"])
+        st.download_button(
+            "Download immutable model, configuration, samples and evidence ZIP",
+            payload, file_name=f"lake-research-run-{chosen[:12]}.zip",
+            mime="application/zip", key="local_job_export",
+        )
+    else:
+        st.info("Results will appear here after this local worker finishes.")
+
+    if st.button("Rerun saved settings as a NEW experiment", key="local_job_rerun"):
+        try:
+            new_id = launch_job(spec)
+            st.session_state["local_selected_experiment"] = new_id
+            st.success("Launched new, separately recorded experiment: " + new_id[:12])
+        except (JobError, OSError) as exc:
+            st.error("Re-run not launched: " + str(exc))
+
+    complete = [run for run in jobs if run["status"] == "completed"]
+    if len(complete) >= 2:
+        st.subheader("4 · Compare completed source-model runs")
+        st.caption(
+            "Choose 2–12 finished experiments. A direct comparison requires the "
+            "same original K, site identities AND exact source coefficients. "
+            "Matching seeds alone are not sufficient; no statistical inference."
+        )
+        choices = [run["job_id"] for run in complete]
+        selected_runs = st.multiselect(
+            "Compare completed job IDs", choices,
+            default=choices[:2], max_selections=12,
+            format_func=lambda item: item[:12],
+            key="local_comparison_ids",
+        )
+        if len(selected_runs) >= 2:
+            try:
+                compared = compare_completed_jobs(selected_runs)
+                table = pd.DataFrame(compared["observations"])
+                st.caption("Identical original model SHA-256: " + compared["model_sha256"])
+                st.dataframe(table, hide_index=True, width="stretch")
+                st.caption(compared["scope"])
+                sa_only = table.loc[table["Solver"] == "classical_sa"]
+                if len(sa_only) > 1:
+                    st.scatter_chart(
+                        sa_only, x="Job ID", y="Original-feasible fraction",
+                        height=240,
+                    )
+                    st.caption(
+                        "Each mark is ONE user-run classical experiment. "
+                        "This is descriptive only, not a significance test or "
+                        "optimized two-penalty recommendation."
+                    )
+            except (JobError, ValueError, OSError) as exc:
+                st.warning("Selected runs cannot be compared directly: " + str(exc))

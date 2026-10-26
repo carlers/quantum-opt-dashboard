@@ -90,3 +90,51 @@ def test_manifest_records_provenance_not_solver_claims(study):
     assert encoded["paper_parity_claimed"] is False
     assert [t["n_free"] for t in encoded["tiers"]] == [20, 50, 100]
     assert encoded["tiers"][0]["candidate_master_positions"] == list(FROZEN_N20_MASTER_POSITIONS)
+
+
+def test_independent_raw_source_fps_recovers_all_three_tiers(study):
+    """Independent notebook Cell 3 reconstruction: no production FPS helpers.
+
+    Rebuilds the 10k bbox lattice directly from *raw* GeoJSON coordinates,
+    water hull containment, nearest-master unique eligible pool and sequential
+    farthest-point choices. Confirms N50/100 are not just mutually consistent
+    results of a defective shared helper.
+    """
+    from scipy.spatial import cKDTree
+    from shapely import concave_hull
+    from shapely.geometry import MultiPoint, Point
+
+    raw = json.loads(REFERENCE_GEOJSON.read_text(encoding="utf-8"))["features"]
+    source_xy = np.array([f["geometry"]["coordinates"][:2] for f in raw], dtype=float)
+    fixed = np.flatnonzero([
+        bool(f["properties"].get("has_existing_station", False))
+        for f in raw
+    ])
+    assert tuple(fixed) == study.fixed_master_positions
+    water = concave_hull(MultiPoint(source_xy), ratio=0.05, allow_holes=True)
+    xmin, ymin = source_xy.min(axis=0)
+    xmax, ymax = source_xy.max(axis=0)
+    dx = np.sqrt(((xmax - xmin) * (ymax - ymin) / 10000) / (np.sqrt(3) / 2))
+    dy = dx * np.sqrt(3) / 2
+    candidates = []
+    for row in range(int(np.ceil((ymax - ymin) / dy)) + 1):
+        y = ymin + row * dy
+        if y > ymax:
+            continue
+        for col in range(int(np.ceil((xmax - xmin) / dx)) + 1):
+            x = xmin + col * dx + (0.5 * dx if row % 2 else 0)
+            if x <= xmax and water.contains(Point(float(x), float(y))):
+                candidates.append((x, y))
+    snapped = cKDTree(source_xy).query(np.array(candidates), k=1)[1]
+    eligible = np.unique(snapped[~np.isin(snapped, fixed)])
+    distances = cKDTree(source_xy[fixed]).query(source_xy[eligible], k=1)[0]
+    independent: list[int] = []
+    for _ in range(100):
+        offset = int(np.argmax(distances))
+        independent.append(int(eligible[offset]))
+        difference = source_xy[eligible] - source_xy[eligible[offset]]
+        distances = np.minimum(distances, np.sqrt(np.sum(difference * difference, axis=1)))
+        distances[offset] = -1.
+    assert tuple(independent[:20]) == FROZEN_N20_MASTER_POSITIONS
+    for tier in study.tier_instances:
+        assert tier.candidate_master_positions == tuple(independent[:tier.n_free])

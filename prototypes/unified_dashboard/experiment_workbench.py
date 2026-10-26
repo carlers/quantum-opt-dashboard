@@ -13,6 +13,7 @@ import streamlit as st
 from prototypes.unified_dashboard.experiment_analysis import (
     compare_completed_jobs, load_verified_samples,
 )
+from prototypes.unified_dashboard.sweep_workbench import render_sweep_section
 
 from problems.water_quality.experiment_jobs import (
     JobError, Spec, export_bundle, job_root, launch_job,
@@ -122,6 +123,8 @@ def render_experiment_page():
             st.success("Local worker launched: " + job_id[:12] + ". Refresh below to inspect.")
         except (JobError, OSError, ValueError) as exc:
             st.error("Experiment not launched: " + str(exc))
+
+    render_sweep_section()
 
     st.subheader("2 · Saved experiment history")
     st.caption(

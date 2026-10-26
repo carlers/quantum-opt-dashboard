@@ -30,21 +30,48 @@ entrypoint-adjacent file in a separate job and tests import origins with
 
 ### Navigation
 
-1. **Water-quality placement** — original committed lake GeoJSON, exact
-   N20 SCIP experiment, result map, genuine LP/audit export.
-2. **Configure another problem** — synthetic JSON/CSV/GeoJSON inputs, typed
-   variable/constraint/formulation controls, exact SCIP and optional
-   unconstrained-binary QUBO export. This page is intentionally marked
-   synthetic; it is not an evacuation operations application.
-3. **QUBO and classical SA** — original water binary MIQP, actual
-   slack-augmented QUBO and penalties; optional **small** 1–16 independent
-   individual OpenJij classical SA samples, seeded and fully auditable.
-4. **About the research** — scientific limitations and pointers.
+1. **Water-quality placement** — original lake GeoJSON, separately bounded N20
+   SCIP experiment, exact source evidence and original water map.
+2. **Verified source results** — reviewed, archived original-source N50/N100
+   SCIP+HiGHS observations. These do **not** rerun solvers on navigation.
+3. **Run experiments (local)** — NEW researcher-initiated bounded SCIP N20/50/100
+   and classical OpenJij N20 jobs; persistent local status/history, site maps,
+   complete sample explorer, original-model-identity-checked run comparisons,
+   explicit rerun, cancellation and reproducible ZIP download. An optional
+   small **2×2 budget × connectivity QUBO penalty grid** is user-triggered
+   and capped at four cells/32 samples total.
+4. **Configure another problem** — synthetic JSON/CSV/GeoJSON inputs and
+   independently checked mathematical representations; not real field operations.
+5. **QUBO and classical SA** — existing small interactive source-QUBO inspector
+   and manually launched classical sampler. It is not quantum hardware.
+6. **About the research** — source/manuscript/field limitations and references.
+
+**Launching research computations locally (never on public Cloud):**
+
+```sh
+git switch feat/user-launched-bounded-2x2-sweeps-20261026
+python -m pip install -r requirements.txt
+export QOPT_LOCAL_EXPERIMENTS=1
+# Optionally choose persistent non-repository local experiment storage:
+export QOPT_EXPERIMENT_STORE="$HOME/.local/share/quantum-opt-dashboard/experiments"
+streamlit run prototypes/unified_dashboard/app.py --server.address localhost
+```
+
+The runner launches **only after the researcher clicks**, using fixed,
+separate Python worker entrypoints and a single-operator local filesystem job
+store. The flag is OFF by default. The code provides **no authentication, user
+quotas, tenant separation, stable multiuser cloud queue, hard process isolation
+or reliable storage outside that local machine**. **Never enable this flag on a
+publicly accessible Streamlit host.** The owner-hosted preview and production
+apps are unchanged. See
+[`docs/USER_CONTROLLED_EXPERIMENT_WORKBENCH_MVP.md`](../../docs/USER_CONTROLLED_EXPERIMENT_WORKBENCH_MVP.md)
+and [`docs/USER_CONTROLLED_BOUNDED_2X2_SWEEPS.md`](../../docs/USER_CONTROLLED_BOUNDED_2X2_SWEEPS.md)
+for source restrictions, receipts and deliberate limits.
 
 Standalone legacy entry points `prototypes/streamlit_water_quality/app.py`
-and `prototypes/streamlit_configurable/app.py` remain usable for regression
-tests and migration. The unified shell simply routes into them. There are
-no new storage, auth, API or worker services.
+and `prototypes/streamlit_configurable/app.py` remain usable. This stacked
+DRAFT adds a local worker and local storage only, **not** a remote service,
+password system, managed cloud queue or new deployed backend.
 
 ### Integration policy
 

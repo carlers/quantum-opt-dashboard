@@ -495,7 +495,10 @@ def execute_job(job_id, *, root=None):
 
 
 def export_bundle(job_id, *, root=None):
-    record = read_job(job_id, root=root)
+    try:
+        record = read_job(job_id, root=root)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise JobError("Stored scientific output changed or corrupted") from exc
     if record["status"] != "completed":
         raise JobError("Only complete experiments have exportable original artifacts")
     folder = job_dir(Path(root) if root is not None else job_root(), job_id)

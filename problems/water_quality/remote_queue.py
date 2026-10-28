@@ -305,6 +305,34 @@ class PrivateQueue:
                 raise QueueError("Cannot finish without a valid active lease")
         return status
 
+    def audit_stalled(self) -> list[dict]:
+        """Read-only operator report. NEVER reclaims a lease or reruns a job."""
+        with self._connection() as db:
+            rows = db.execute(
+                "SELECT job_id, owner, lease_until, attempts "
+                "FROM research_jobs WHERE status='running' AND lease_until<? "
+                "ORDER BY created_at ASC", (time.time(),)
+            ).fetchall()
+        report = []
+        for row in rows:
+            job_id = row["job_id"]
+            try:
+                record = read_job(job_id, root=self.root)
+                state = record["status"]
+                if state == "completed":
+                    export_bundle(job_id, root=self.root)
+                    evidence = "verified_completed_archive"
+                else:
+                    evidence = "not_completed"
+            except (OSError, ValueError, KeyError, TypeError):
+                state, evidence = "unreadable", "corrupt_or_missing"
+            report.append({
+                "job_id": job_id, "worker_state": state,
+                "evidence": evidence, "attempts": row["attempts"],
+                "manual_review_required": True,
+            })
+        return report
+
     def run_once(self, *, wall_seconds: int = MAX_OPERATOR_WALL_SECONDS):
         """Explicit CLI dispatch only, no daemon, no HTTP listener, no auto-retry.
 
@@ -367,13 +395,16 @@ class PrivateQueue:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("init", "run-once"))
+    parser.add_argument("action", choices=("init", "run-once", "audit-stalled"))
     parser.add_argument("--database", type=Path, required=True)
     parser.add_argument("--root", type=Path, required=True)
     args = parser.parse_args()
     queue = PrivateQueue(database=args.database, root=args.root)
     if args.action == "init":
         print("Private queue initialized; no server or worker started")
+    elif args.action == "audit-stalled":
+        import json
+        print(json.dumps({"stalled": queue.audit_stalled()}, sort_keys=True))
     else:
         result = queue.run_once()
         print("No queued experiments" if result is None else

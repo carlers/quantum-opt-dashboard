@@ -1,0 +1,35 @@
+name: Clean derived water-quality notebook smoke
+
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/notebooks/derived_historical_weight_audit.ipynb"
+      - "problems/water_quality/tests/test_derived_weights_notebook.py"
+      - "problems/water_quality/tests/test_historical_weight_contract.py"
+      - "scripts/historical_weight_contract.py"
+      - "docs/research_protocols/DERIVED_NOTEBOOK_INPUT_AUDIT.md"
+      - ".github/workflows/derived-weight-notebook.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-clean-derived-notebook:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Execute clean derived notebook cells using stdlib only
+        run: python -m unittest discover -s problems/water_quality/tests -p test_derived_weights_notebook.py -v
+      - name: Check static AST extraction of original factor inputs
+        run: python -m unittest discover -s problems/water_quality/tests -p test_historical_weight_contract.py -v
+      - name: State narrow scientific claim
+        run: |
+          echo "Original CELL 2 AST parsed without execution; historical and alternate weights compared with Decimal; original source remains unchanged." >> "$GITHUB_STEP_SUMMARY"
+          echo "No SCIP, quantum hardware, site placement, manuscript WorldPop/AHP parity, OCI or live dashboard." >> "$GITHUB_STEP_SUMMARY"

@@ -11,6 +11,7 @@ accidental duplicate native solver execution after lease expiry.
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 from contextlib import contextmanager
 from dataclasses import dataclass
 import os
@@ -26,10 +27,10 @@ import time
 
 from problems.water_quality.experiment_jobs import (
     JOB_PATTERN, ROOT, SOURCE_SHA256, JobError, Spec, create_job, export_bundle,
-    job_dir, read_job, request_cancel, update_state, utc_now,
+    job_dir, read_job, request_cancel, update_state, utc_now, canonical,
 )
 
-OWNER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z")
+OWNER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\Z")
 TERMINAL = frozenset({"completed", "failed", "cancelled"})
 MAX_PER_OWNER_ACTIVE = 4
 MAX_GLOBAL_ACTIVE = 20
@@ -126,9 +127,21 @@ class PrivateQueue:
                   cancel_requested INTEGER NOT NULL DEFAULT 0,
                   lease_token TEXT,
                   lease_until REAL,
-                  attempts INTEGER NOT NULL DEFAULT 0
+                  attempts INTEGER NOT NULL DEFAULT 0,
+                  idempotency_key TEXT,
+                  config_sha256 TEXT
                 )
             """)
+            # Non-destructive migration for an earlier private foundation DB.
+            columns = {r[1] for r in db.execute("PRAGMA table_info(research_jobs)")}
+            for col in ("idempotency_key", "config_sha256"):
+                if col not in columns:
+                    db.execute("ALTER TABLE research_jobs ADD COLUMN " + col + " TEXT")
+            db.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS research_owner_idempotency "
+                "ON research_jobs(owner, idempotency_key) "
+                "WHERE idempotency_key IS NOT NULL"
+            )
             db.execute(
                 "CREATE INDEX IF NOT EXISTS research_owner_jobs "
                 "ON research_jobs(owner, created_at)"
@@ -136,11 +149,28 @@ class PrivateQueue:
         if self.database.stat().st_mode & 0o077:
             raise QueueError("Queue database must not be group/world readable")
 
-    def submit(self, owner: str, spec: Spec) -> str:
-        """Only the future authenticated API may provide owner, not the payload."""
+    def submit(self, owner: str, spec: Spec, *,
+               idempotency_key: str | None = None) -> str:
+        """Return the first matching job on authenticated, equal-config retries."""
         owner = _owner(owner)
         spec.validate()
+        if idempotency_key is not None and (
+            type(idempotency_key) is not str
+            or re.fullmatch(r"[0-9a-f]{32}", idempotency_key) is None
+        ):
+            raise QueueError("Invalid Idempotency-Key")
+        config_sha256 = sha256(canonical(spec.manifest())).hexdigest()
         with self._transaction() as db:
+            if idempotency_key is not None:
+                found = db.execute(
+                    "SELECT job_id,config_sha256 FROM research_jobs "
+                    "WHERE owner=? AND idempotency_key=?",
+                    (owner, idempotency_key),
+                ).fetchone()
+                if found is not None:
+                    if found["config_sha256"] != config_sha256:
+                        raise QueueError("Idempotency-Key conflicts with existing configuration")
+                    return found["job_id"]
             active = db.execute(
                 "SELECT COUNT(*) FROM research_jobs WHERE status IN ('queued','running')"
             ).fetchone()[0]
@@ -156,8 +186,9 @@ class PrivateQueue:
             now = utc_now()
             db.execute(
                 "INSERT INTO research_jobs(job_id,owner,status,created_at,updated_at,"
-                "source_sha256) VALUES(?,?,?,?,?,?)",
-                (job_id, owner, "queued", now, now, SOURCE_SHA256),
+                "source_sha256,idempotency_key,config_sha256) VALUES(?,?,?,?,?,?,?,?)",
+                (job_id, owner, "queued", now, now, SOURCE_SHA256,
+                 idempotency_key, config_sha256),
             )
         return job_id
 
@@ -274,6 +305,34 @@ class PrivateQueue:
                 raise QueueError("Cannot finish without a valid active lease")
         return status
 
+    def audit_stalled(self) -> list[dict]:
+        """Read-only operator report. NEVER reclaims a lease or reruns a job."""
+        with self._connection() as db:
+            rows = db.execute(
+                "SELECT job_id, owner, lease_until, attempts "
+                "FROM research_jobs WHERE status='running' AND lease_until<? "
+                "ORDER BY created_at ASC", (time.time(),)
+            ).fetchall()
+        report = []
+        for row in rows:
+            job_id = row["job_id"]
+            try:
+                record = read_job(job_id, root=self.root)
+                state = record["status"]
+                if state == "completed":
+                    export_bundle(job_id, root=self.root)
+                    evidence = "verified_completed_archive"
+                else:
+                    evidence = "not_completed"
+            except (OSError, ValueError, KeyError, TypeError):
+                state, evidence = "unreadable", "corrupt_or_missing"
+            report.append({
+                "job_id": job_id, "worker_state": state,
+                "evidence": evidence, "attempts": row["attempts"],
+                "manual_review_required": True,
+            })
+        return report
+
     def run_once(self, *, wall_seconds: int = MAX_OPERATOR_WALL_SECONDS):
         """Explicit CLI dispatch only, no daemon, no HTTP listener, no auto-retry.
 
@@ -336,13 +395,16 @@ class PrivateQueue:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("init", "run-once"))
+    parser.add_argument("action", choices=("init", "run-once", "audit-stalled"))
     parser.add_argument("--database", type=Path, required=True)
     parser.add_argument("--root", type=Path, required=True)
     args = parser.parse_args()
     queue = PrivateQueue(database=args.database, root=args.root)
     if args.action == "init":
         print("Private queue initialized; no server or worker started")
+    elif args.action == "audit-stalled":
+        import json
+        print(json.dumps({"stalled": queue.audit_stalled()}, sort_keys=True))
     else:
         result = queue.run_once()
         print("No queued experiments" if result is None else

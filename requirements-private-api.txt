@@ -1,0 +1,6 @@
+# Additional dependencies for the *private* research job API, not Streamlit Cloud.
+-r requirements.txt
+fastapi>=0.115,<1
+uvicorn>=0.34,<1
+PyJWT[crypto]>=2.10,<3
+httpx>=0.27,<1

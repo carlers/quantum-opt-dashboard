@@ -1,0 +1,55 @@
+name: Private OIDC research API and bounded worker contracts
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/private_api.py"
+      - "problems/water_quality/remote_queue.py"
+      - "prototypes/unified_dashboard/tests/test_private_api.py"
+      - "prototypes/unified_dashboard/tests/test_remote_queue_foundation.py"
+      - "requirements-private-api.txt"
+      - "deploy/systemd/quantum-opt-private-*"
+      - "docs/OCI_PRIVATE_OIDC_API.md"
+      - ".github/workflows/private-oidc-api.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authenticated-api:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install separate private API requirements
+        run: |
+          python -m pip install -r requirements-private-api.txt
+          python -m pip install "pytest>=8,<10"
+          python -m pip check
+      - name: Signed OIDC tenant isolation + real source-SCIP evidence
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          python -m pytest -q -s \
+            prototypes/unified_dashboard/tests/test_private_api.py \
+            prototypes/unified_dashboard/tests/test_remote_queue_foundation.py
+      - name: Fail closed if systemd worker limits or loopback-only API regressed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          worker = Path("deploy/systemd/quantum-opt-private-worker.service").read_text()
+          api = Path("deploy/systemd/quantum-opt-private-api.service").read_text()
+          for text in ("MemoryMax=2G", "MemorySwapMax=0", "TasksMax=64",
+                       "CPUQuota=100%", "KillMode=control-group", "PrivateNetwork=yes"):
+              assert text in worker, text
+          assert "User=qopt" in worker and "User=qopt" in api
+          assert "--host 127.0.0.1" in api
+          assert "0.0.0.0" not in api
+          print("DISABLED_RESOURCE_UNIT_CONTRACTS_VERIFIED (no live cgroup enforcement tested)")
+          PY
+      - name: Clear deployment limitations
+        run: |
+          echo "Signed JWT API, per-owner idempotency and actual SCIP evidence tested in-process. Systemd cgroup limits are static templates, not yet live-verified. No public listener, real OIDC provider, backups, restart recovery or dashboard integration." >> "$GITHUB_STEP_SUMMARY"

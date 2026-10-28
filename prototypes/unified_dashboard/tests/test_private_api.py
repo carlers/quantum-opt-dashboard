@@ -14,10 +14,14 @@ from types import SimpleNamespace
 from uuid import uuid4
 from zipfile import ZipFile
 
-import jwt
+import pytest
+# Optional API-only packages are installed by the dedicated authenticated-API
+# workflow; existing Streamlit/water CI may collect this test without them.
+jwt = pytest.importorskip("jwt")
+pytest.importorskip("fastapi")
+pytest.importorskip("cryptography")
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
-import pytest
 
 from problems.water_quality.experiment_jobs import Spec
 from problems.water_quality.private_api import IdentityVerifier, create_app

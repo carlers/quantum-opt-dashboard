@@ -11,6 +11,7 @@ accidental duplicate native solver execution after lease expiry.
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 from contextlib import contextmanager
 from dataclasses import dataclass
 import os
@@ -26,7 +27,7 @@ import time
 
 from problems.water_quality.experiment_jobs import (
     JOB_PATTERN, ROOT, SOURCE_SHA256, JobError, Spec, create_job, export_bundle,
-    job_dir, read_job, request_cancel, update_state, utc_now,
+    job_dir, read_job, request_cancel, update_state, utc_now, canonical,
 )
 
 OWNER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z")
@@ -126,9 +127,21 @@ class PrivateQueue:
                   cancel_requested INTEGER NOT NULL DEFAULT 0,
                   lease_token TEXT,
                   lease_until REAL,
-                  attempts INTEGER NOT NULL DEFAULT 0
+                  attempts INTEGER NOT NULL DEFAULT 0,
+                  idempotency_key TEXT,
+                  config_sha256 TEXT
                 )
             """)
+            # Non-destructive migration for an earlier private foundation DB.
+            columns = {r[1] for r in db.execute("PRAGMA table_info(research_jobs)")}
+            for col in ("idempotency_key", "config_sha256"):
+                if col not in columns:
+                    db.execute("ALTER TABLE research_jobs ADD COLUMN " + col + " TEXT")
+            db.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS research_owner_idempotency "
+                "ON research_jobs(owner, idempotency_key) "
+                "WHERE idempotency_key IS NOT NULL"
+            )
             db.execute(
                 "CREATE INDEX IF NOT EXISTS research_owner_jobs "
                 "ON research_jobs(owner, created_at)"
@@ -136,11 +149,28 @@ class PrivateQueue:
         if self.database.stat().st_mode & 0o077:
             raise QueueError("Queue database must not be group/world readable")
 
-    def submit(self, owner: str, spec: Spec) -> str:
-        """Only the future authenticated API may provide owner, not the payload."""
+    def submit(self, owner: str, spec: Spec, *,
+               idempotency_key: str | None = None) -> str:
+        """Return the first matching job on authenticated, equal-config retries."""
         owner = _owner(owner)
         spec.validate()
+        if idempotency_key is not None and (
+            type(idempotency_key) is not str
+            or re.fullmatch(r"[0-9a-f]{32}", idempotency_key) is None
+        ):
+            raise QueueError("Invalid Idempotency-Key")
+        config_sha256 = sha256(canonical(spec.manifest())).hexdigest()
         with self._transaction() as db:
+            if idempotency_key is not None:
+                found = db.execute(
+                    "SELECT job_id,config_sha256 FROM research_jobs "
+                    "WHERE owner=? AND idempotency_key=?",
+                    (owner, idempotency_key),
+                ).fetchone()
+                if found is not None:
+                    if found["config_sha256"] != config_sha256:
+                        raise QueueError("Idempotency-Key conflicts with existing configuration")
+                    return found["job_id"]
             active = db.execute(
                 "SELECT COUNT(*) FROM research_jobs WHERE status IN ('queued','running')"
             ).fetchone()[0]
@@ -156,8 +186,9 @@ class PrivateQueue:
             now = utc_now()
             db.execute(
                 "INSERT INTO research_jobs(job_id,owner,status,created_at,updated_at,"
-                "source_sha256) VALUES(?,?,?,?,?,?)",
-                (job_id, owner, "queued", now, now, SOURCE_SHA256),
+                "source_sha256,idempotency_key,config_sha256) VALUES(?,?,?,?,?,?,?,?)",
+                (job_id, owner, "queued", now, now, SOURCE_SHA256,
+                 idempotency_key, config_sha256),
             )
         return job_id
 

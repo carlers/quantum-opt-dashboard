@@ -67,6 +67,26 @@ Never bypass protection even if you have the credentials.
 - Plugin frontend UI, if any, ships as a separate npm package
   `@qopt/plugin-<name>-ui` and is dynamically imported.
 
+## Scientific reference precedence — Laguna de Bay N20
+
+- **For future notebook-derived water-quality N=20, K=5 work**, use
+  `problems/water_quality/notebooks/water_quality_n20_reproducible.ipynb`
+  as the **working model specification** after the review/merge gate, with
+  `scripts/run_n20_reference_notebook.py` as the executable acceptance test.
+  Its current draft lives in PR #56; it is **not** in `main` yet.
+- The 25-cell `experiment9 grid search copy.ipynb` and committed GeoJSON
+  remain **immutable historical inputs**, not working notebooks to edit.
+- Consult `docs/SCIENTIFIC_REFERENCE_POLICY.md` before modifying model
+  terms, experimental assumptions, optimizer encodings or claiming parity.
+  Preserve exact model coefficient/fingerprint evidence **and**
+  independently tested objective/feasibility within documented tolerance.
+- The N20 reference does **not** establish published-paper parity (#16),
+  exact cross-run float reproducibility (#24), historical larger-N grid/SA
+  parity, or a model for evacuation-center planning. New domains require
+  independent approved problem specifications.
+- Never merge draft PRs, change `main`, or redeploy Streamlit production
+  merely because a working notebook's CI passes.
+
 ## Testing
 
 - Every PR includes tests for the behavior it introduces.

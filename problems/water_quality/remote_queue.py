@@ -30,7 +30,7 @@ from problems.water_quality.experiment_jobs import (
     job_dir, read_job, request_cancel, update_state, utc_now, canonical,
 )
 
-OWNER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z")
+OWNER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\Z")
 TERMINAL = frozenset({"completed", "failed", "cancelled"})
 MAX_PER_OWNER_ACTIVE = 4
 MAX_GLOBAL_ACTIVE = 20

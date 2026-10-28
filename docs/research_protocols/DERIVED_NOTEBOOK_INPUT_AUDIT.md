@@ -9,7 +9,7 @@ Derived notebook: [`problems/water_quality/notebooks/derived_historical_weight_a
 The historical 25-cell notebook is preserved byte-for-byte; it contains duplicate stages, historical configuration and substantial experiment code. It is **not cleaned or executed** in place. This new eight-cell notebook is a small **derived, output-free**, independently testable entrypoint that:
 
 1. Finds the checked-out research repository and verifies the immutable original notebook+GeoJSON source fingerprints using [source provenance draft PR #159](https://github.com/carlers/quantum-opt-dashboard/pull/159).
-2. Shows the **eight historical notebook factor weights** and the **eight distinct paper-weight sensitivity constants** as represented by the draft `problems/water_quality/notebook_reference_model.py`. It avoids changing or normalizing either vector.
+2. Statically extracts the historical **eight WEIGHTS and FACTOR_NAMES input literals from original notebook JSON cell index 3** (labeled **CELL 2**), without executing that cell or importing NumPy. A second copy in the derived notebook is a regression assertion against the actual parsed source. Shows the **eight distinct paper-weight sensitivity constants** as represented by the draft `problems/water_quality/notebook_reference_model.py`. It avoids changing or normalizing either vector.
 3. Uses Python's exact decimal arithmetic to show notebook weight sum `1.0001`, alternate sum `1.000000001`, and factor-by-factor differences. This is an **input discrepancy inspection**, not an output or objective-value comparison.
 4. Explicitly identifies D2 as historical **road proximity** and treats manuscript WorldPop/AHP input parity as unverified.
 
@@ -22,11 +22,14 @@ From the checkout root containing source integrity PR #159:
 ```bash
 python scripts/verify_research_sources.py
 python -m unittest discover -s problems/water_quality/tests -p test_derived_weights_notebook.py -v
+python -m unittest discover -s problems/water_quality/tests -p test_historical_weight_contract.py -v
 ```
 
 To open interactively, install Jupyter in your **local** environment; no notebook package is required for CI. Run all cells from a working directory **inside the repository**. Re-run the first source validation cell before interpreting weights. Every code cell has null execution count and empty stored outputs in Git.
 
 ## Provenance and source caveats
+
+The original historical notebook JSON cell index 3 (titled **CELL 2**) has `WEIGHTS = np.array([...], dtype=np.float64)`; `scripts/historical_weight_contract.py` parses this assignment using `ast` and exact decimal source tokens rather than executing source Python or trusting a copied vector. The additional adversarial test suite rejects executable expressions, changed D2 labels, duplicated names, altered notebook bytes and ambiguous assignments.
 
 The historical notebook's Cell 2 uses notebook weights `[.3671,.1224,.2508,.0502,.1278,.0183,.0476,.0159]`. The research `notebook_reference_model.py` stores a different `PAPER_WEIGHTS` vector `[.276095907,.276095907,.179220150,.089610075,.087188181,.043594091,.024097845,.024097845]`. These are **already present in an unmerged scientific draft**; copying them into a derived notebook is not independent manuscript authentication. Source rights and university requirements are not yet verified.
 

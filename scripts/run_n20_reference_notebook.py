@@ -72,8 +72,19 @@ def verify_exact_model(record: dict) -> None:
     if model["budget_exact"] != 5:
         raise AssertionError("The original N20 reference budget changed")
     linear = [float.fromhex(s) for s in model["linear_float64_hex"]]
-    edges = [(int(i), int(j), float.fromhex(q))
-             for i, j, q in model["quadratic_ij_float64_hex"]]
+    raw_edges = model["quadratic_ij_float64_hex"]
+    # Never coerce a fractional, string or bool node index to an int: coercion
+    # could change the optimization graph while keeping a self-consistent hash.
+    if not all(
+        type(term) is list and len(term) == 3
+        and type(term[0]) is int and type(term[1]) is int
+        and type(term[2]) is str
+        for term in raw_edges
+    ):
+        raise AssertionError("Invalid binary quadratic interaction index")
+    edges = [(i, j, float.fromhex(q)) for i, j, q in raw_edges]
+    if len(set((i, j) for i, j, _ in edges)) != len(edges):
+        raise AssertionError("Duplicate quadratic interaction pair")
     fixed = model["fixed_neighbor_flags"]
     neighbors = model["free_neighbor_indices"]
     coordinates = model["site_coords_epsg32651_float64_hex"]
@@ -82,23 +93,41 @@ def verify_exact_model(record: dict) -> None:
         raise AssertionError("N20 objective or one-hop model shape changed")
     if len(coordinates) != 35 or any(len(row) != 2 for row in coordinates):
         raise AssertionError("Expected 20 free and 15 fixed projected coordinates")
-    if len(weights) != 8 or not all(w >= 0 and math.isfinite(w) for w in weights):
+    if (len(weights) != 8 or not all(w >= 0 and math.isfinite(w) for w in weights)
+            or sum(weights) <= 0):
         raise AssertionError("Invalid environmental factor weights")
     if not all(math.isfinite(a) for a in linear):
         raise AssertionError("Nonfinite original linear coefficient")
     if not all(0 <= i < j < 20 and q >= 0 and math.isfinite(q)
                for i, j, q in edges):
         raise AssertionError("Invalid binary quadratic interaction term")
-    if not all(value in (0, 1) for value in fixed):
+    if not all(type(value) is int and value in (0, 1) for value in fixed):
         raise AssertionError("Invalid fixed-station adjacency flag")
-    if any(j == i or j < 0 or j >= 20 or i not in neighbors[j]
+    for members in neighbors:
+        if (type(members) is not list or
+                not all(type(j) is int and 0 <= j < 20 for j in members) or
+                len(set(members)) != len(members)):
+            raise AssertionError("Invalid or duplicate one-hop neighbor index")
+    if any(j == i or i not in neighbors[j]
            for i, members in enumerate(neighbors) for j in members):
         raise AssertionError("One-hop free adjacency is not symmetric")
     if not all(math.isfinite(float.fromhex(s)) for row in coordinates for s in row):
         raise AssertionError("Nonfinite projected candidate coordinate")
-    selected = set(record["selected_local_positions"])
+    raw_selection = record["selected_local_positions"]
+    if (type(raw_selection) is not list or len(raw_selection) != 5 or
+            not all(type(i) is int and 0 <= i < 20 for i in raw_selection) or
+            len(set(raw_selection)) != 5):
+        raise AssertionError("Expected five distinct integer N20 selected positions")
+    selected = set(raw_selection)
     if any(not fixed[i] and not selected.intersection(neighbors[i]) for i in selected):
         raise AssertionError("Selected stations violate the reported one-hop rules")
+    # Hash equality alone is insufficient; reject structurally inconsistent
+    # numerical metadata even when the attacker recomputes its digest.
+    for name in ("d_max_m_float64_hex", "redundancy_beta_float64_hex",
+                 "wake_delta_float64_hex"):
+        value = float.fromhex(model[name])
+        if not math.isfinite(value) or value < 0 or (name == "d_max_m_float64_hex" and value <= 0):
+            raise AssertionError("Invalid original optimization numeric parameter")
     reconstructed_energy = sum(linear[i] for i in selected) + sum(
         q for i, j, q in edges if i in selected and j in selected
     )

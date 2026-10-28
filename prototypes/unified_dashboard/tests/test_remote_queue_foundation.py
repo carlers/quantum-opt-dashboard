@@ -89,6 +89,11 @@ def test_lost_lease_never_reclaims_or_duplicates_job(queue):
             "UPDATE research_jobs SET lease_until=0 WHERE job_id=?", (first,)
         )
     assert queue.claim_next() is None  # Fail closed until human intervention.
+    audit = queue.audit_stalled()
+    assert len(audit) == 1
+    assert audit[0]["job_id"] == first
+    assert audit[0]["manual_review_required"] is True
+    assert audit[0]["worker_state"] == "queued"
     with pytest.raises(QueueError, match="lease"):
         queue.heartbeat(claim)
     execute_job(first, root=queue.root)

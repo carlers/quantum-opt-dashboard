@@ -1,0 +1,36 @@
+name: Frozen original water-quality source integrity
+
+on:
+  pull_request:
+    paths:
+      - "scripts/verify_research_sources.py"
+      - "docs/research_protocols/original_water_sources_v1.json"
+      - "docs/research_protocols/ORIGINAL_WATER_SOURCE_CUSTODY.md"
+      - "problems/water_quality/data/**"
+      - "problems/water_quality/notebooks/**"
+      - "problems/water_quality/tests/test_source_provenance.py"
+      - ".github/workflows/original-water-source-integrity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  immutable-source-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify preserved notebook and original GeoJSON without execution
+        run: python scripts/verify_research_sources.py
+      - name: Test failure cases and preservation boundaries
+        run: python -m unittest discover -s problems/water_quality/tests -p test_source_provenance.py -v
+      - name: Report limitations
+        run: |
+          echo "Validated historical source byte identity and output-free notebook shape only." >> "$GITHUB_STEP_SUMMARY"
+          echo "This is NOT a manuscript/WorldPop parity certificate, original data rights license, scientific experiment, or solver execution." >> "$GITHUB_STEP_SUMMARY"

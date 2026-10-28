@@ -75,6 +75,16 @@ class PrivateQueue:
         self.database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         if self.root.stat().st_mode & 0o077:
             raise QueueError("Experiment store must not be group/world accessible")
+        if self.database.exists():
+            if not self.database.is_file() or self.database.stat().st_mode & 0o077:
+                raise QueueError("Existing queue database has unsafe permissions")
+        else:
+            # Do not let sqlite's default umask (often 022) create a 0644 DB.
+            try:
+                fd = os.open(self.database, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                os.close(fd)
+            except FileExistsError as exc:
+                raise QueueError("Queue database was created concurrently") from exc
         self._initialize()
 
     @contextmanager

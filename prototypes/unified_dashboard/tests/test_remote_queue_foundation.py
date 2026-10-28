@@ -104,7 +104,7 @@ def test_bounded_per_owner_submission(queue):
         queue.submit("alice", Spec())
     # Another independent principal is still allowed within the global bound.
     queue.submit("bob", Spec())
-    with pytest.raises(QueueError):
+    with pytest.raises(JobError, match="source-validated"):
         queue.submit("bob", Spec(n_free=2000))
 
 

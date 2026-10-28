@@ -1,0 +1,35 @@
+name: Private Oracle research queue foundation
+on:
+  pull_request:
+    paths:
+      - "problems/water_quality/remote_queue.py"
+      - "prototypes/unified_dashboard/tests/test_remote_queue_foundation.py"
+      - "docs/OCI_PRIVATE_QUEUE_FOUNDATION.md"
+      - ".github/workflows/private-remote-queue-foundation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bounded-queue:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install same scientific dependencies as dashboard
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install "pytest>=8,<10"
+          python -m pip check
+      - name: Verify isolation and real source-SCIP subprocess
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+        run: |
+          python -m pytest -q -s prototypes/unified_dashboard/tests/test_remote_queue_foundation.py
+      - name: Explain scope
+        run: |
+          echo "SQLite queue and actual bounded solver subprocess tested. No HTTP auth, public service, cgroup memory, durable off-host archive, or deployment is claimed." >> "$GITHUB_STEP_SUMMARY"

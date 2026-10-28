@@ -61,7 +61,7 @@ Uninstalled files:
 
 These units were **statically inspected in CI only**. A live Ubuntu 24.04 systemd/cgroup v2 smoke test must prove real native solver execution, enforced out-of-memory/process cleanup, unexpected worker kill/reboot behavior and no wider VCN exposure. Worker `run_once` uses `RLIMIT_CPU` and a 90-second Python wall limit as an additional guard. The systemd cgroup is the *planned hard memory boundary*; the Python limits alone do not provide it.
 
-**No automatic lease reclaim or retry**: an expired running claim blocks further dispatch until an authorized operator verifies the old native process is dead, inspects source/evidence, and reconciles the job. This is deliberate to avoid silent duplicate physical computations. Verified off-VM artifact backup and recovery/runbooks are still blockers.
+**No automatic lease reclaim or retry**: an expired running claim blocks further dispatch until an authorized operator verifies the old native process is dead, inspects source/evidence, and reconciles the job. Run the read-only `python -m problems.water_quality.remote_queue audit-stalled --database <private-db> --root <private-jobs>` command as the trusted operator to identify expired claims and inspect whether completed evidence verifies. The audit **does not recover or restart jobs**. An explicit safe recovery implementation is still a release blocker. This is deliberate to avoid silent duplicate scientific execution. Verified off-VM artifact backup and recovery/runbooks are also blockers.
 
 ## Local CI / test-only commands (no background job service)
 

@@ -4,9 +4,13 @@ No data export, solver, network, notebook execution or third-party imports.
 """
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 
+# Legacy water-quality CI uses the pytest entrypoint, which does not insert
+# the repository root into sys.path. Import this read-only repo script explicitly.
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from scripts.verify_research_sources import (
     ANCHORS, CATALOG, GEOJSON, NOTEBOOK, SourceIntegrityError,
     _check_notebook, _load_json_no_duplicates, _safe_raw, verify,

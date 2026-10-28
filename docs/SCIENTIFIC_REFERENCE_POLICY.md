@@ -20,6 +20,12 @@
 - Certified N20/K5 independent SCIP/exhaustive selection: local `[0,1,3,6,7]`; GeoJSON master positions `[5253,2394,1557,47,5409]`, original objective approximately `-3.3012934918564643`, checked over `C(20,5)=15504` subsets. These describe the **notebook-derived** case, not a recreation of historical manuscript Table V energy `-3.301319`.
 - Cross-process exact float64 model hashes may vary by last-bit precision (issue #24). The notebook now emits all original-model coefficient terms and one-hop flags in hexadecimal along with a source/parameter digest. **Record the exact digest and environment per run, but never silently round coefficients or reject scientifically equivalent values solely because the exact digest differs.** Use independent tolerance-based objective/coefficient tests and investigate unexpected drift.
 
+## Negative-evidence validator hardening (2026-10-28)
+
+`scripts/run_n20_reference_notebook.py::verify_exact_model` now rejects fabricated or rehashed manifests containing duplicate or non-integer selections, fractional/string/boolean quadratic indices, duplicate quadratic pairs, non-integer or duplicate one-hop neighbors, boolean fixed-station flags, all-zero factor weights, invalid Dmax and negative/nonfinite scalar parameters. It **does not coerce invalid indices** or collapse a bad selection into a valid set. This closes structural acceptance holes in the standalone scientific manifest check, independently of the final result's already-pinned selection.
+
+The [N20 clean-replay CI workflow](https://github.com/carlers/quantum-opt-dashboard/actions/workflows/notebook-n20-replay.yml) runs an expanded set of **16 adversarial exact-model unit tests**, followed by the actual fresh-kernel SCIP N20 reference execution. A forged checksum is never proof of a source-authorized model; the independent source, LP, physical feasibility and manuscript-provenance checks still remain necessary. This is a **review-only** amendment to draft [PR #56](https://github.com/carlers/quantum-opt-dashboard/pull/56), not a merged change.
+
 ## Rules for future development
 
 1. Before modifying water-quality N20 mathematics, data transforms, solver compiler, candidate selection, factor weights, scientific UI or report semantics, read the **curated notebook first** and the archived original for historical interpretation. Read #16 and #24 for unresolved source and precision limitations.

@@ -1,0 +1,13 @@
+# REVIEW-ONLY example, NOT an installed or enabled timer.
+# Do not activate until stale-worker recovery and off-host backups are proven.
+[Unit]
+Description=Example private research queue polling schedule (disabled)
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=15s
+Unit=quantum-opt-private-worker.service
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

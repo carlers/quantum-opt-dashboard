@@ -95,5 +95,90 @@ class N20ModelManifestTests(unittest.TestCase):
             verify_exact_model(record)
 
 
+    def test_rehashed_duplicate_selected_position_is_rejected(self):
+        record = tiny_contract()
+        record["selected_local_positions"] = [0, 1, 3, 6, 6]
+        record["original_energy"] = 0.125
+        with self.assertRaisesRegex(AssertionError, "five distinct"):
+            verify_exact_model(record)
+
+    def test_rehashed_noninteger_selected_position_is_rejected(self):
+        for bad in (3.0, "3", True, -1, 20):
+            with self.subTest(bad=bad):
+                record = tiny_contract()
+                record["selected_local_positions"][2] = bad
+                with self.assertRaisesRegex(AssertionError, "five distinct"):
+                    verify_exact_model(record)
+
+    def test_rehashed_fractional_quadratic_index_is_not_coerced(self):
+        record = tiny_contract()
+        record["model_input"]["quadratic_ij_float64_hex"][0][0] = 0.9
+        record["model_input_sha256"] = digest(record["model_input"])
+        with self.assertRaisesRegex(AssertionError, "interaction index"):
+            verify_exact_model(record)
+
+    def test_rehashed_string_and_boolean_quadratic_index_rejected(self):
+        for bad in ("0", True):
+            with self.subTest(bad=bad):
+                record = tiny_contract()
+                record["model_input"]["quadratic_ij_float64_hex"][0][0] = bad
+                record["model_input_sha256"] = digest(record["model_input"])
+                with self.assertRaisesRegex(AssertionError, "interaction index"):
+                    verify_exact_model(record)
+
+    def test_rehashed_duplicate_quadratic_pair_rejected(self):
+        record = tiny_contract()
+        record["model_input"]["quadratic_ij_float64_hex"][-1][:2] = [0, 1]
+        record["model_input_sha256"] = digest(record["model_input"])
+        with self.assertRaisesRegex(AssertionError, "Duplicate quadratic"):
+            verify_exact_model(record)
+
+    def test_rehashed_boolean_fixed_adjacency_rejected(self):
+        record = tiny_contract()
+        record["model_input"]["fixed_neighbor_flags"][0] = True
+        record["model_input_sha256"] = digest(record["model_input"])
+        with self.assertRaisesRegex(AssertionError, "fixed-station"):
+            verify_exact_model(record)
+
+    def test_rehashed_duplicate_one_hop_neighbor_rejected(self):
+        record = tiny_contract()
+        record["model_input"]["free_neighbor_indices"][2] = [1, 1]
+        record["model_input"]["free_neighbor_indices"][1] = [2]
+        record["model_input_sha256"] = digest(record["model_input"])
+        with self.assertRaisesRegex(AssertionError, "duplicate one-hop"):
+            verify_exact_model(record)
+
+    def test_rehashed_fractional_neighbor_rejected(self):
+        record = tiny_contract()
+        record["model_input"]["free_neighbor_indices"][1] = [2.0]
+        record["model_input"]["free_neighbor_indices"][2] = [1]
+        record["model_input_sha256"] = digest(record["model_input"])
+        with self.assertRaisesRegex(AssertionError, "neighbor index"):
+            verify_exact_model(record)
+
+    def test_rehashed_all_zero_weights_rejected(self):
+        record = tiny_contract()
+        record["model_input"]["factor_weights_float64_hex"] = [float(0).hex()] * 8
+        record["model_input_sha256"] = digest(record["model_input"])
+        with self.assertRaisesRegex(AssertionError, "factor weights"):
+            verify_exact_model(record)
+
+    def test_rehashed_nonpositive_or_nan_distance_rejected(self):
+        for bad in (0.0, -1.0, float("nan"), float("inf")):
+            with self.subTest(bad=bad):
+                record = tiny_contract()
+                record["model_input"]["d_max_m_float64_hex"] = bad.hex()
+                record["model_input_sha256"] = digest(record["model_input"])
+                with self.assertRaisesRegex(AssertionError, "numeric parameter"):
+                    verify_exact_model(record)
+
+    def test_rehashed_negative_penalty_parameter_rejected(self):
+        record = tiny_contract()
+        record["model_input"]["wake_delta_float64_hex"] = float(-1).hex()
+        record["model_input_sha256"] = digest(record["model_input"])
+        with self.assertRaisesRegex(AssertionError, "numeric parameter"):
+            verify_exact_model(record)
+
+
 if __name__ == "__main__":
     unittest.main()

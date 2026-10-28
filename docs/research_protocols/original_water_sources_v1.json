@@ -1,0 +1,23 @@
+{
+  "schema": "original-water-quality-research-sources-v1",
+  "description": "Preserved historical Laguna de Bay source bytes. Verification of identity is not reproduction, license clearance or scientific validation.",
+  "not_manuscript_dataset_parity": true,
+  "not_redistribution_authorization": true,
+  "not_solver_execution": true,
+  "sources": [
+    {
+      "path": "problems/water_quality/notebooks/experiment9 grid search copy.ipynb",
+      "sha256": "08cbc1572048f4c34aab508ae195c82575acd685c7d29695d0eccecdf67cc048",
+      "git_blob_sha1": "a554f4f37957e924c0ed417e53af2dab04e45ffa",
+      "role": "historical_notebook",
+      "rights_status": "not_independently_verified"
+    },
+    {
+      "path": "problems/water_quality/data/LDB_centroids_clean.geojson",
+      "sha256": "e303cce3d6af6ff4162bb31e09ca27215bc4e29b164fa0181e3f6931de3ae3a7",
+      "git_blob_sha1": "de79af608585bc02eb0ab05c0fd4cc2f02e9acd7",
+      "role": "historical_geojson",
+      "rights_status": "not_independently_verified"
+    }
+  ]
+}

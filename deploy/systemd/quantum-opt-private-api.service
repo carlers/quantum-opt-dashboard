@@ -1,0 +1,34 @@
+# REVIEW-ONLY template: DO NOT enable until authentication, TLS/private routing,
+# dedicated pinned /opt install and backup/recovery acceptance are complete.
+[Unit]
+Description=Quantum Opt private authenticated experiment API (loopback only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qopt
+Group=qopt
+WorkingDirectory=/opt/quantum-opt/repo
+EnvironmentFile=/etc/quantum-opt/private-api.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+UMask=0077
+ExecStart=/opt/quantum-opt/venv/bin/python -m problems.water_quality.private_api --host 127.0.0.1 --port 8876 --database /var/lib/quantum-opt/queue.sqlite3 --root /var/lib/quantum-opt/experiments
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/quantum-opt
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryMax=512M
+TasksMax=32
+CPUQuota=30%
+
+[Install]
+WantedBy=multi-user.target

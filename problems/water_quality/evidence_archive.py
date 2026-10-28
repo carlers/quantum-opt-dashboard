@@ -80,6 +80,9 @@ def inspect_bundle(raw: bytes, *, job_id: str) -> dict:
                         or info.file_size > MAX_JOB_ZIP_BYTES):
                     raise EvidenceError("Unsupported ZIP entry type or size")
             members = {name: zip_file.read(name) for name in names}
+    except EvidenceError:
+        # Preserve specific security/structure validation failures.
+        raise
     except (BadZipFile, EOFError, OSError, ValueError, RuntimeError) as exc:
         raise EvidenceError("Unreadable scientific evidence ZIP") from exc
     try:

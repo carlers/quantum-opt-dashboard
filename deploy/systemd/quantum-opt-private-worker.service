@@ -1,0 +1,47 @@
+# REVIEW-ONLY template. One sequential SCIP/OpenJij job per invocation.
+# Worker and all its children share a hard cgroup: memory, CPU, task and wall.
+# Do NOT install/enable until the runner is in /opt and restoration is tested.
+[Unit]
+Description=Quantum Opt bounded private research job dispatcher (one job)
+After=local-fs.target
+ConditionPathExists=/opt/quantum-opt/venv/bin/python
+
+[Service]
+Type=oneshot
+User=qopt
+Group=qopt
+WorkingDirectory=/opt/quantum-opt/repo
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+UMask=0077
+ExecStart=/opt/quantum-opt/venv/bin/python -m problems.water_quality.remote_queue run-once --database /var/lib/quantum-opt/queue.sqlite3 --root /var/lib/quantum-opt/experiments
+Restart=no
+TimeoutStartSec=100
+RuntimeMaxSec=100
+TimeoutStopSec=5
+KillMode=control-group
+SendSIGKILL=yes
+NoNewPrivileges=yes
+PrivateNetwork=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/quantum-opt
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryAccounting=yes
+MemoryMax=2G
+MemorySwapMax=0
+CPUAccounting=yes
+CPUQuota=100%
+TasksAccounting=yes
+TasksMax=64
+LimitNOFILE=1024
+
+# Intentionally no [Install]: only explicit operator dispatch or a later
+# separately approved scheduler. Timeouts leave jobs fenced/stale, never retried.

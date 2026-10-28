@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - "scripts/audit_penalty_export.py"
+      - "scripts/audit_notebook_energy_domains.py"
       - "scripts/tests/test_penalty_export.py"
+      - "scripts/tests/test_energy_domains.py"
       - "docs/research_protocols/OFFLINE_PENALTY_EXPORT_AUDIT.md"
       - ".github/workflows/offline-penalty-export-audit.yml"
   workflow_dispatch:
@@ -25,8 +27,10 @@ jobs:
           python-version: "3.12"
       - name: Compile and test read-only original export schema, no private data
         run: |
-          python -m compileall -q scripts/audit_penalty_export.py
+          python -m compileall -q scripts/audit_penalty_export.py scripts/audit_notebook_energy_domains.py
           python -m unittest discover -s scripts/tests -p test_penalty_export.py -v
+          python -m unittest discover -s scripts/tests -p test_energy_domains.py -v
+          python scripts/audit_notebook_energy_domains.py
       - name: Record narrow evidence scope
         run: |
           echo "Synthetic tests only; requires actual private historical exports for a source-backed table audit." >> "$GITHUB_STEP_SUMMARY"

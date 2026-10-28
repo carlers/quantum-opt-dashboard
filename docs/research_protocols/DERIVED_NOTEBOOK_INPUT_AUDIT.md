@@ -32,8 +32,10 @@ The historical notebook's Cell 2 uses notebook weights `[.3671,.1224,.2508,.0502
 
 The original historical `d2_road_proximity` data is not a WorldPop population raster or a census-based human-exposure signal. Do not interpret weight changes as paper validity, identical geographic input, improved lake monitoring or quantum advantage.
 
-## Future derived notebooks
+## Relationship to the existing executable N20 notebook
 
-Keep future notebooks separate from the historical one. Add a N20 exact-model reproducibility notebook **only** when source provenance, authorized geospatial use, algebra, SCIP LP/QUBO commitments, independent enumeration/solution audit and numerical-runtime tolerances are pinned, with bounded seeds/runtimes and no confidential outputs in Git.
+An **earlier unmerged** [scientific draft PR #56](https://github.com/carlers/quantum-opt-dashboard/pull/56) already contains `problems/water_quality/notebooks/water_quality_n20_reproducible.ipynb`, a distinct executable SCIP/exhaustive N20 reference notebook with an independent verification protocol. Do **not** recreate or overwrite it. The eight-cell notebook in this PR deliberately covers **only** the narrower historical-versus-sensitivity input-weight comparison and can be reviewed before the heavier N20 execution path.
+
+Before using PR #56 as a publication-grade basis, review its original-source rights, frozen manifests, tested solver/environment versions, LP/QUBO lineage, full feasible-set certificate and precision tolerances against the newer science branches. That work is not complete merely because PR #159 or this tiny input notebook passes. Keep all derived notebooks separate from the historical original; use bounded tests and no confidential outputs in Git.
 
 References: [source custody](./ORIGINAL_WATER_SOURCE_CUSTODY.md), [notebook cell parity matrix](../NOTEBOOK_DASHBOARD_PARITY_2026_10_26.md), [academic reproducibility survey](../ACADEMIC_REPRODUCIBILITY_SURVEY.md).

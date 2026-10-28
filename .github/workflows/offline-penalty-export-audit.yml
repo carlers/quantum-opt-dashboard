@@ -1,0 +1,33 @@
+name: Offline historical penalty export audit
+
+on:
+  pull_request:
+    paths:
+      - "scripts/audit_penalty_export.py"
+      - "scripts/tests/test_penalty_export.py"
+      - "docs/research_protocols/OFFLINE_PENALTY_EXPORT_AUDIT.md"
+      - ".github/workflows/offline-penalty-export-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-grid-witness-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile and test read-only original export schema, no private data
+        run: |
+          python -m compileall -q scripts/audit_penalty_export.py
+          python -m unittest discover -s scripts/tests -p test_penalty_export.py -v
+      - name: Record narrow evidence scope
+        run: |
+          echo "Synthetic tests only; requires actual private historical exports for a source-backed table audit." >> "$GITHUB_STEP_SUMMARY"
+          echo "No solver, notebook execution, original manuscript upload, OCI or data-rights claim." >> "$GITHUB_STEP_SUMMARY"
